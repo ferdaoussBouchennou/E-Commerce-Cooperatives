@@ -1,0 +1,198 @@
+// CoopShop Custom JavaScript
+
+(function() {
+    'use strict';
+
+    // Initialize on DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+        initAddToCart();
+        initSmoothScroll();
+        initAnimations();
+    });
+
+    // Check if user is authenticated
+    function isUserAuthenticated() {
+        // Check if there's a user session variable set by the server
+        // This will be set to true when user logs in
+        const authElement = document.getElementById('user-authenticated');
+        if (authElement) {
+            return authElement.getAttribute('data-authenticated') === 'true';
+        }
+        
+        // Fallback: check localStorage (for client-side only scenarios)
+        return localStorage.getItem('userAuthenticated') === 'true';
+    }
+
+    // Add to Cart functionality
+    function initAddToCart() {
+        const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+        
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Check if user is authenticated
+                if (!isUserAuthenticated()) {
+                    // Show notification
+                    showNotification('Veuillez vous connecter pour ajouter des produits au panier', 'info');
+                    
+                    // Try to find the connexion section on the page
+                    const connexionSection = document.getElementById('connexion');
+                    if (connexionSection) {
+                        // Scroll to connexion section
+                        const offset = 80; // Header height
+                        const targetPosition = connexionSection.offsetTop - offset;
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        // If no section found, try to find any link with href="#connexion" and click it
+                        const connexionLink = document.querySelector('a[href="#connexion"]');
+                        if (connexionLink) {
+                            connexionLink.click();
+                        } else {
+                            // Fallback: scroll to top and set hash
+                            window.location.hash = '#connexion';
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                    }
+                    return; // Stop execution, don't add to cart
+                }
+                
+                const produitId = this.getAttribute('data-produit-id');
+                
+                // Add to cart logic here
+                addProductToCart(produitId);
+                
+                // Show notification
+                showNotification('Produit ajouté au panier!', 'success');
+                
+                // Update cart badge
+                updateCartBadge();
+            });
+        });
+    }
+
+    // Add product to cart
+    function addProductToCart(produitId) {
+        // Get existing cart from localStorage
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        
+        // Check if product already exists
+        const existingItem = cart.find(item => item.produitId === produitId);
+        
+        if (existingItem) {
+            existingItem.quantite += 1;
+        } else {
+            cart.push({
+                produitId: produitId,
+                quantite: 1,
+                dateAjout: new Date().toISOString()
+            });
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }
+
+    // Update cart badge
+    function updateCartBadge() {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const totalItems = cart.reduce((sum, item) => sum + item.quantite, 0);
+        
+        const cartBadge = document.getElementById('cart-badge');
+        if (cartBadge) {
+            if (totalItems > 0) {
+                cartBadge.textContent = totalItems;
+                cartBadge.style.display = 'flex';
+            } else {
+                cartBadge.style.display = 'none';
+            }
+        }
+    }
+
+    // Initialize cart badge on page load
+    window.addEventListener('load', function() {
+        updateCartBadge();
+    });
+
+    // Smooth scroll for anchor links
+    function initSmoothScroll() {
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && href.length > 1 && !href.includes('?')) {
+                    const target = document.querySelector(href);
+                    if (target) {
+                        e.preventDefault();
+                        const offset = 80; // Header height
+                        const targetPosition = target.offsetTop - offset;
+                        
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+    }
+
+    // Initialize animations
+    function initAnimations() {
+        // Fade in elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe product and category cards
+        document.querySelectorAll('.product-card, .category-card').forEach(el => {
+            observer.observe(el);
+        });
+    }
+
+    // Show notification
+    function showNotification(message, type) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'info'} position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.style.transition = 'opacity 0.3s ease';
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    // Mobile menu toggle enhancement
+    const navbarToggler = document.querySelector('.navbar-toggler');
+    if (navbarToggler) {
+        navbarToggler.addEventListener('click', function() {
+            const navbar = document.querySelector('#navbarNav');
+            if (navbar) {
+                navbar.classList.toggle('show');
+            }
+        });
+    }
+
+})();
+

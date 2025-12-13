@@ -1,20 +1,373 @@
-﻿/* Set padding to keep content from hitting the edges */
+﻿/* Custom Colors - Palette de la page React */
+:root {
+    /* Palette principale */
+    --azul-profundo: #305C7D;
+    /* Bleu profond - Primary */
+    --arena-suave: #E8DCC2;
+    /* Sable doux - Background, accent */
+    --terracota-calido: #C06C50;
+    /* Terracotta chaud - Accent, boutons */
+    --blanco-roto: #F5F3EF;
+    /* Blanc cassé - Background */
+    --verde-oliva: #7D8453;
+    /* Vert olive - Accent */
+
+    /* Couleurs dérivées */
+    --primary-color: #305C7D;
+    /* Azul Profundo */
+    --primary-dark: #1e3d54;
+    /* Azul Profundo plus foncé */
+    --accent-color: #C06C50;
+    /* Terracotta Cálido */
+    --accent-secondary: #7D8453;
+    /* Verde Oliva */
+    --background-light: #F5F3EF;
+    /* Blanco Roto */
+    --background-warm: #E8DCC2;
+    /* Arena Suave */
+    --success-color: #7D8453;
+    /* Verde Oliva pour success */
+    --text-dark: #2d3748;
+    --text-muted: #5a6c7d;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text-dark);
+    padding-top: 0;
+    background-color: var(--blanco-roto);
+}
+
+/* Remove default body-content padding */
 .body-content {
-    margin-top: 15px;
-    padding-left: 15px;
-    padding-right: 15px;
+    padding: 0;
 }
 
-/* Override the default bootstrap behavior where horizontal description lists 
-   will truncate terms that are too long to fit in the left column 
-*/
-.dl-horizontal dt {
-    white-space: normal;
+/* Hero Section */
+.hero-section {
+    position: relative;
 }
 
-/* Set width on the form input elements since they're 100% wide by default */
+.hero-overlay {
+    background: linear-gradient(135deg, rgba(48, 92, 125, 0.85) 0%, rgba(192, 108, 80, 0.75) 100%);
+    z-index: 0;
+}
+
+.hero-section .container {
+    z-index: 1;
+}
+
+/* Buttons */
+.btn-accent {
+    background: var(--terracota-calido);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn-accent:hover {
+    background: #a85a44;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(192, 108, 80, 0.4);
+    color: white;
+}
+
+.btn-primary {
+    background-color: var(--azul-profundo);
+    border-color: var(--azul-profundo);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Category Card */
+.category-card {
+    transition: transform 0.3s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+}
+
+.category-image {
+    transition: transform 0.7s ease;
+}
+
+.category-card:hover .category-image {
+    transform: scale(1.1);
+}
+
+.category-overlay {
+    background: linear-gradient(to top, rgba(48, 92, 125, 0.9) 0%, rgba(48, 92, 125, 0.4) 50%, transparent 100%);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.category-card:hover .category-overlay {
+    opacity: 0.9;
+}
+
+/* Product Card */
+.product-card {
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    text-decoration: none;
+}
+
+.product-image {
+    transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.1);
+}
+
+.product-card:hover .product-actions {
+    opacity: 1 !important;
+}
+
+.product-card:hover .product-cart-overlay {
+    transform: translateY(0) !important;
+}
+
+.product-title {
+    color: var(--text-dark);
+    transition: color 0.3s ease;
+}
+
+.product-card:hover .product-title {
+    color: var(--azul-profundo);
+}
+
+/* Badge Styles avec nouvelle palette */
+.badge.bg-success {
+    background-color: var(--verde-oliva) !important;
+    color: white;
+}
+
+.badge.bg-warning {
+    background-color: var(--arena-suave) !important;
+    color: var(--text-dark);
+}
+
+.badge.bg-primary {
+    background-color: var(--azul-profundo) !important;
+}
+
+/* Feature Icons */
+.feature-icon {
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.feature-icon:hover {
+    transform: scale(1.05);
+}
+
+/* Smooth Scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Navbar */
+.navbar {
+    backdrop-filter: blur(10px);
+    background-color: var(--blanco-roto) !important;
+    border-bottom: 1px solid rgba(48, 92, 125, 0.1);
+}
+
+.nav-link {
+    color: var(--azul-profundo) !important;
+    font-weight: 500;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: var(--terracota-calido) !important;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--terracota-calido);
+    transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+/* Badge Styles */
+.badge {
+    font-weight: 500;
+    padding: 0.375rem 0.75rem;
+}
+
+/* Utilities */
+.object-fit-cover {
+    object-fit: cover;
+}
+
+.text-white-50 {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* Logo Styles */
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--azul-profundo) !important;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.navbar-brand .logo-icon {
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.navbar-brand .logo-text-coop {
+    color: var(--azul-profundo);
+    font-weight: 600;
+}
+
+.navbar-brand .logo-text-shop {
+    color: var(--verde-oliva);
+    font-weight: 600;
+}
+
+.navbar-brand .logo-o {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #305C7D 0%, #C06C50 50%, #7D8453 100%);
+    vertical-align: middle;
+    margin: 0 2px;
+    position: relative;
+}
+
+.navbar-brand .logo-o::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* Background sections */
+.bg-light {
+    background-color: var(--blanco-roto) !important;
+}
+
+.bg-muted {
+    background-color: var(--arena-suave) !important;
+}
+
+/* Text colors */
+.text-primary {
+    color: var(--azul-profundo) !important;
+}
+
+.text-olive {
+    color: var(--verde-oliva) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        min-height: 60vh !important;
+    }
+
+    .hero-section h1 {
+        font-size: 2rem !important;
+    }
+
+    .hero-section .lead {
+        font-size: 1rem !important;
+    }
+}
+
+/* Footer */
+footer {
+    background-color: rgb(211, 197, 166);
+}
+
+footer a {
+    transition: color 0.3s ease;
+}
+
+footer a:hover {
+    color: var(--terracota-calido) !important;
+}
+
+footer .text-white-50 {
+    color: var(--azul-profundo) !important;
+}
+
+/* Search Input */
+.input-group-text {
+    border: none;
+    background-color: var(--blanco-roto) !important;
+}
+
+.form-control:focus {
+    border-color: var(--azul-profundo);
+    box-shadow: 0 0 0 0.2rem rgba(48, 92, 125, 0.25);
+}
+
+.bg-light {
+    background-color: var(--blanco-roto) !important;
+}
+
+.bg-primary {
+    background-color: var(--azul-profundo) !important;
+}
+
+/* Override default bootstrap behavior */
 input,
 select,
 textarea {
-    max-width: 280px;
+    max-width: 100%;
 }

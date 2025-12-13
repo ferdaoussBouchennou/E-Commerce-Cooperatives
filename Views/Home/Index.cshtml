@@ -1,33 +1,229 @@
-﻿@{
-    ViewBag.Title = "Home Page";
+﻿@using E_Commerce_Cooperatives.Models
+@{
+    ViewBag.Title = "Accueil - CoopShop";
+    var categories = ViewBag.Categories as List<Categorie>;
+    var produitsVedettes = ViewBag.ProduitsVedettes as List<Produit>;
+    var nouveauxProduits = ViewBag.NouveauxProduits as List<Produit>;
 }
 
+@Html.Partial("_Header")
+
 <main>
-    <section class="row" aria-labelledby="aspnetTitle">
-        <h1 id="title">ASP.NET</h1>
-        <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-        <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
+    <!-- Hero Section -->
+    <section class="hero-section position-relative overflow-hidden" style="min-height: 70vh;">
+        <img src="@Url.Content("~/Content/images/hero-banner.jpg")" alt="Artisanat marocain" 
+             class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover; z-index: -1;" 
+             onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)';">
+        <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100"></div>
+        
+        <div class="container position-relative h-100 d-flex align-items-center" style="min-height: 70vh;">
+                <div class="text-white" style="max-width: 650px;">
+                <span class="badge px-3 py-2 mb-4 d-inline-block" style="background-color: rgba(232, 220, 194, 0.2); color: #E8DCC2; border: 1px solid rgba(232, 220, 194, 0.3);">Artisanat Authentique du Maroc</span>
+                <h1 class="display-4 fw-bold mb-4" style="line-height: 1.2;">
+                    Découvrez les trésors des coopératives marocaines
+                </h1>
+                <p class="lead mb-4" style="opacity: 0.95;">
+                    Des produits artisanaux uniques, fabriqués avec passion par les coopératives locales. 
+                    Soutenez l'économie solidaire tout en vous faisant plaisir.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="#catalogue" class="btn btn-accent btn-lg px-4 py-3">
+                        Explorer le catalogue
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                        </svg>
+                    </a>
+                    <a href="#cooperatives" class="btn btn-outline-light btn-lg px-4 py-3">
+                        Nos coopératives
+                    </a>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <div class="row">
-        <section class="col-md-4" aria-labelledby="gettingStartedTitle">
-            <h2 id="gettingStartedTitle">Getting started</h2>
-            <p>
-                ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-                enables a clean separation of concerns and gives you full control over markup
-                for enjoyable, agile development.
-            </p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="librariesTitle">
-            <h2 id="librariesTitle">Get more libraries</h2>
-            <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="hostingTitle">
-            <h2 id="hostingTitle">Web Hosting</h2>
-            <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-        </section>
+    <!-- Features Bar -->
+    <!-- Features Bar -->
+<section class="py-4" style="background-color: #E8DCC2;">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Livraison -->
+            <div class="col-6 col-md-3">
+                <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-3">
+                    <div class="feature-icon rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background-color: #305C7D;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white" viewBox="0 0 16 16">
+                            <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                        </svg>
+                    </div>
+                    <span class="fw-semibold small d-none d-md-inline" style="color: #305C7D;">Livraison au Maroc et à tous les pays</span>
+                    <span class="fw-semibold small d-md-none" style="color: #305C7D; font-size: 0.75rem;">Livraison internationale</span>
+                </div>
+            </div>
+            
+            <!-- Qualité -->
+            <div class="col-6 col-md-3">
+                <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-3">
+                    <div class="feature-icon rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background-color: #305C7D;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white" viewBox="0 0 16 16">
+                            <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62 62 0 0 1 5.072.56"/>
+                            <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+                        </svg>
+                    </div>
+                    <span class="fw-semibold small d-none d-md-inline" style="color: #305C7D;">Qualité garantie</span>
+                    <span class="fw-semibold small d-md-none" style="color: #305C7D; font-size: 0.75rem;">Qualité</span>
+                </div>
+            </div>
+            
+            <!-- Naturels -->
+            <div class="col-6 col-md-3">
+                <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-3">
+                    <div class="feature-icon rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background-color: #305C7D;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white" class="bi bi-tree-fill" viewBox="0 0 16 16">
+                            <path d="M8.416.223a.5.5 0 0 0-.832 0l-3 4.5A.5.5 0 0 0 5 5.5h.098L3.076 8.735A.5.5 0 0 0 3.5 9.5h.191l-1.638 3.276a.5.5 0 0 0 .447.724H7V16h2v-2.5h4.5a.5.5 0 0 0 .447-.724L12.31 9.5h.191a.5.5 0 0 0 .424-.765L10.902 5.5H11a.5.5 0 0 0 .416-.777l-3-4.5z"/>
+                        </svg>
+                    </div>
+                    <span class="fw-semibold small d-none d-md-inline" style="color: #305C7D;">Produits 100% naturels</span>
+                    <span class="fw-semibold small d-md-none" style="color: #305C7D; font-size: 0.75rem;">100% naturels</span>
+                </div>
+            </div>
+            
+            <!-- Coopératives -->
+            <div class="col-6 col-md-3">
+                <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-3">
+                    <div class="feature-icon rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background-color: #305C7D;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="white" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                        </svg>
+                    </div>
+                    <span class="fw-semibold small d-none d-md-inline" style="color: #305C7D;">Soutien aux coopératives</span>
+                    <span class="fw-semibold small d-md-none" style="color: #305C7D; font-size: 0.75rem;">Coopératives</span>
+                </div>
+            </div>
+        </div>
     </div>
+</section>
+
+    <!-- Categories Section -->
+    @if (categories != null && categories.Any())
+    {
+        <section id="categories" class="py-5">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-end mb-4">
+                    <div>
+                        <h2 class="display-5 fw-bold mb-2">Nos Catégories</h2>
+                        <p class="text-muted">Explorez notre sélection de produits artisanaux</p>
+                    </div>
+                    <a href="#catalogue" class="btn btn-link text-decoration-none d-none d-md-inline-flex align-items-center">
+                        Voir tout
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="row g-4">
+                    @foreach (var category in categories.Take(4))
+                    {
+                        <div class="col-md-6 col-lg-3">
+                            <a href="#catalogue?categorie=@category.CategorieId" class="category-card text-decoration-none">
+                                <div class="position-relative overflow-hidden rounded-3" style="aspect-ratio: 3/2;">
+                                    <img src="@(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
+                                         alt="@category.Nom" 
+                                         class="w-100 h-100 object-fit-cover category-image"
+                                         onerror="this.src='/Content/images/default-category.jpg';">
+                                    <div class="category-overlay position-absolute top-0 start-0 w-100 h-100"></div>
+                                    <div class="position-absolute bottom-0 start-0 w-100 p-4 text-white">
+                                        <h3 class="h4 fw-bold mb-2">@category.Nom</h3>
+                                        <p class="small mb-2 opacity-90" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                            @category.Description
+                                        </p>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="small fw-medium">Explorer</span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                                                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+    <!-- Featured Products -->
+    @if (produitsVedettes != null && produitsVedettes.Any())
+    {
+        <section id="produits-vedettes" class="py-5 bg-light">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-end mb-4">
+                    <div>
+                        <h2 class="display-5 fw-bold mb-2">Produits Vedettes</h2>
+                        <p class="text-muted">Les coups de cœur de nos clients</p>
+                    </div>
+                    <a href="#catalogue" class="btn btn-link text-decoration-none d-none d-md-inline-flex align-items-center">
+                        Voir tout
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="row g-4">
+                    @foreach (var produit in produitsVedettes.Take(4))
+                    {
+                        <div class="col-sm-6 col-lg-3">
+                            @Html.Partial("_ProductCard", produit)
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+    <!-- New Products -->
+    @if (nouveauxProduits != null && nouveauxProduits.Any())
+    {
+        <section id="nouveautes" class="py-5">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-end mb-4">
+                    <div>
+                        <h2 class="display-5 fw-bold mb-2">Nouveautés</h2>
+                        <p class="text-muted">Découvrez nos dernières arrivées</p>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    @foreach (var produit in nouveauxProduits.Take(4))
+                    {
+                        <div class="col-sm-6 col-lg-3">
+                            @Html.Partial("_ProductCard", produit)
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+    <!-- CTA Section -->
+    <section class="py-5 text-white" style="background-color: #305C7D;">
+        <div class="container text-center">
+            <h2 class="display-5 fw-bold mb-4">Rejoignez notre communauté</h2>
+            <p class="lead mb-4 opacity-90" style="max-width: 600px; margin: 0 auto;">
+                Inscrivez-vous pour recevoir nos offres exclusives et découvrir en avant-première 
+                les nouveaux produits de nos coopératives partenaires.
+            </p>
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                <a href="#inscription" class="btn btn-lg px-4" style="background-color: #C06C50; color: white; border: none;">
+                    Créer un compte
+                </a>
+                <a href="#connexion" class="btn btn-outline-light btn-lg px-4" style="border-color: rgba(255,255,255,0.5); color: white;">
+                    Se connecter
+                </a>
+            </div>
+        </div>
+    </section>
 </main>
+
+@Html.Partial("_Footer")
