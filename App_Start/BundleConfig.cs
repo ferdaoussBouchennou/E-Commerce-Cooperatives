@@ -23,7 +23,8 @@ namespace E_Commerce_Cooperatives
                       "~/Scripts/bootstrap.js"));
 
             bundles.Add(new ScriptBundle("~/bundles/site").Include(
-                      "~/Scripts/site.js"));
+                      "~/Scripts/site.js",
+                      "~/Scripts/search.js"));
 
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       "~/Content/bootstrap.css",

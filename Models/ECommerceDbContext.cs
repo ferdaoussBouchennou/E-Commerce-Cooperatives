@@ -86,7 +86,7 @@ namespace E_Commerce_Cooperatives.Models
             return cooperatives;
         }
 
-        public List<Produit> GetProduits(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null, int page = 1, int pageSize = 9)
+        public List<Produit> GetProduits(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null, int page = 1, int pageSize = 9, string search = null, string sortOrder = "popular", decimal? minPrice = null, decimal? maxPrice = null, List<int> cooperativeIds = null, bool inStockOnly = false)
         {
             var produits = new List<Produit>();
             using (var connection = new SqlConnection(connectionString))
@@ -109,13 +109,76 @@ namespace E_Commerce_Cooperatives.Models
                     query += " AND p.EstNouveau = @EstNouveau";
                 if (categorieId.HasValue)
                     query += " AND p.CategorieId = @CategorieId";
+                if (!string.IsNullOrEmpty(search))
+                    query += " AND (p.Nom LIKE @Search OR p.Description LIKE @Search)";
 
-                query += " ORDER BY p.DateCreation DESC OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+                if (minPrice.HasValue)
+                    query += " AND p.Prix >= @MinPrice";
+                if (maxPrice.HasValue)
+                    query += " AND p.Prix <= @MaxPrice";
+                
+                if (cooperativeIds != null && cooperativeIds.Any())
+                {
+                    var coopIds = string.Join(",", cooperativeIds);
+                    query += $" AND p.CooperativeId IN ({coopIds})";
+                }
+
+                if (inStockOnly)
+                    query += " AND p.StockTotal > 0";
+
+                if (!string.IsNullOrEmpty(search))
+                    query += " AND (p.Nom LIKE @Search OR p.Description LIKE @Search)";
+
+                // Sorting Logic
+                switch (sortOrder)
+                {
+                    case "newest":
+                        query += " ORDER BY p.EstNouveau DESC, p.DateCreation DESC";
+                        break;
+                    case "price-asc":
+                        query += " ORDER BY p.Prix ASC";
+                        break;
+                    case "price-desc":
+                        query += " ORDER BY p.Prix DESC";
+                        break;
+                    // Note: Rating and Popularity require joins/subqueries for accurate sorting if not pre-calculated on Product table.
+                    // Assuming for now simple sorting or fallback. 
+                    // To do it properly with SQL for computed fields (Avg Rating, Count Reviews), we need to join Views or compute it.
+                    // Given the query structure, let's try to join efficiently or use subqueries for ordering if strictly required.
+                    // For simplicity and performance, usually these are cached fields, but let's check if we can join.
+                    // The current query does LEFT JOINs but doesn't aggregate.
+                    // LET'S USE A COMMON TABLE EXPRESSION (CTE) OR SUBQUERY APPROACH IF COMPLEX, 
+                    // OR JUST SORT BY ID/DATE IF COMPLEXITY IS TOO HIGH FOR NOW WITHOUT SCHEMA CHANGES.
+                    // HOWEVER, user asked for "Popularity". Usually means "Most ordered" or "Most viewed" or "Most Reviews".
+                    // Let's assume "Most Reviews" for Popularity based on current schema (AvisProduits).
+                    
+                    case "rating":
+                        // Complex sort: requires joining with avg rating. 
+                        // Simplified: Do it in memory? No, pagination breaks.
+                        // Correct way: Add subquery for sorting.
+                         query += " ORDER BY (SELECT AVG(CAST(Note AS FLOAT)) FROM AvisProduits WHERE ProduitId = p.ProduitId) DESC";
+                        break;
+                    case "popular":
+                    default:
+                         // Popularity = Number of reviews?
+                         query += " ORDER BY (SELECT COUNT(*) FROM AvisProduits WHERE ProduitId = p.ProduitId) DESC";
+                        break;
+                }
+                
+                // Secondary sort for stable pagination
+                query += ", p.ProduitId DESC OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
 
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
                     command.Parameters.AddWithValue("@PageSize", pageSize);
+                    if (!string.IsNullOrEmpty(search))
+                        command.Parameters.AddWithValue("@Search", "%" + search + "%");
+                    if (minPrice.HasValue)
+                        command.Parameters.AddWithValue("@MinPrice", minPrice.Value);
+                    if (maxPrice.HasValue)
+                        command.Parameters.AddWithValue("@MaxPrice", maxPrice.Value);
+                    
                     if (estEnVedette.HasValue)
                         command.Parameters.AddWithValue("@EstEnVedette", estEnVedette.Value);
                     if (estNouveau.HasValue)
@@ -183,7 +246,7 @@ namespace E_Commerce_Cooperatives.Models
             return produits;
         }
 
-        public int GetProduitsCount(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null)
+        public int GetProduitsCount(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null, string search = null, decimal? minPrice = null, decimal? maxPrice = null, List<int> cooperativeIds = null, bool inStockOnly = false)
         {
             int count = 0;
             using (var connection = new SqlConnection(connectionString))
@@ -197,6 +260,22 @@ namespace E_Commerce_Cooperatives.Models
                     query += " AND p.EstNouveau = @EstNouveau";
                 if (categorieId.HasValue)
                     query += " AND p.CategorieId = @CategorieId";
+                if (!string.IsNullOrEmpty(search))
+                    query += " AND (p.Nom LIKE @Search OR p.Description LIKE @Search)";
+
+                if (minPrice.HasValue)
+                    query += " AND p.Prix >= @MinPrice";
+                if (maxPrice.HasValue)
+                    query += " AND p.Prix <= @MaxPrice";
+                
+                if (cooperativeIds != null && cooperativeIds.Any())
+                {
+                    var coopIds = string.Join(",", cooperativeIds);
+                    query += $" AND p.CooperativeId IN ({coopIds})";
+                }
+
+                if (inStockOnly)
+                    query += " AND p.StockTotal > 0";
 
                 using (var command = new SqlCommand(query, connection))
                 {
@@ -206,11 +285,55 @@ namespace E_Commerce_Cooperatives.Models
                         command.Parameters.AddWithValue("@EstNouveau", estNouveau.Value);
                     if (categorieId.HasValue)
                         command.Parameters.AddWithValue("@CategorieId", categorieId.Value);
+                    if (!string.IsNullOrEmpty(search))
+                        command.Parameters.AddWithValue("@Search", "%" + search + "%");
+                    if (minPrice.HasValue)
+                        command.Parameters.AddWithValue("@MinPrice", minPrice.Value);
+                    if (maxPrice.HasValue)
+                        command.Parameters.AddWithValue("@MaxPrice", maxPrice.Value);
 
                     count = (int)command.ExecuteScalar();
                 }
             }
             return count;
+        }
+
+        public List<dynamic> GetSearchSuggestions(string term, int limit = 5)
+        {
+            var suggestions = new List<dynamic>();
+            if (string.IsNullOrWhiteSpace(term))
+                return suggestions;
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT TOP (@Limit) p.ProduitId, p.Nom, p.Prix, p.ImageUrl 
+                    FROM Produits p
+                    WHERE p.EstDisponible = 1 AND p.Nom LIKE @Term
+                    ORDER BY p.Nom";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Limit", limit);
+                    command.Parameters.AddWithValue("@Term", "%" + term + "%");
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            suggestions.Add(new
+                            {
+                                ProduitId = reader.GetInt32(0),
+                                Nom = reader.GetString(1),
+                                Prix = reader.GetDecimal(2),
+                                ImageUrl = reader.IsDBNull(3) ? null : reader.GetString(3)
+                            });
+                        }
+                    }
+                }
+            }
+            return suggestions;
         }
 
         private List<ImageProduit> GetImagesProduit(int produitId)

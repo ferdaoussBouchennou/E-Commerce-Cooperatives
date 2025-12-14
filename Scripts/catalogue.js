@@ -21,128 +21,46 @@
     };
 
     function initCatalogueFilters() {
-        // Get all products from the DOM
-        const productItems = document.querySelectorAll('.product-item');
-        allProducts = Array.from(productItems);
+        // Price Range Display
+        const priceMinRange = document.getElementById('price-range-min');
+        const priceMaxRange = document.getElementById('price-range-max');
+        const priceMinDisplay = document.getElementById('price-min');
+        const priceMaxDisplay = document.getElementById('price-max');
 
-        // Initialize filters from URL parameters
-        initFiltersFromURL();
-
-        // Search input
-        const searchInput = document.getElementById('search-input');
-        if (searchInput) {
-            let searchTimeout;
-            searchInput.addEventListener('input', function(e) {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    currentFilters.search = e.target.value.toLowerCase().trim();
-                    applyFilters();
-                }, 300);
-            });
+        if (priceMinRange && priceMaxRange) {
+             priceMinRange.addEventListener('input', function() {
+                if (priceMinDisplay) priceMinDisplay.textContent = this.value + ' MAD';
+             });
+             priceMaxRange.addEventListener('input', function() {
+                if (priceMaxDisplay) priceMaxDisplay.textContent = this.value + ' MAD';
+             });
+             // We rely on 'change' (mouse up) to submit form, which is added inline in HTML
         }
 
-        // Category filters (desktop)
-        const categoryFilters = document.querySelectorAll('.filter-category');
-        categoryFilters.forEach(filter => {
-            filter.addEventListener('change', function() {
-                updateCategoryFilters();
-                applyFilters();
+        // Cooperatives Multi-select Logic
+        const filterForm = document.getElementById('filter-form');
+        const coopsHidden = document.getElementById('coops-hidden');
+        const coopCheckboxes = document.querySelectorAll('.filter-cooperative-checkbox');
+
+        coopCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                if (filterForm && coopsHidden) {
+                    const checkedCoops = Array.from(coopCheckboxes)
+                        .filter(c => c.checked)
+                        .map(c => c.value);
+                    coopsHidden.value = checkedCoops.join(',');
+                    filterForm.submit();
+                }
             });
         });
 
-        // Category filters (mobile)
-        const categoryFiltersMobile = document.querySelectorAll('.filter-category-mobile');
-        categoryFiltersMobile.forEach(filter => {
-            filter.addEventListener('change', function() {
-                // Sync with desktop
-                const desktopFilter = document.getElementById('cat-' + this.value);
-                if (desktopFilter) {
-                    desktopFilter.checked = this.checked;
-                }
-                updateCategoryFilters();
-                applyFilters();
-            });
-        });
-
-        // Cooperative filters (desktop)
-        const cooperativeFilters = document.querySelectorAll('.filter-cooperative');
-        cooperativeFilters.forEach(filter => {
-            filter.addEventListener('change', function() {
-                updateCooperativeFilters();
-                applyFilters();
-            });
-        });
-
-        // Cooperative filters (mobile)
-        const cooperativeFiltersMobile = document.querySelectorAll('.filter-cooperative-mobile');
-        cooperativeFiltersMobile.forEach(filter => {
-            filter.addEventListener('change', function() {
-                // Sync with desktop
-                const desktopFilter = document.getElementById('coop-' + this.value);
-                if (desktopFilter) {
-                    desktopFilter.checked = this.checked;
-                }
-                updateCooperativeFilters();
-                applyFilters();
-            });
-        });
-
-        // Only available filter (desktop)
-        const onlyAvailable = document.getElementById('only-available');
-        if (onlyAvailable) {
-            onlyAvailable.addEventListener('change', function() {
-                currentFilters.onlyAvailable = this.checked;
-                // Sync with mobile
-                const mobileFilter = document.getElementById('only-available-mobile');
-                if (mobileFilter) {
-                    mobileFilter.checked = this.checked;
-                }
-                applyFilters();
-            });
-        }
-
-        // Only available filter (mobile)
-        const onlyAvailableMobile = document.getElementById('only-available-mobile');
-        if (onlyAvailableMobile) {
-            onlyAvailableMobile.addEventListener('change', function() {
-                currentFilters.onlyAvailable = this.checked;
-                // Sync with desktop
-                const desktopFilter = document.getElementById('only-available');
-                if (desktopFilter) {
-                    desktopFilter.checked = this.checked;
-                }
-                applyFilters();
-            });
-        }
-
-        // Sort select
-        const sortSelect = document.getElementById('sort-select');
-        if (sortSelect) {
-            sortSelect.addEventListener('change', function() {
-                currentFilters.sortBy = this.value;
-                applyFilters();
-            });
-        }
-
-        // Clear filters buttons
-        const clearFiltersBtn = document.getElementById('clear-filters');
-        if (clearFiltersBtn) {
-            clearFiltersBtn.addEventListener('click', clearAllFilters);
-        }
-
-        const clearFiltersMobileBtn = document.getElementById('clear-filters-mobile');
-        if (clearFiltersMobileBtn) {
-            clearFiltersMobileBtn.addEventListener('click', clearAllFilters);
-        }
-
-        const resetFiltersBtn = document.getElementById('reset-filters-btn');
-        if (resetFiltersBtn) {
-            resetFiltersBtn.addEventListener('click', clearAllFilters);
-        }
-
-        // Initial filter application
-        applyFilters();
+        // Initialize mobile filters if needed (but currently stripped down for this fix)
     }
+
+    // Legacy function stubs to prevent errors if invoked
+    function applyFilters() {}
+    function initFiltersFromURL() {}
+    function initPriceRange() {}
 
     function initFiltersFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -335,27 +253,8 @@
     }
 
     function sortProducts(products) {
-        products.sort((a, b) => {
-            switch (currentFilters.sortBy) {
-                case 'newest':
-                    const aNew = a.dataset.estNouveau === 'true' ? 1 : 0;
-                    const bNew = b.dataset.estNouveau === 'true' ? 1 : 0;
-                    return bNew - aNew;
-
-                case 'price-asc':
-                    return parseFloat(a.dataset.prix || 0) - parseFloat(b.dataset.prix || 0);
-
-                case 'price-desc':
-                    return parseFloat(b.dataset.prix || 0) - parseFloat(a.dataset.prix || 0);
-
-                case 'rating':
-                    return parseFloat(b.dataset.note || 0) - parseFloat(a.dataset.note || 0);
-
-                case 'popular':
-                default:
-                    return parseInt(b.dataset.nombreAvis || 0) - parseInt(a.dataset.nombreAvis || 0);
-            }
-        });
+       // Sorting is now handled server-side.
+       // This function is kept empty or removed to prevent client-side reordering that overrides server order.
     }
 
     function displayProducts(products) {
@@ -407,7 +306,7 @@
 
     function clearAllFilters() {
         // Clear search
-        const searchInput = document.getElementById('search-input');
+        const searchInput = document.getElementById('catalogue-search-input');
         if (searchInput) {
             searchInput.value = '';
         }
@@ -458,6 +357,16 @@
         const sortSelect = document.getElementById('sort-select');
         if (sortSelect) {
             sortSelect.value = 'popular';
+            // If we are clearing filters, we might want to reload purely, 
+            // but the current implementation of applyFilters() is primarily client-side hiding.
+            // Since we moved sorting to server-side, client-side applyFilters 
+            // will just hide/show items based on price/categories/etc. but won't resort server list.
+            // FOR NOW, let's keep it as is, but note that sort won't change until reload.
+            // Actually, if clearAllFilters assumes client-side reset, it functionality is now split.
+            // To properly clear filters with server-side implementation, we should probably 
+            // reload the page with no params.
+            window.location.href = window.location.pathname;
+            return;
         }
 
         // Reset filter state

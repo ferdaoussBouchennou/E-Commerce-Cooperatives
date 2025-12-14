@@ -33,23 +33,45 @@
         <!-- Search & Controls -->
         <div class="row mb-4">
             <div class="col-12 col-md-8 col-lg-9 mb-3 mb-md-0">
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                        </svg>
-                    </span>
-                    <input type="search" id="search-input" class="form-control border-0 bg-light" placeholder="Rechercher un produit..." />
+                <div class="input-group search-input-group position-relative smart-search-container">
+                    <form action="@Url.Action("Index", "Catalogue")" method="get" class="d-flex w-100">
+                        @if (ViewBag.SelectedCategorie != null)
+                        {
+                            <input type="hidden" name="categorie" value="@ViewBag.SelectedCategorie" />
+                        }
+                        <button type="submit" class="input-group-text border-0 bg-transparent" style="cursor: pointer;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                        </button>
+                        <input type="search" name="search" id="catalogue-search-input" class="form-control border-0 bg-transparent smart-search-input" placeholder="Rechercher un produit..." value="@ViewBag.SearchTerm" autocomplete="off" />
+                        @if (ViewBag.CurrentSort != null)
+                        {
+                            <input type="hidden" name="sort" value="@ViewBag.CurrentSort" />
+                        }
+                    </form>
+                    <!-- Suggestions Container -->
+                    <div class="search-suggestions position-absolute w-100 bg-white shadow-lg rounded-bottom start-0 overflow-hidden" style="top: 100%; z-index: 1050; display: none; border: 1px solid rgba(0,0,0,0.1); border-top: none;"></div>
                 </div>
             </div>
             <div class="col-12 col-md-4 col-lg-3">
-                <select id="sort-select" class="form-select border-0 bg-light">
-                    <option value="popular">Popularité</option>
-                    <option value="newest">Nouveautés</option>
-                    <option value="price-asc">Prix croissant</option>
-                    <option value="price-desc">Prix décroissant</option>
-                    <option value="rating">Meilleures notes</option>
-                </select>
+                <form action="@Url.Action("Index", "Catalogue")" method="get" id="sort-form">
+                    @if (ViewBag.SelectedCategorie != null)
+                    {
+                        <input type="hidden" name="categorie" value="@ViewBag.SelectedCategorie" />
+                    }
+                    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+                    {
+                        <input type="hidden" name="search" value="@ViewBag.SearchTerm" />
+                    }
+                    <select name="sort" id="sort-select" class="form-select border-0 bg-light" onchange="this.form.submit()">
+                        <option value="popular" @(ViewBag.CurrentSort == "popular" ? "selected" : "")>Popularité</option>
+                        <option value="newest" @(ViewBag.CurrentSort == "newest" ? "selected" : "")>Nouveautés</option>
+                        <option value="price-asc" @(ViewBag.CurrentSort == "price-asc" ? "selected" : "")>Prix croissant</option>
+                        <option value="price-desc" @(ViewBag.CurrentSort == "price-desc" ? "selected" : "")>Prix décroissant</option>
+                        <option value="rating" @(ViewBag.CurrentSort == "rating" ? "selected" : "")>Meilleures notes</option>
+                    </select>
+                </form>
             </div>
         </div>
 
@@ -66,19 +88,29 @@
         <div class="row">
             <!-- Desktop Sidebar Filters -->
             <aside class="col-lg-3 d-none d-lg-block">
-                <div class="bg-white rounded-3 p-4 shadow-sm sticky-top" style="top: 100px;">
+                <form id="filter-form" action="@Url.Action("Index", "Catalogue")" method="get" class="bg-white rounded-3 p-4 shadow-sm sticky-top" style="top: 100px;">
                     <h3 class="h5 fw-bold mb-4">Filtres</h3>
                     
+                    <!-- Hidden inputs to preserve other states -->
+                    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+                    {
+                        <input type="hidden" name="search" value="@ViewBag.SearchTerm" />
+                    }
+                    @if (ViewBag.CurrentSort != null)
+                    {
+                        <input type="hidden" name="sort" value="@ViewBag.CurrentSort" />
+                    }
+
                     <!-- Price Range -->
                     <div class="mb-4">
                         <h4 class="h6 fw-semibold mb-3">Prix (MAD)</h4>
                         <div class="px-2">
-                            <input type="range" class="form-range" id="price-range-min" min="0" max="1500" step="10" value="0" />
-                            <input type="range" class="form-range" id="price-range-max" min="0" max="1500" step="10" value="1500" />
+                            <input type="range" class="form-range" id="price-range-min" name="minPrice" min="0" max="1500" step="10" value="@(ViewBag.MinPrice ?? 0)" onchange="this.form.submit()" />
+                            <input type="range" class="form-range" id="price-range-max" name="maxPrice" min="0" max="1500" step="10" value="@(ViewBag.MaxPrice ?? 1500)" onchange="this.form.submit()" />
                         </div>
                         <div class="d-flex justify-content-between mt-2">
-                            <span class="small text-muted" id="price-min">0 MAD</span>
-                            <span class="small text-muted" id="price-max">1500 MAD</span>
+                            <span class="small text-muted" id="price-min">@(ViewBag.MinPrice ?? 0) MAD</span>
+                            <span class="small text-muted" id="price-max">@(ViewBag.MaxPrice ?? 1500) MAD</span>
                         </div>
                     </div>
 
@@ -86,12 +118,23 @@
                     <div class="mb-4">
                         <h4 class="h6 fw-semibold mb-3">Catégories</h4>
                         <div class="filter-categories">
+                            <!-- Radio buttons for categories are simpler for server-side single select, 
+                                 but if user wants multiple, we need checkboxes with same name 'categorie' or custom handling.
+                                 Controller accepts 'int? categorie', so legacy was single select. 
+                                 Let's stick to single select logic for 'categorie' param, or 'categories' list if we changed it.
+                                 The Controller HAS 'int? categorie'. So single select. 
+                                 Let's use Radio buttons for now since Controller takes 'int?'.
+                            -->
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="categorie" value="" id="cat-all" @(ViewBag.SelectedCategorie == null ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label cursor-pointer" for="cat-all">Toutes les catégories</label>
+                            </div>
                             @foreach (var category in categories)
                             {
                                 var count = productCountByCategory.ContainsKey(category.CategorieId) ? productCountByCategory[category.CategorieId] : 0;
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input filter-category" type="checkbox" value="@category.CategorieId" id="cat-@category.CategorieId" 
-                                           @(selectedCategorie == category.CategorieId ? "checked" : "") />
+                                    <input class="form-check-input" type="radio" name="categorie" value="@category.CategorieId" id="cat-@category.CategorieId" 
+                                           @(selectedCategorie == category.CategorieId ? "checked" : "") onchange="this.form.submit()" />
                                     <label class="form-check-label w-100 d-flex justify-content-between cursor-pointer" for="cat-@category.CategorieId">
                                         <span class="small">@category.Nom</span>
                                         <span class="small text-muted">(@count)</span>
@@ -105,10 +148,21 @@
                     <div class="mb-4">
                         <h4 class="h6 fw-semibold mb-3">Coopératives</h4>
                         <div class="filter-cooperatives" style="max-height: 300px; overflow-y: auto;">
+                            <!-- We need to submit 'coops' as comma separated string or multiple inputs with same name?
+                                 Controller expects 'string coops' (comma separated).
+                                 So we need JS to join them on submit? Or use separate inputs and let MVC bind?
+                                 MVC binds 'coops=1&coops=2' to List<int> or string array usually. 
+                                 But I defined 'string coops'.
+                                 Solution: Use checkboxes with name="coopIds" and a hidden input 'coops', update on submit.
+                                 OR simpler: change Controller to 'List<int> coops'. NOT POSSIBLE EASILY without custom model binder or using valid naming.
+                                 Let's stick to update-on-submit JS. -->
+                            <input type="hidden" name="coops" id="coops-hidden" value="@(ViewBag.SelectedCoops != null ? string.Join(",", ViewBag.SelectedCoops) : "")" />
                             @foreach (var cooperative in cooperatives)
                             {
+                                var selectedCoops = ViewBag.SelectedCoops as List<int>;
+                                var isChecked = selectedCoops != null && selectedCoops.Contains(cooperative.CooperativeId);
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input filter-cooperative" type="checkbox" value="@cooperative.CooperativeId" id="coop-@cooperative.CooperativeId" />
+                                    <input class="form-check-input filter-cooperative-checkbox" type="checkbox" value="@cooperative.CooperativeId" id="coop-@cooperative.CooperativeId" @(isChecked ? "checked" : "") />
                                     <label class="form-check-label cursor-pointer" for="coop-@cooperative.CooperativeId">
                                         <span class="small">@cooperative.Nom</span>
                                     </label>
@@ -120,7 +174,7 @@
                     <!-- Availability -->
                     <div class="mb-4">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="only-available" />
+                            <input class="form-check-input" type="checkbox" name="onlyAvailable" value="true" id="only-available" @(ViewBag.OnlyAvailable == true ? "checked" : "") onchange="this.form.submit()" />
                             <label class="form-check-label cursor-pointer" for="only-available">
                                 <span class="small fw-medium">En stock uniquement</span>
                             </label>
@@ -128,14 +182,14 @@
                     </div>
 
                     <!-- Clear Filters -->
-                    <button type="button" class="btn btn-outline-secondary w-100" id="clear-filters">
+                    <a href="@Url.Action("Index", "Catalogue")" class="btn btn-outline-secondary w-100">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle me-2" viewBox="0 0 16 16">
                             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                             <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
                         </svg>
                         Effacer les filtres
-                    </button>
-                </div>
+                    </a>
+                </form>
             </aside>
 
             <!-- Mobile Offcanvas Filters -->
@@ -244,18 +298,18 @@
                             <nav aria-label="Page navigation" class="mt-5">
                                 <ul class="pagination justify-content-center">
                                     <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                        <a class="page-link" href="@Url.Action("Index", new { page = currentPage - 1, categorie = ViewBag.SelectedCategorie })" aria-label="Précédent">
+                                        <a class="page-link" href="@Url.Action("Index", new { page = currentPage - 1, categorie = ViewBag.SelectedCategorie, search = ViewBag.SearchTerm, sort = ViewBag.CurrentSort })" aria-label="Précédent">
                                             <span aria-hidden="true">&laquo;</span>
                                         </a>
                                     </li>
                                     @for (int i = 1; i <= totalPages; i++)
                                     {
                                         <li class="page-item @(i == currentPage ? "active" : "")">
-                                            <a class="page-link" href="@Url.Action("Index", new { page = i, categorie = ViewBag.SelectedCategorie })">@i</a>
+                                            <a class="page-link" href="@Url.Action("Index", new { page = i, categorie = ViewBag.SelectedCategorie, search = ViewBag.SearchTerm, sort = ViewBag.CurrentSort })">@i</a>
                                         </li>
                                     }
                                     <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                        <a class="page-link" href="@Url.Action("Index", new { page = currentPage + 1, categorie = ViewBag.SelectedCategorie })" aria-label="Suivant">
+                                        <a class="page-link" href="@Url.Action("Index", new { page = currentPage + 1, categorie = ViewBag.SelectedCategorie, search = ViewBag.SearchTerm, sort = ViewBag.CurrentSort })" aria-label="Suivant">
                                             <span aria-hidden="true">&raquo;</span>
                                         </a>
                                     </li>
@@ -280,5 +334,25 @@
 
 @section scripts {
     <script src="~/Scripts/catalogue.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var searchTerm = '@Html.Raw(HttpUtility.JavaScriptStringEncode(ViewBag.SearchTerm as string))';
+            if (searchTerm && searchTerm.length > 0) {
+                try {
+                    var regex = new RegExp('(' + searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+                    var titles = document.querySelectorAll('.product-title');
+                    titles.forEach(function(title) {
+                        // Ensure we don't break HTML if title has other tags (though it shouldn't)
+                        var text = title.textContent;
+                        if (text.toLowerCase().includes(searchTerm.toLowerCase())) {
+                            title.innerHTML = text.replace(regex, '<span class="bg-warning bg-opacity-25 text-dark fw-bold px-1 rounded">$1</span>');
+                        }
+                    });
+                } catch (e) {
+                    console.error("Highlighting error", e);
+                }
+            }
+        });
+    </script>
 }
 

@@ -22,15 +22,17 @@
             </nav>
 
             <!-- Search Bar - Desktop -->
-            <div class="d-none d-lg-flex me-3">
-                <div class="input-group" style="max-width: 300px;">
-                    <span class="input-group-text bg-light border-0">
+            <div class="d-none d-lg-flex me-3 position-relative smart-search-container">
+                <form action="@Url.Action("Index", "Catalogue")" method="get" class="input-group" style="max-width: 300px;">
+                    <button type="submit" class="input-group-text bg-light border-0" style="cursor: pointer;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                         </svg>
-                    </span>
-                    <input type="search" class="form-control border-0 bg-light" placeholder="Rechercher un produit...">
-                </div>
+                    </button>
+                    <input type="search" name="search" id="global-search-input" class="form-control border-0 bg-light smart-search-input" placeholder="Rechercher un produit..." autocomplete="off">
+                </form>
+                <!-- Suggestions Container -->
+                <div id="search-suggestions" class="search-suggestions position-absolute w-100 bg-white shadow-lg rounded-bottom start-0 overflow-hidden" style="top: 100%; z-index: 1050; display: none; border: 1px solid rgba(0,0,0,0.1); border-top: none;"></div>
             </div>
 
             <!-- Actions -->
