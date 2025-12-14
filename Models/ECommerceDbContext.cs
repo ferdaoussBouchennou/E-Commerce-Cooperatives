@@ -456,7 +456,12 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT Note, Commentaire FROM AvisProduits WHERE ProduitId = @ProduitId";
+                var query = @"SELECT a.AvisId, a.ClientId, a.Note, a.Commentaire, a.DateAvis, 
+                                    c.Nom + ' ' + c.Prenom as ClientNom
+                             FROM AvisProduits a
+                             LEFT JOIN Clients c ON a.ClientId = c.ClientId
+                             WHERE a.ProduitId = @ProduitId
+                             ORDER BY a.DateAvis DESC";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@ProduitId", produitId);
@@ -466,14 +471,140 @@ namespace E_Commerce_Cooperatives.Models
                         {
                             avis.Add(new AvisProduit
                             {
-                                Note = reader.GetInt32(0),
-                                Commentaire = reader.IsDBNull(1) ? null : reader.GetString(1)
+                                AvisId = reader.GetInt32(0),
+                                ClientId = reader.GetInt32(1),
+                                Note = reader.GetInt32(2),
+                                Commentaire = reader.IsDBNull(3) ? null : reader.GetString(3),
+                                DateAvis = reader.GetDateTime(4),
+                                ClientNom = reader.IsDBNull(5) ? "Client anonyme" : reader.GetString(5)
                             });
                         }
                     }
                 }
             }
             return avis;
+        }
+
+        private List<Variante> GetVariantesProduit(int produitId)
+        {
+            var variantes = new List<Variante>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"SELECT VarianteId, Taille, Couleur, Stock, PrixSupplementaire, SKU, EstDisponible, DateCreation
+                             FROM Variantes 
+                             WHERE ProduitId = @ProduitId AND EstDisponible = 1
+                             ORDER BY Taille, Couleur";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            variantes.Add(new Variante
+                            {
+                                VarianteId = reader.GetInt32(0),
+                                Taille = reader.IsDBNull(1) ? null : reader.GetString(1),
+                                Couleur = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                Stock = reader.GetInt32(3),
+                                PrixSupplementaire = reader.GetDecimal(4),
+                                SKU = reader.IsDBNull(5) ? null : reader.GetString(5),
+                                EstDisponible = reader.GetBoolean(6),
+                                DateCreation = reader.GetDateTime(7)
+                            });
+                        }
+                    }
+                }
+            }
+            return variantes;
+        }
+
+        public Produit GetProduitDetails(int produitId)
+        {
+            Produit produit = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT p.ProduitId, p.Nom, p.Description, p.Prix, p.ImageUrl, p.CategorieId, p.CooperativeId, 
+                           p.StockTotal, p.SeuilAlerte, p.EstDisponible, p.EstEnVedette, p.EstNouveau,
+                           p.DateCreation, p.DateModification,
+                           c.CategorieId, c.Nom as CategorieNom, c.Description as CategorieDescription,
+                           coop.CooperativeId, coop.Nom as CooperativeNom, coop.Description as CooperativeDescription,
+                           coop.Adresse as CooperativeAdresse, coop.Ville as CooperativeVille, coop.Telephone as CooperativeTelephone
+                    FROM Produits p
+                    LEFT JOIN Categories c ON p.CategorieId = c.CategorieId
+                    LEFT JOIN Cooperatives coop ON p.CooperativeId = coop.CooperativeId
+                    WHERE p.ProduitId = @ProduitId AND p.EstDisponible = 1";
+                
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            produit = new Produit
+                            {
+                                ProduitId = reader.GetInt32(0),
+                                Nom = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                Prix = reader.GetDecimal(3),
+                                ImageUrl = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                CategorieId = reader.IsDBNull(5) ? (int?)null : reader.GetInt32(5),
+                                CooperativeId = reader.IsDBNull(6) ? (int?)null : reader.GetInt32(6),
+                                StockTotal = reader.GetInt32(7),
+                                SeuilAlerte = reader.GetInt32(8),
+                                EstDisponible = reader.GetBoolean(9),
+                                EstEnVedette = reader.GetBoolean(10),
+                                EstNouveau = reader.GetBoolean(11),
+                                DateCreation = reader.GetDateTime(12),
+                                DateModification = reader.IsDBNull(13) ? (DateTime?)null : reader.GetDateTime(13)
+                            };
+
+                            if (!reader.IsDBNull(14))
+                            {
+                                produit.Categorie = new Categorie
+                                {
+                                    CategorieId = reader.GetInt32(14),
+                                    Nom = reader.GetString(15),
+                                    Description = reader.IsDBNull(16) ? null : reader.GetString(16)
+                                };
+                            }
+
+                            if (!reader.IsDBNull(17))
+                            {
+                                produit.Cooperative = new Cooperative
+                                {
+                                    CooperativeId = reader.GetInt32(17),
+                                    Nom = reader.GetString(18),
+                                    Description = reader.IsDBNull(19) ? null : reader.GetString(19),
+                                    Adresse = reader.IsDBNull(20) ? null : reader.GetString(20),
+                                    Ville = reader.IsDBNull(21) ? null : reader.GetString(21),
+                                    Telephone = reader.IsDBNull(22) ? null : reader.GetString(22)
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (produit != null)
+            {
+                // Charger les images, variantes et avis
+                produit.Images = GetImagesProduit(produit.ProduitId);
+                produit.Variantes = GetVariantesProduit(produit.ProduitId);
+                var avis = GetAvisProduit(produit.ProduitId);
+                if (avis.Any())
+                {
+                    produit.NoteMoyenne = (decimal)avis.Average(a => a.Note);
+                    produit.NombreAvis = avis.Count;
+                }
+                produit.Avis = avis;
+            }
+
+            return produit;
         }
 
         public void Dispose()

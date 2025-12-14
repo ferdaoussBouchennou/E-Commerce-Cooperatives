@@ -46,11 +46,13 @@ namespace E_Commerce_Cooperatives.Models
         // Propriétés calculées pour la vue
         public decimal NoteMoyenne { get; set; }
         public int NombreAvis { get; set; }
+        public virtual ICollection<AvisProduit> Avis { get; set; }
         
         public Produit()
         {
             Images = new HashSet<ImageProduit>();
             Variantes = new HashSet<Variante>();
+            Avis = new HashSet<AvisProduit>();
         }
     }
 }

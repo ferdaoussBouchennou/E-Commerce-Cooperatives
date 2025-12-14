@@ -2,7 +2,7 @@
 @using System.Linq
 @model Produit
 
-<a href="#produit/@Model.ProduitId" class="product-card text-decoration-none">
+<a href="@Url.Action("Details", "Produit", new { id = Model.ProduitId })" class="product-card text-decoration-none">
     <article class="bg-white rounded-3 overflow-hidden shadow-sm h-100">
         <!-- Image Container -->
         <div class="position-relative" style="aspect-ratio: 1/1; overflow: hidden;">

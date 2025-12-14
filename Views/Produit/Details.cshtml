@@ -1,0 +1,521 @@
+@using E_Commerce_Cooperatives.Models
+@{
+    ViewBag.Title = "Détails du produit - CoopShop";
+    var produit = ViewBag.Produit as Produit;
+    var produitsSimilaires = ViewBag.ProduitsSimilaires as List<Produit> ?? new List<Produit>();
+    
+    if (produit == null)
+    {
+        Response.Redirect(Url.Action("Index", "Catalogue"));
+        return;
+    }
+    
+    var images = produit.Images?.ToList() ?? new List<ImageProduit>();
+    if (!images.Any() && !string.IsNullOrEmpty(produit.ImageUrl))
+    {
+        images.Add(new ImageProduit { UrlImage = produit.ImageUrl, EstPrincipale = true });
+    }
+    if (!images.Any())
+    {
+        images.Add(new ImageProduit { UrlImage = "/Content/images/default-product.jpg", EstPrincipale = true });
+    }
+    
+    var variantes = produit.Variantes?.ToList() ?? new List<Variante>();
+    var avis = produit.Avis?.ToList() ?? new List<AvisProduit>();
+}
+
+@Html.Partial("_Header")
+
+<main class="py-5" style="background-color: #F5F3EF;">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" style="color: #305C7D;">Accueil</a></li>
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Catalogue")" style="color: #305C7D;">Catalogue</a></li>
+                @if (produit.Categorie != null)
+                {
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Catalogue", new { categorie = produit.CategorieId })" style="color: #305C7D;">@produit.Categorie.Nom</a></li>
+                }
+                <li class="breadcrumb-item active" aria-current="page">@produit.Nom</li>
+            </ol>
+        </nav>
+
+        <div class="row g-5">
+            <!-- Image Gallery -->
+            <div class="col-lg-6">
+                <div class="product-gallery">
+                    <!-- Main Image -->
+                    <div class="position-relative mb-3 rounded-3 overflow-hidden" style="aspect-ratio: 1/1; background-color: white;">
+                        <img id="main-product-image" 
+                             src="@images[0].UrlImage" 
+                             alt="@produit.Nom" 
+                             class="w-100 h-100 object-fit-cover cursor-pointer"
+                             style="cursor: zoom-in;"
+                             onclick="openImageModal(this.src)">
+                        @if (produit.EstNouveau)
+                        {
+                            <span class="badge position-absolute top-0 start-0 m-3" style="background-color: #7D8453; color: white; font-size: 0.875rem;">
+                                Nouveau
+                            </span>
+                        }
+                        @if (produit.EstEnVedette)
+                        {
+                            <span class="badge position-absolute top-0 start-0 m-3" style="background-color: #305C7D; color: white; font-size: 0.875rem; @(produit.EstNouveau ? "margin-top: 3.5rem !important;" : "")">
+                                Vedette
+                            </span>
+                        }
+                    </div>
+                    
+                    <!-- Thumbnail Images -->
+                    @if (images.Count > 1)
+                    {
+                        <div class="d-flex gap-2 flex-wrap">
+                            @foreach (var img in images)
+                            {
+                                <div class="thumbnail-image position-relative rounded overflow-hidden" 
+                                     style="width: 80px; height: 80px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s;"
+                                     onclick="changeMainImage('@img.UrlImage', this)">
+                                    <img src="@img.UrlImage" 
+                                         alt="@produit.Nom" 
+                                         class="w-100 h-100 object-fit-cover"
+                                         onerror="this.src='/Content/images/default-product.jpg';">
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="col-lg-6">
+                <!-- Category -->
+                @if (produit.Categorie != null)
+                {
+                    <p class="text-uppercase small mb-2" style="color: #C06C50; letter-spacing: 1px; font-weight: 500;">
+                        @produit.Categorie.Nom
+                    </p>
+                }
+
+                <!-- Title -->
+                <h1 class="display-5 fw-bold mb-3" style="color: #2d3748;">
+                    @produit.Nom
+                </h1>
+
+                <!-- Rating -->
+                @if (produit.NombreAvis > 0)
+                {
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="d-flex">
+                            @for (int i = 0; i < 5; i++)
+                            {
+                                if (i < Math.Floor(produit.NoteMoyenne))
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#ffc107" viewBox="0 0 16 16">
+                                        <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#e0e0e0" viewBox="0 0 16 16">
+                                        <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+                                    </svg>
+                                }
+                            }
+                        </div>
+                        <span class="fw-semibold" style="color: #2d3748;">
+                            @produit.NoteMoyenne.ToString("F1")
+                        </span>
+                        <span class="text-muted">
+                            (@produit.NombreAvis avis)
+                        </span>
+                    </div>
+                }
+
+                <!-- Price -->
+                <div class="mb-4">
+                    <span class="display-6 fw-bold" style="color: #305C7D;">
+                        <span id="product-price">@produit.Prix.ToString("F2")</span> MAD
+                    </span>
+                    @if (variantes.Any() && variantes.Any(v => v.PrixSupplementaire > 0))
+                    {
+                        <span class="text-muted ms-2">et plus</span>
+                    }
+                </div>
+
+                <!-- Description -->
+                @if (!string.IsNullOrEmpty(produit.Description))
+                {
+                    <div class="mb-4">
+                        <h3 class="h5 fw-semibold mb-2" style="color: #2d3748;">Description</h3>
+                        <p class="text-muted" style="line-height: 1.8;">
+                            @produit.Description
+                        </p>
+                    </div>
+                }
+
+                <!-- Cooperative Info -->
+                @if (produit.Cooperative != null)
+                {
+                    <div class="bg-white rounded-3 p-4 mb-4" style="border: 1px solid #e0e0e0;">
+                        <h3 class="h6 fw-semibold mb-3" style="color: #2d3748;">Coopérative</h3>
+                        <p class="fw-semibold mb-2" style="color: #305C7D; font-size: 1.1rem;">
+                            @produit.Cooperative.Nom
+                        </p>
+                        @if (!string.IsNullOrEmpty(produit.Cooperative.Description))
+                        {
+                            <p class="text-muted small mb-2">
+                                @produit.Cooperative.Description
+                            </p>
+                        }
+                        @if (!string.IsNullOrEmpty(produit.Cooperative.Ville))
+                        {
+                            <p class="mb-1 small text-muted">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-geo-alt me-1" viewBox="0 0 16 16">
+                                    <path d="M12.166 8.94c-.524 1.137-1.97 2.344-3.666 3.847-1.696-1.503-3.142-2.71-3.666-3.847C4.484 7.68 4.002 6.784 4.002 6c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .784-.482 1.68-.834 2.94M8 3.5c-1.38 0-2.5 1.12-2.5 2.5 0 .715.39 1.43.834 2.5.89 1.93 2.166 3.03 3.166 3.73.5-.7 2.276-1.8 3.166-3.73.444-1.07.834-1.785.834-2.5 0-1.38-1.12-2.5-2.5-2.5"/>
+                                </svg>
+                                @produit.Cooperative.Ville
+                            </p>
+                        }
+                        @if (!string.IsNullOrEmpty(produit.Cooperative.Adresse))
+                        {
+                            <p class="mb-1 small text-muted">
+                                @produit.Cooperative.Adresse
+                            </p>
+                        }
+                        @if (!string.IsNullOrEmpty(produit.Cooperative.Telephone))
+                        {
+                            <p class="mb-0 small text-muted">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-telephone me-1" viewBox="0 0 16 16">
+                                    <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122L9.65 11.21a.678.678 0 0 1-.195-.302l-.792-2.207a.68.68 0 0 0-.122-.58L6.884 4.515a.678.678 0 0 0-.58-.122L4.198 4.72a.68.68 0 0 0-.302.195l-1.794 2.307a.678.678 0 0 0-.063 1.015z"/>
+                                </svg>
+                                @produit.Cooperative.Telephone
+                            </p>
+                        }
+                    </div>
+                }
+
+                <!-- Variants -->
+                @if (variantes.Any())
+                {
+                    <div class="mb-4">
+                        <h3 class="h6 fw-semibold mb-3" style="color: #2d3748;">
+                            @(variantes.First().Taille != null ? "Taille" : "Variante")
+                        </h3>
+                        <div class="d-flex flex-wrap gap-2" id="variants-container">
+                            @foreach (var variant in variantes)
+                            {
+                                var variantPrice = produit.Prix + variant.PrixSupplementaire;
+                                <button type="button" 
+                                        class="btn variant-btn @(variant == variantes.First() ? "active" : "")"
+                                        data-variant-id="@variant.VarianteId"
+                                        data-variant-price="@variantPrice"
+                                        data-variant-stock="@variant.Stock"
+                                        style="border: 2px solid #e0e0e0; background-color: white; color: #2d3748; transition: all 0.3s;"
+                                        onclick="selectVariant(this, @variant.VarianteId, @variantPrice, @variant.Stock)">
+                                    @(variant.Taille ?? variant.Couleur ?? "Standard")
+                                    @if (variant.PrixSupplementaire > 0)
+                                    {
+                                        <span class="small ms-1">(+@variant.PrixSupplementaire.ToString("F2") MAD)</span>
+                                    }
+                                    @if (variant.Stock == 0)
+                                    {
+                                        <span class="badge bg-danger ms-2">Épuisé</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Quantity & Stock -->
+                <div class="mb-4">
+                    <h3 class="h6 fw-semibold mb-3" style="color: #2d3748;">Quantité</h3>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex align-items-center border rounded" style="border-color: #e0e0e0 !important;">
+                            <button type="button" 
+                                    class="btn border-0 bg-transparent px-3 py-2" 
+                                    onclick="decreaseQuantity()"
+                                    id="decrease-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
+                                </svg>
+                            </button>
+                            <span class="px-4 py-2 fw-semibold" id="quantity-display" style="min-width: 50px; text-align: center;">1</span>
+                            <button type="button" 
+                                    class="btn border-0 bg-transparent px-3 py-2" 
+                                    onclick="increaseQuantity()"
+                                    id="increase-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <span class="text-muted small" id="stock-info">
+                            @(variantes.Any() ? variantes.First().Stock : produit.StockTotal) en stock
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-3 mb-4">
+                    <button type="button" 
+                            class="btn btn-lg flex-grow-1" 
+                            id="add-to-cart-btn"
+                            style="background-color: #C06C50; color: white; border: none;"
+                            onclick="addToCart()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-plus me-2" viewBox="0 0 16 16">
+                            <path d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9V5.5z"/>
+                            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                        </svg>
+                        Ajouter au panier
+                    </button>
+                    
+                </div>
+
+                <!-- Features -->
+                <div class="row g-3 pt-4 border-top">
+                    <div class="col-4 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#C06C50" class="bi bi-truck mb-2" viewBox="0 0 16 16">
+                            <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zM1.5 3a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h1.05a2.5 2.5 0 0 1 4.9 0h5.1a2.5 2.5 0 0 1 4.9 0h1.05a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4.5a.5.5 0 0 1-.5.5h-1.05a2.5 2.5 0 0 1-4.9 0H5.55a2.5 2.5 0 0 1-4.9 0H1.5a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 0-.5-.5zm11 1a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1z"/>
+                        </svg>
+                        <p class="small text-muted mb-0">Livraison rapide</p>
+                    </div>
+                    <div class="col-4 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#C06C50" class="bi bi-shield-check mb-2" viewBox="0 0 16 16">
+                            <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62 62 0 0 1 5.072.56"/>
+                            <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+                        </svg>
+                        <p class="small text-muted mb-0">Paiement sécurisé</p>
+                    </div>
+                    <div class="col-4 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#C06C50" class="bi bi-box-arrow-left mb-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5H1.5a.5.5 0 0 0 0 1H6v1.5a.5.5 0 0 0 .5.5"/>
+                            <path fill-rule="evenodd" d="M14.5 8.5a.5.5 0 0 0-.5-.5H4.707l2.147-2.146a.5.5 0 1 0-.708-.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L4.707 9.5H14a.5.5 0 0 0 .5-.5"/>
+                            <path fill-rule="evenodd" d="M14 5.5a.5.5 0 0 0-.5-.5h-11a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5m-11-1A1.5 1.5 0 0 0 1.5 6v11A1.5 1.5 0 0 0 3 18.5h11a1.5 1.5 0 0 0 1.5-1.5V6A1.5 1.5 0 0 0 14 4.5z"/>
+                        </svg>
+                        <p class="small text-muted mb-0">Retour gratuit</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        @if (avis.Any())
+        {
+            <section class="mt-5 pt-5 border-top">
+                <h2 class="h3 fw-bold mb-4" style="color: #2d3748;">
+                    Avis clients (@avis.Count)
+                </h2>
+                <div class="row g-4">
+                    @foreach (var review in avis)
+                    {
+                        <div class="col-md-6">
+                            <div class="bg-white rounded-3 p-4 shadow-sm">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-semibold" 
+                                         style="width: 40px; height: 40px; background-color: #305C7D; color: white; font-size: 1.1rem;">
+                                        @(review.ClientNom?.Substring(0, 1).ToUpper() ?? "A")
+                                    </div>
+                                    <div>
+                                        <p class="fw-semibold mb-0" style="color: #2d3748;">
+                                            @(review.ClientNom ?? "Client anonyme")
+                                        </p>
+                                        <p class="small text-muted mb-0">
+                                            @review.DateAvis.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"))
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-1 mb-3">
+                                    @for (int i = 0; i < 5; i++)
+                                    {
+                                        if (i < review.Note)
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#ffc107" viewBox="0 0 16 16">
+                                                <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#e0e0e0" viewBox="0 0 16 16">
+                                                <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+                                            </svg>
+                                        }
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(review.Commentaire))
+                                {
+                                    <p class="text-muted mb-0" style="line-height: 1.6;">
+                                        @review.Commentaire
+                                    </p>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+        else
+        {
+            <section class="mt-5 pt-5 border-top">
+                <h2 class="h3 fw-bold mb-4" style="color: #2d3748;">Avis clients</h2>
+                <p class="text-muted">Aucun avis pour ce produit pour le moment.</p>
+            </section>
+        }
+
+        <!-- Related Products -->
+        @if (produitsSimilaires.Any())
+        {
+            <section class="mt-5 pt-5 border-top">
+                <h2 class="h3 fw-bold mb-4" style="color: #2d3748;">Produits similaires</h2>
+                <div class="row g-4">
+                    @foreach (var similarProduct in produitsSimilaires)
+                    {
+                        <div class="col-sm-6 col-lg-3">
+                            @Html.Partial("_ProductCard", similarProduct)
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</main>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-transparent border-0">
+            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
+            <img id="modal-image" src="" alt="" class="w-100 rounded">
+        </div>
+    </div>
+</div>
+
+@Html.Partial("_Footer")
+
+@section scripts {
+    <script>
+        let currentQuantity = 1;
+        let selectedVariantId = null;
+        let selectedVariantPrice = @produit.Prix;
+        let selectedVariantStock = @(variantes.Any() ? variantes.First().Stock : produit.StockTotal);
+        const basePrice = @produit.Prix;
+        const productId = @produit.ProduitId;
+
+        function changeMainImage(imageSrc, element) {
+            document.getElementById('main-product-image').src = imageSrc;
+            // Update active thumbnail
+            document.querySelectorAll('.thumbnail-image').forEach(thumb => {
+                thumb.style.borderColor = 'transparent';
+            });
+            if (element) {
+                element.style.borderColor = '#305C7D';
+            }
+        }
+
+        function openImageModal(imageSrc) {
+            document.getElementById('modal-image').src = imageSrc;
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        }
+
+        function selectVariant(button, variantId, price, stock) {
+            selectedVariantId = variantId;
+            selectedVariantPrice = price;
+            selectedVariantStock = stock;
+            
+            // Update UI
+            document.querySelectorAll('.variant-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.borderColor = '#e0e0e0';
+                btn.style.backgroundColor = 'white';
+            });
+            button.classList.add('active');
+            button.style.borderColor = '#C06C50';
+            button.style.backgroundColor = '#F5F3EF';
+            
+            // Update price
+            document.getElementById('product-price').textContent = price.toFixed(2);
+            
+            // Update stock
+            document.getElementById('stock-info').textContent = stock + ' en stock';
+            
+            // Update quantity max
+            if (currentQuantity > stock) {
+                currentQuantity = stock;
+                updateQuantityDisplay();
+            }
+            updateQuantityButtons();
+        }
+
+        function increaseQuantity() {
+            if (currentQuantity < selectedVariantStock) {
+                currentQuantity++;
+                updateQuantityDisplay();
+                updateQuantityButtons();
+            }
+        }
+
+        function decreaseQuantity() {
+            if (currentQuantity > 1) {
+                currentQuantity--;
+                updateQuantityDisplay();
+                updateQuantityButtons();
+            }
+        }
+
+        function updateQuantityDisplay() {
+            document.getElementById('quantity-display').textContent = currentQuantity;
+        }
+
+        function updateQuantityButtons() {
+            const decreaseBtn = document.getElementById('decrease-btn');
+            const increaseBtn = document.getElementById('increase-btn');
+            
+            decreaseBtn.disabled = currentQuantity <= 1;
+            increaseBtn.disabled = currentQuantity >= selectedVariantStock;
+        }
+
+        function addToCart() {
+            const isAuthenticated = document.getElementById('user-authenticated')?.dataset.authenticated === 'true';
+            
+            if (!isAuthenticated) {
+                alert('Veuillez vous connecter pour ajouter au panier');
+                window.location.href = '@Url.Action("Index", "Home")#connexion';
+                return;
+            }
+            
+            // TODO: Implement add to cart functionality
+            // For now, just show a message
+            alert(currentQuantity + ' x @produit.Nom ajouté au panier');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateQuantityButtons();
+            if (document.querySelectorAll('.thumbnail-image').length > 0) {
+                document.querySelectorAll('.thumbnail-image')[0].style.borderColor = '#305C7D';
+            }
+        });
+    </script>
+}
+
+<style>
+    .thumbnail-image:hover {
+        border-color: #305C7D !important;
+    }
+    
+    .variant-btn:hover:not(.active) {
+        border-color: #C06C50 !important;
+    }
+    
+    .variant-btn.active {
+        border-color: #C06C50 !important;
+        background-color: #F5F3EF !important;
+    }
+    
+    #imageModal .modal-content {
+        background: rgba(0, 0, 0, 0.9);
+    }
+</style>
+

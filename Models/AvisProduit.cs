@@ -21,6 +21,9 @@ namespace E_Commerce_Cooperatives.Models
         public string Commentaire { get; set; }
         
         public DateTime DateAvis { get; set; }
+        
+        // Propriété calculée pour la vue (non mappée à la base de données)
+        public string ClientNom { get; set; }
     }
 }
 
