@@ -30,6 +30,143 @@
             </p>
         </div>
 
+        <!-- Active Filters Display -->
+        @if (ViewBag.SelectedCategorie != null || 
+             ViewBag.MinPrice != ViewBag.GlobalMinPrice || 
+             ViewBag.MaxPrice != ViewBag.GlobalMaxPrice ||
+             (ViewBag.SelectedCoops != null && ((List<int>)ViewBag.SelectedCoops).Any()) ||
+             ViewBag.OnlyAvailable == true ||
+             ViewBag.MinRating != null)
+        {
+            <div class="mb-4">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="text-muted small">Filtres actifs:</span>
+                    
+                    <!-- Prix Filter Badge -->
+                    @if (ViewBag.MinPrice != ViewBag.GlobalMinPrice || ViewBag.MaxPrice != ViewBag.GlobalMaxPrice)
+                    {
+                        <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-tag"></i>
+                            Prix: @ViewBag.MinPrice - @ViewBag.MaxPrice MAD
+                            <a href="@Url.Action("Index", "Catalogue", new { 
+                                categorie = ViewBag.SelectedCategorie,
+                                search = ViewBag.SearchTerm,
+                                sort = ViewBag.CurrentSort,
+                                coops = ViewBag.SelectedCoops != null ? string.Join(",", ViewBag.SelectedCoops) : null,
+                                onlyAvailable = ViewBag.OnlyAvailable,
+                                minRating = ViewBag.MinRating,
+                                page = ViewBag.CurrentPage
+                            })" class="text-decoration-none text-dark">
+                                <i class="bi bi-x"></i>
+                            </a>
+                        </span>
+                    }
+                    
+                    <!-- Category Filter Badge -->
+                    @if (ViewBag.SelectedCategorie != null)
+                    {
+                        var selectedCat = categories.FirstOrDefault(c => c.CategorieId == ViewBag.SelectedCategorie);
+                        <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-folder"></i>
+                            @selectedCat?.Nom
+                            <a href="@Url.Action("Index", "Catalogue", new { 
+                                search = ViewBag.SearchTerm,
+                                sort = ViewBag.CurrentSort,
+                                minPrice = ViewBag.MinPrice != ViewBag.GlobalMinPrice ? ViewBag.MinPrice : null,
+                                maxPrice = ViewBag.MaxPrice != ViewBag.GlobalMaxPrice ? ViewBag.MaxPrice : null,
+                                coops = ViewBag.SelectedCoops != null ? string.Join(",", ViewBag.SelectedCoops) : null,
+                                onlyAvailable = ViewBag.OnlyAvailable,
+                                minRating = ViewBag.MinRating,
+                                page = ViewBag.CurrentPage
+                            })" class="text-decoration-none text-dark">
+                                <i class="bi bi-x"></i>
+                            </a>
+                        </span>
+                    }
+                    
+                    <!-- Cooperatives Filter Badges -->
+                    @if (ViewBag.SelectedCoops != null)
+                    {
+                        var selectedCoopIds = ViewBag.SelectedCoops as List<int>;
+                        foreach (var coopId in selectedCoopIds)
+                        {
+                            var coop = cooperatives.FirstOrDefault(c => c.CooperativeId == coopId);
+                            if (coop != null)
+                            {
+                                var otherCoops = selectedCoopIds.Where(id => id != coopId).ToList();
+                                <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-2">
+                                    <i class="bi bi-building"></i>
+                                    @coop.Nom
+                                    <a href="@Url.Action("Index", "Catalogue", new { 
+                                        categorie = ViewBag.SelectedCategorie,
+                                        search = ViewBag.SearchTerm,
+                                        sort = ViewBag.CurrentSort,
+                                        minPrice = ViewBag.MinPrice != ViewBag.GlobalMinPrice ? ViewBag.MinPrice : null,
+                                        maxPrice = ViewBag.MaxPrice != ViewBag.GlobalMaxPrice ? ViewBag.MaxPrice : null,
+                                        coops = otherCoops.Any() ? string.Join(",", otherCoops) : null,
+                                        onlyAvailable = ViewBag.OnlyAvailable,
+                                        minRating = ViewBag.MinRating,
+                                        page = ViewBag.CurrentPage
+                                    })" class="text-decoration-none text-dark">
+                                        <i class="bi bi-x"></i>
+                                    </a>
+                                </span>
+                            }
+                        }
+                    }
+                    
+                    <!-- Rating Filter Badge -->
+                    @if (ViewBag.MinRating != null)
+                    {
+                        <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            @ViewBag.MinRating+ étoiles
+                            <a href="@Url.Action("Index", "Catalogue", new { 
+                                categorie = ViewBag.SelectedCategorie,
+                                search = ViewBag.SearchTerm,
+                                sort = ViewBag.CurrentSort,
+                                minPrice = ViewBag.MinPrice != ViewBag.GlobalMinPrice ? ViewBag.MinPrice : null,
+                                maxPrice = ViewBag.MaxPrice != ViewBag.GlobalMaxPrice ? ViewBag.MaxPrice : null,
+                                coops = ViewBag.SelectedCoops != null ? string.Join(",", ViewBag.SelectedCoops) : null,
+                                onlyAvailable = ViewBag.OnlyAvailable,
+                                page = ViewBag.CurrentPage
+                            })" class="text-decoration-none text-dark">
+                                <i class="bi bi-x"></i>
+                            </a>
+                        </span>
+                    }
+                    
+                    <!-- Availability Filter Badge -->
+                    @if (ViewBag.OnlyAvailable == true)
+                    {
+                        <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                            En stock
+                            <a href="@Url.Action("Index", "Catalogue", new { 
+                                categorie = ViewBag.SelectedCategorie,
+                                search = ViewBag.SearchTerm,
+                                sort = ViewBag.CurrentSort,
+                                minPrice = ViewBag.MinPrice != ViewBag.GlobalMinPrice ? ViewBag.MinPrice : null,
+                                maxPrice = ViewBag.MaxPrice != ViewBag.GlobalMaxPrice ? ViewBag.MaxPrice : null,
+                                coops = ViewBag.SelectedCoops != null ? string.Join(",", ViewBag.SelectedCoops) : null,
+                                minRating = ViewBag.MinRating,
+                                page = ViewBag.CurrentPage
+                            })" class="text-decoration-none text-dark">
+                                <i class="bi bi-x"></i>
+                            </a>
+                        </span>
+                    }
+                    
+                    <!-- Clear All Filters -->
+                    <a href="@Url.Action("Index", "Catalogue", new { search = ViewBag.SearchTerm, sort = ViewBag.CurrentSort })" 
+                       class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Tout effacer
+                    </a>
+                </div>
+            </div>
+        }
+
         <!-- Search & Controls -->
         <div class="row mb-4">
             <div class="col-12 col-md-8 col-lg-9 mb-3 mb-md-0">
@@ -39,11 +176,11 @@
                         {
                             <input type="hidden" name="categorie" value="@ViewBag.SelectedCategorie" />
                         }
-                        @if (ViewBag.MinPrice != null)
+                        @if (ViewBag.MinPrice != null && ViewBag.MinPrice != ViewBag.GlobalMinPrice)
                         {
                             <input type="hidden" name="minPrice" value="@ViewBag.MinPrice" />
                         }
-                        @if (ViewBag.MaxPrice != null)
+                        @if (ViewBag.MaxPrice != null && ViewBag.MaxPrice != ViewBag.GlobalMaxPrice)
                         {
                             <input type="hidden" name="maxPrice" value="@ViewBag.MaxPrice" />
                         }
@@ -88,11 +225,11 @@
                     {
                         <input type="hidden" name="categorie" value="@ViewBag.SelectedCategorie" />
                     }
-                    @if (ViewBag.MinPrice != null)
+                    @if (ViewBag.MinPrice != null && ViewBag.MinPrice != ViewBag.GlobalMinPrice)
                     {
                         <input type="hidden" name="minPrice" value="@ViewBag.MinPrice" />
                     }
-                    @if (ViewBag.MaxPrice != null)
+                    @if (ViewBag.MaxPrice != null && ViewBag.MaxPrice != ViewBag.GlobalMaxPrice)
                     {
                         <input type="hidden" name="maxPrice" value="@ViewBag.MaxPrice" />
                     }
@@ -161,7 +298,10 @@
                                  var currentMin = ViewBag.MinPrice ?? globalMin;
                                  var currentMax = ViewBag.MaxPrice ?? globalMax;
                              }
+                            <label for="price-range-min" class="form-label small">Minimum</label>
                             <input type="range" class="form-range" id="price-range-min" name="minPrice" min="@globalMin" max="@globalMax" step="10" value="@currentMin" onchange="this.form.submit()" />
+                            
+                            <label for="price-range-max" class="form-label small mt-3">Maximum</label>
                             <input type="range" class="form-range" id="price-range-max" name="maxPrice" min="@globalMin" max="@globalMax" step="10" value="@currentMax" onchange="this.form.submit()" />
                         </div>
                         <div class="d-flex justify-content-between mt-2">
@@ -218,17 +358,38 @@
                         <div class="filter-ratings">
                             @{ var currentRating = ViewBag.MinRating as int?; }
                             <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="minRating" value="5" id="rating-5" @(currentRating == 5 ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label cursor-pointer" for="rating-5">
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></span>
+                                    <span class="small text-muted ms-1">5 étoiles</span>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
                                 <input class="form-check-input" type="radio" name="minRating" value="4" id="rating-4" @(currentRating == 4 ? "checked" : "") onchange="this.form.submit()" />
                                 <label class="form-check-label cursor-pointer" for="rating-4">
                                     <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i></span>
-                                    <span class="small text-muted">& plus</span>
+                                    <span class="small text-muted ms-1">4+ étoiles</span>
                                 </label>
                             </div>
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="radio" name="minRating" value="3" id="rating-3" @(currentRating == 3 ? "checked" : "") onchange="this.form.submit()" />
                                 <label class="form-check-label cursor-pointer" for="rating-3">
                                     <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i></span>
-                                    <span class="small text-muted">& plus</span>
+                                    <span class="small text-muted ms-1">3+ étoiles</span>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="minRating" value="2" id="rating-2" @(currentRating == 2 ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label cursor-pointer" for="rating-2">
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i></span>
+                                    <span class="small text-muted ms-1">2+ étoiles</span>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="minRating" value="1" id="rating-1" @(currentRating == 1 ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label cursor-pointer" for="rating-1">
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i></span>
+                                    <span class="small text-muted ms-1">1+ étoile</span>
                                 </label>
                             </div>
                             <div class="form-check mb-2">
@@ -263,8 +424,8 @@
 
             <!-- Mobile Offcanvas Filters -->
             <div class="offcanvas offcanvas-start" tabindex="-1" id="filterOffcanvas">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title">Filtres</h5>
+                <div class="offcanvas-header border-bottom">
+                    <h5 class="offcanvas-title fw-bold">Filtres</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
                 </div>
                 <div class="offcanvas-body">
@@ -278,7 +439,10 @@
                                  var currentMinM = ViewBag.MinPrice ?? globalMinM;
                                  var currentMaxM = ViewBag.MaxPrice ?? globalMaxM;
                              }
+                            <label for="price-range-min-mobile" class="form-label small">Minimum</label>
                             <input type="range" class="form-range" id="price-range-min-mobile" min="@globalMinM" max="@globalMaxM" step="10" value="@currentMinM" />
+                            
+                            <label for="price-range-max-mobile" class="form-label small mt-3">Maximum</label>
                             <input type="range" class="form-range" id="price-range-max-mobile" min="@globalMinM" max="@globalMaxM" step="10" value="@currentMaxM" />
                         </div>
                         <div class="d-flex justify-content-between mt-2">
@@ -291,11 +455,17 @@
                     <div class="mb-4">
                         <h4 class="h6 fw-semibold mb-3">Catégories</h4>
                         <div class="filter-categories-mobile">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-category-mobile" type="radio" name="categorieMobile" value="" id="cat-mobile-all" @(ViewBag.SelectedCategorie == null ? "checked" : "") />
+                                <label class="form-check-label cursor-pointer" for="cat-mobile-all">
+                                    <span class="small">Toutes les catégories</span>
+                                </label>
+                            </div>
                             @foreach (var category in categories)
                             {
                                 var count = productCountByCategory.ContainsKey(category.CategorieId) ? productCountByCategory[category.CategorieId] : 0;
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input filter-category-mobile" type="checkbox" value="@category.CategorieId" id="cat-mobile-@category.CategorieId" 
+                                    <input class="form-check-input filter-category-mobile" type="radio" name="categorieMobile" value="@category.CategorieId" id="cat-mobile-@category.CategorieId" 
                                            @(selectedCategorie == category.CategorieId ? "checked" : "") />
                                     <label class="form-check-label w-100 d-flex justify-content-between cursor-pointer" for="cat-mobile-@category.CategorieId">
                                         <span class="small">@category.Nom</span>
@@ -309,7 +479,7 @@
                     <!-- Cooperatives -->
                     <div class="mb-4">
                         <h4 class="h6 fw-semibold mb-3">Coopératives</h4>
-                        <div class="filter-cooperatives-mobile" style="max-height: 300px; overflow-y: auto;">
+                        <div class="filter-cooperatives-mobile" style="max-height: 250px; overflow-y: auto;">
                             @foreach (var cooperative in cooperatives)
                             {
                                 var selectedCoops = (ViewBag.SelectedCoops as IEnumerable<int>)?.ToList();
@@ -330,17 +500,38 @@
                         <div class="filter-ratings-mobile">
                             @{ var currentRatingM = ViewBag.MinRating as int?; }
                             <div class="form-check mb-2">
+                                <input class="form-check-input filter-rating-mobile" type="radio" name="minRatingMobile" value="5" id="rating-mobile-5" @(currentRatingM == 5 ? "checked" : "") />
+                                <label class="form-check-label cursor-pointer" for="rating-mobile-5">
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></span>
+                                    <span class="small text-muted ms-1">5 étoiles</span>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
                                 <input class="form-check-input filter-rating-mobile" type="radio" name="minRatingMobile" value="4" id="rating-mobile-4" @(currentRatingM == 4 ? "checked" : "") />
                                 <label class="form-check-label cursor-pointer" for="rating-mobile-4">
                                     <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i></span>
-                                    <span class="small text-muted">& plus</span>
+                                    <span class="small text-muted ms-1">4+ étoiles</span>
                                 </label>
                             </div>
                             <div class="form-check mb-2">
                                 <input class="form-check-input filter-rating-mobile" type="radio" name="minRatingMobile" value="3" id="rating-mobile-3" @(currentRatingM == 3 ? "checked" : "") />
                                 <label class="form-check-label cursor-pointer" for="rating-mobile-3">
                                     <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i></span>
-                                    <span class="small text-muted">& plus</span>
+                                    <span class="small text-muted ms-1">3+ étoiles</span>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-rating-mobile" type="radio" name="minRatingMobile" value="2" id="rating-mobile-2" @(currentRatingM == 2 ? "checked" : "") />
+                                <label class="form-check-label cursor-pointer" for="rating-mobile-2">
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i></span>
+                                    <span class="small text-muted ms-1">2+ étoiles</span>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-rating-mobile" type="radio" name="minRatingMobile" value="1" id="rating-mobile-1" @(currentRatingM == 1 ? "checked" : "") />
+                                <label class="form-check-label cursor-pointer" for="rating-mobile-1">
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i></span>
+                                    <span class="small text-muted ms-1">1+ étoile</span>
                                 </label>
                             </div>
                             <div class="form-check mb-2">
@@ -363,11 +554,13 @@
                     </div>
 
                     <!-- Actions -->
-                    <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-primary text-white" onclick="applyMobileFilters()">
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="button" class="btn btn-primary text-white" id="apply-mobile-filters">
+                            <i class="bi bi-check-circle me-2"></i>
                             Appliquer les filtres
                         </button>
                         <button type="button" class="btn btn-outline-secondary" id="clear-filters-mobile">
+                            <i class="bi bi-x-circle me-2"></i>
                             Effacer les filtres
                         </button>
                     </div>
@@ -405,15 +598,15 @@
                             var currentPage = (int)ViewBag.CurrentPage;
                             var totalPages = (int)ViewBag.TotalPages;
 
-                            <nav aria-label="Page navigation">
+                            <nav aria-label="Page navigation" class="mt-5">
                                 <ul class="pagination justify-content-center">
                                     @{
                                         var routeValues = new System.Web.Routing.RouteValueDictionary();
                                         if (!string.IsNullOrEmpty(ViewBag.SearchTerm)) { routeValues["search"] = ViewBag.SearchTerm; }
                                         if (!string.IsNullOrEmpty(ViewBag.CurrentSort)) { routeValues["sort"] = ViewBag.CurrentSort; }
                                         if (ViewBag.SelectedCategorie != null) { routeValues["categorie"] = ViewBag.SelectedCategorie; }
-                                        if (ViewBag.MinPrice != null) { routeValues["minPrice"] = ViewBag.MinPrice; }
-                                        if (ViewBag.MaxPrice != null) { routeValues["maxPrice"] = ViewBag.MaxPrice; }
+                                        if (ViewBag.MinPrice != null && ViewBag.MinPrice != ViewBag.GlobalMinPrice) { routeValues["minPrice"] = ViewBag.MinPrice; }
+                                        if (ViewBag.MaxPrice != null && ViewBag.MaxPrice != ViewBag.GlobalMaxPrice) { routeValues["maxPrice"] = ViewBag.MaxPrice; }
                                         if (ViewBag.SelectedCoops != null) {
                                              var coopsList = ViewBag.SelectedCoops as List<int>;
                                              if(coopsList != null && coopsList.Any()) 
@@ -459,8 +652,15 @@
                     else
                     {
                         <div class="text-center py-5">
-                            <p class="text-muted mb-4">Aucun produit ne correspond à vos critères</p>
-                            <button type="button" class="btn btn-outline-secondary" id="reset-filters-btn">Réinitialiser les filtres</button>
+                            <div class="mb-4">
+                                <i class="bi bi-search" style="font-size: 4rem; color: #ccc;"></i>
+                            </div>
+                            <h3 class="h5 text-muted mb-3">Aucun produit trouvé</h3>
+                            <p class="text-muted mb-4">Aucun produit ne correspond à vos critères de recherche</p>
+                            <a href="@Url.Action("Index", "Catalogue")" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>
+                                Réinitialiser les filtres
+                            </a>
                         </div>
                     }
                 </div>
@@ -478,10 +678,10 @@
             var searchTerm = '@Html.Raw(HttpUtility.JavaScriptStringEncode(ViewBag.SearchTerm as string))';
             if (searchTerm && searchTerm.length > 0) {
                 try {
-                    var regex = new RegExp('(' + searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+                    var regex = new RegExp('(' + searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\                            <label for="price-range-max-mobile" class="form-label small mt-3">Maximum</label>
+                            <input type="range" class="form-range" id="price-range-max-mobile" min="@globalMin') + ')', 'gi');
                     var titles = document.querySelectorAll('.product-title');
                     titles.forEach(function(title) {
-                        // Ensure we don't break HTML if title has other tags (though it shouldn't)
                         var text = title.textContent;
                         if (text.toLowerCase().includes(searchTerm.toLowerCase())) {
                             title.innerHTML = text.replace(regex, '<span class="bg-warning bg-opacity-25 text-dark fw-bold px-1 rounded">$1</span>');

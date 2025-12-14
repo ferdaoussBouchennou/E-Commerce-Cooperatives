@@ -19,18 +19,48 @@ namespace E_Commerce_Cooperatives.Controllers
                 List<int> cooperativeIds = new List<int>();
                 if (!string.IsNullOrEmpty(coops))
                 {
-                    cooperativeIds = coops.Split(',').Select(int.Parse).ToList();
+                    cooperativeIds = coops.Split(',')
+                        .Where(c => !string.IsNullOrWhiteSpace(c))
+                        .Select(int.Parse)
+                        .ToList();
                 }
 
                 // Get dynamic max and min price from DB
                 var dbMaxPrice = db.GetMaxPrice();
                 var dbMinPrice = db.GetMinPrice();
 
+                // Si minPrice/maxPrice ne sont pas spécifiés, utiliser les valeurs de la BD
+                var effectiveMinPrice = minPrice ?? dbMinPrice;
+                var effectiveMaxPrice = maxPrice ?? dbMaxPrice;
+
                 // Récupérer les produits pour la page actuelle
-                var produits = db.GetProduits(null, null, categorie, page, pageSize, search, sort, minPrice, maxPrice, cooperativeIds, onlyAvailable, minRating);
+                var produits = db.GetProduits(
+                    null, 
+                    null, 
+                    categorie, 
+                    page, 
+                    pageSize, 
+                    search, 
+                    sort, 
+                    effectiveMinPrice, 
+                    effectiveMaxPrice, 
+                    cooperativeIds, 
+                    onlyAvailable, 
+                    minRating
+                );
                 
-                // Récupérer le nombre total de produits pour cette catégorie
-                var totalProduits = db.GetProduitsCount(null, null, categorie, search, minPrice, maxPrice, cooperativeIds, onlyAvailable, minRating);
+                // Récupérer le nombre total de produits
+                var totalProduits = db.GetProduitsCount(
+                    null, 
+                    null, 
+                    categorie, 
+                    search, 
+                    effectiveMinPrice, 
+                    effectiveMaxPrice, 
+                    cooperativeIds, 
+                    onlyAvailable, 
+                    minRating
+                );
                 
                 // Calculer le nombre de pages
                 var totalPages = (int)Math.Ceiling((double)totalProduits / pageSize);
@@ -41,12 +71,14 @@ namespace E_Commerce_Cooperatives.Controllers
                 // Récupérer les coopératives pour les filtres
                 var cooperatives = db.GetCooperatives();
                 
-                // Compter le nombre de produits par catégorie
-                var productCountByCategory = produits
+                // Compter le nombre de produits par catégorie (pour affichage dans filtres)
+                var allProductsForCounts = db.GetProduits(null, null, null, 1, int.MaxValue, null, null, null, null, null, false, null);
+                var productCountByCategory = allProductsForCounts
                     .Where(p => p.CategorieId.HasValue)
                     .GroupBy(p => p.CategorieId.Value)
                     .ToDictionary(g => g.Key, g => g.Count());
                 
+                // Passer les données à la vue
                 ViewBag.Produits = produits;
                 ViewBag.Categories = categories;
                 ViewBag.Cooperatives = cooperatives;
@@ -54,10 +86,15 @@ namespace E_Commerce_Cooperatives.Controllers
                 ViewBag.SelectedCategorie = categorie;
                 ViewBag.SearchTerm = search;
                 ViewBag.CurrentSort = sort;
-                ViewBag.MinPrice = minPrice ?? dbMinPrice; // Use selected or default DB min
-                ViewBag.MaxPrice = maxPrice ?? dbMaxPrice; // Use selected or default DB max
-                ViewBag.GlobalMaxPrice = dbMaxPrice; // Pass global max for slider attributes
-                ViewBag.GlobalMinPrice = dbMinPrice; // Pass global min for slider attributes
+                
+                // Prix actuellement sélectionnés (ou valeurs par défaut)
+                ViewBag.MinPrice = effectiveMinPrice;
+                ViewBag.MaxPrice = effectiveMaxPrice;
+                
+                // Limites globales pour les sliders
+                ViewBag.GlobalMaxPrice = dbMaxPrice;
+                ViewBag.GlobalMinPrice = dbMinPrice;
+                
                 ViewBag.SelectedCoops = cooperativeIds;
                 ViewBag.OnlyAvailable = onlyAvailable;
                 ViewBag.MinRating = minRating;
@@ -82,4 +119,3 @@ namespace E_Commerce_Cooperatives.Controllers
         }
     }
 }
-
