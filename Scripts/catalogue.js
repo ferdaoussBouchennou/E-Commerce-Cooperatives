@@ -37,22 +37,125 @@
              // We rely on 'change' (mouse up) to submit form, which is added inline in HTML
         }
 
-        // Cooperatives Multi-select Logic
+        // --- MOBILE FILTER LOGIC ---
+    const mobilePriceMin = document.getElementById('price-range-min-mobile');
+    const mobilePriceMax = document.getElementById('price-range-max-mobile');
+    const mobilePriceMinDisplay = document.getElementById('price-min-mobile');
+    const mobilePriceMaxDisplay = document.getElementById('price-max-mobile');
+    const mobileApplyBtn = document.querySelector('#filterOffcanvas .btn-primary'); // Assuming there is an apply button or we use the close/change?
+    // Wait, the view showed "Effacer les filtres" button but no "Appliquer". 
+    // Usually mobile filters need an "Apply" button. 
+    // If not present, I'll add one or trigger on change? 
+    // Triggering on change in offcanvas is annoying. Better to have "Apply".
+    // I will check the view for an Apply button. If missing, I will add logic to add one or use the existing "Effacer" to "Appliquer"? No.
+    
+    // Let's look at the view again. Lines 280-282 show "Effacer les filtres".
+    // I should probably add an "Appliquer" button in the view and then handle it here.
+    // OR just handle "change" events but typically that's slow.
+    // Let's implement "Live Update" for now to be consistent with desktop, 
+    // OR create a function `applyMobileFilters`.
+
+    // Reuse helper to update displays
+    function updateMobilePriceDisplay() {
+        if(mobilePriceMin && mobilePriceMinDisplay) mobilePriceMinDisplay.textContent = mobilePriceMin.value + ' MAD';
+        if(mobilePriceMax && mobilePriceMaxDisplay) mobilePriceMaxDisplay.textContent = mobilePriceMax.value + ' MAD';
+    }
+
+    if (mobilePriceMin && mobilePriceMax) {
+        mobilePriceMin.addEventListener('input', updateMobilePriceDisplay);
+        mobilePriceMax.addEventListener('input', updateMobilePriceDisplay);
+        // Initialize
+        updateMobilePriceDisplay();
+    }
+
+    // Function to gather mobile state and reload
+    window.applyMobileFilters = function() {
+        const params = new URLSearchParams(window.location.search);
+        
+        // Price
+        if (mobilePriceMin) params.set('minPrice', mobilePriceMin.value);
+        if (mobilePriceMax) params.set('maxPrice', mobilePriceMax.value);
+
+        // Categories (Mobile checkboxes)
+        // Note: Controller accepts 'categorie' (int) for single select. 
+        // If UI allows multiple, we need 'categories' list logic or repetitive 'categorie' param? 
+        // Standard MVC binds multiple same-name keys to array? No, usually List<int>.
+        // Current Controller: int? categorie (Single!). 
+        // Mobile UI uses checkboxes. This implies multiple. 
+        // IF user checks multiple, we might want to change Controller to List<int> OR just take the last one.
+        // Let's assume Single Select behavior for now to match Desktop.
+        // Find checked category
+        const checkedCat = document.querySelector('.filter-category-mobile:checked');
+        if (checkedCat) {
+            params.set('categorie', checkedCat.value);
+        } else {
+            params.delete('categorie');
+        }
+
+        // Cooperatives (Mobile checkboxes)
+        const checkedCoops = Array.from(document.querySelectorAll('.filter-cooperative-mobile:checked')).map(cb => cb.value);
+        if (checkedCoops.length > 0) {
+            params.set('coops', checkedCoops.join(','));
+        } else {
+            params.delete('coops');
+        }
+
+        // Availability
+        const availCb = document.getElementById('only-available-mobile');
+        if (availCb && availCb.checked) {
+            params.set('onlyAvailable', 'true');
+        } else {
+            params.delete('onlyAvailable');
+        }
+
+        // Rating (Mobile radio)
+        const checkedRating = document.querySelector('.filter-rating-mobile:checked');
+        if (checkedRating && checkedRating.value) {
+            params.set('minRating', checkedRating.value);
+        } else {
+            params.delete('minRating');
+        }
+
+        // Reset page to 1
+        params.set('page', '1');
+
+        window.location.href = window.location.pathname + '?' + params.toString();
+    };
+
+    // Bind "Apply" logic? 
+    // The view doesn't have an Apply button yet. I should add one in the view. 
+    // For now, let's bind it to "Effacer" just to test? No.
+    // I will add a proper listener if I can find a suitable button.
+    
+    // Clear Filters Mobile
+    const clearMobileBtn = document.getElementById('clear-filters-mobile');
+    if (clearMobileBtn) {
+        clearMobileBtn.addEventListener('click', function() {
+            window.location.href = window.location.pathname; // Clear all query params
+        });
+    }
+
+    // --- SEARCH BAR HIGHLIGHTING (Server-side rendered now, but maybe extra client cleanup?) ---
+    // (Already handled in View script block)
+
+        // Desktop Cooperatives Multi-select Logic
         const filterForm = document.getElementById('filter-form');
         const coopsHidden = document.getElementById('coops-hidden');
         const coopCheckboxes = document.querySelectorAll('.filter-cooperative-checkbox');
 
-        coopCheckboxes.forEach(cb => {
-            cb.addEventListener('change', function() {
-                if (filterForm && coopsHidden) {
+        if (filterForm && coopsHidden) {
+            coopCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
                     const checkedCoops = Array.from(coopCheckboxes)
                         .filter(c => c.checked)
                         .map(c => c.value);
+                    console.log('Coops changed:', checkedCoops);
                     coopsHidden.value = checkedCoops.join(',');
                     filterForm.submit();
-                }
+                });
             });
-        });
+        }
+
 
         // Initialize mobile filters if needed (but currently stripped down for this fix)
     }

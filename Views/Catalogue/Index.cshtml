@@ -39,6 +39,30 @@
                         {
                             <input type="hidden" name="categorie" value="@ViewBag.SelectedCategorie" />
                         }
+                        @if (ViewBag.MinPrice != null)
+                        {
+                            <input type="hidden" name="minPrice" value="@ViewBag.MinPrice" />
+                        }
+                        @if (ViewBag.MaxPrice != null)
+                        {
+                            <input type="hidden" name="maxPrice" value="@ViewBag.MaxPrice" />
+                        }
+                        @if (ViewBag.SelectedCoops != null)
+                        {
+                             var coopsList = (ViewBag.SelectedCoops as IEnumerable<int>)?.ToList();
+                             if(coopsList != null && coopsList.Any())
+                             {
+                                 <input type="hidden" name="coops" value="@string.Join(",", coopsList)" />
+                             }
+                        }
+                        @if (ViewBag.OnlyAvailable == true)
+                        {
+                            <input type="hidden" name="onlyAvailable" value="true" />
+                        }
+                        @if (ViewBag.MinRating != null)
+                        {
+                            <input type="hidden" name="minRating" value="@ViewBag.MinRating" />
+                        }
                         <button type="submit" class="input-group-text border-0 bg-transparent" style="cursor: pointer;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                                 <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
@@ -55,21 +79,47 @@
                 </div>
             </div>
             <div class="col-12 col-md-4 col-lg-3">
-                <form action="@Url.Action("Index", "Catalogue")" method="get" id="sort-form">
-                    @if (ViewBag.SelectedCategorie != null)
-                    {
-                        <input type="hidden" name="categorie" value="@ViewBag.SelectedCategorie" />
-                    }
+                <form action="@Url.Action("Index", "Catalogue")" method="get" id="sort-form" class="d-flex align-items-center">
                     @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
                     {
                         <input type="hidden" name="search" value="@ViewBag.SearchTerm" />
                     }
-                    <select name="sort" id="sort-select" class="form-select border-0 bg-light" onchange="this.form.submit()">
+                    @if (ViewBag.SelectedCategorie != null)
+                    {
+                        <input type="hidden" name="categorie" value="@ViewBag.SelectedCategorie" />
+                    }
+                    @if (ViewBag.MinPrice != null)
+                    {
+                        <input type="hidden" name="minPrice" value="@ViewBag.MinPrice" />
+                    }
+                    @if (ViewBag.MaxPrice != null)
+                    {
+                        <input type="hidden" name="maxPrice" value="@ViewBag.MaxPrice" />
+                    }
+                    @if (ViewBag.SelectedCoops != null)
+                    {
+                         var coopsList = (ViewBag.SelectedCoops as IEnumerable<int>)?.ToList();
+                         if(coopsList != null && coopsList.Any())
+                         {
+                             <input type="hidden" name="coops" value="@string.Join(",", coopsList)" />
+                         }
+                    }
+                    @if (ViewBag.OnlyAvailable == true)
+                    {
+                        <input type="hidden" name="onlyAvailable" value="true" />
+                    }
+                    @if (ViewBag.MinRating != null)
+                    {
+                        <input type="hidden" name="minRating" value="@ViewBag.MinRating" />
+                    }
+
+                    <label for="sort" class="me-2 text-nowrap">Trier par :</label>
+                    <select name="sort" id="sort" class="form-select form-select-sm border-terracotta" onchange="this.form.submit()">
                         <option value="popular" @(ViewBag.CurrentSort == "popular" ? "selected" : "")>Popularité</option>
                         <option value="newest" @(ViewBag.CurrentSort == "newest" ? "selected" : "")>Nouveautés</option>
                         <option value="price-asc" @(ViewBag.CurrentSort == "price-asc" ? "selected" : "")>Prix croissant</option>
                         <option value="price-desc" @(ViewBag.CurrentSort == "price-desc" ? "selected" : "")>Prix décroissant</option>
-                        <option value="rating" @(ViewBag.CurrentSort == "rating" ? "selected" : "")>Meilleures notes</option>
+                        <option value="rating" @(ViewBag.CurrentSort == "rating" ? "selected" : "")>Note moyenne</option>
                     </select>
                 </form>
             </div>
@@ -88,7 +138,7 @@
         <div class="row">
             <!-- Desktop Sidebar Filters -->
             <aside class="col-lg-3 d-none d-lg-block">
-                <form id="filter-form" action="@Url.Action("Index", "Catalogue")" method="get" class="bg-white rounded-3 p-4 shadow-sm sticky-top" style="top: 100px;">
+                <form id="filter-form" action="@Url.Action("Index", "Catalogue")" method="get" class="bg-white rounded-3 p-4 shadow-sm sticky-top" style="top: 120px; z-index: 900;">
                     <h3 class="h5 fw-bold mb-4">Filtres</h3>
                     
                     <!-- Hidden inputs to preserve other states -->
@@ -105,12 +155,18 @@
                     <div class="mb-4">
                         <h4 class="h6 fw-semibold mb-3">Prix (MAD)</h4>
                         <div class="px-2">
-                            <input type="range" class="form-range" id="price-range-min" name="minPrice" min="0" max="1500" step="10" value="@(ViewBag.MinPrice ?? 0)" onchange="this.form.submit()" />
-                            <input type="range" class="form-range" id="price-range-max" name="maxPrice" min="0" max="1500" step="10" value="@(ViewBag.MaxPrice ?? 1500)" onchange="this.form.submit()" />
+                             @{
+                                 var globalMax = ViewBag.GlobalMaxPrice ?? 1500m;
+                                 var globalMin = ViewBag.GlobalMinPrice ?? 0m;
+                                 var currentMin = ViewBag.MinPrice ?? globalMin;
+                                 var currentMax = ViewBag.MaxPrice ?? globalMax;
+                             }
+                            <input type="range" class="form-range" id="price-range-min" name="minPrice" min="@globalMin" max="@globalMax" step="10" value="@currentMin" onchange="this.form.submit()" />
+                            <input type="range" class="form-range" id="price-range-max" name="maxPrice" min="@globalMin" max="@globalMax" step="10" value="@currentMax" onchange="this.form.submit()" />
                         </div>
                         <div class="d-flex justify-content-between mt-2">
-                            <span class="small text-muted" id="price-min">@(ViewBag.MinPrice ?? 0) MAD</span>
-                            <span class="small text-muted" id="price-max">@(ViewBag.MaxPrice ?? 1500) MAD</span>
+                            <span class="small text-muted" id="price-min">@currentMin MAD</span>
+                            <span class="small text-muted" id="price-max">@currentMax MAD</span>
                         </div>
                     </div>
 
@@ -118,13 +174,6 @@
                     <div class="mb-4">
                         <h4 class="h6 fw-semibold mb-3">Catégories</h4>
                         <div class="filter-categories">
-                            <!-- Radio buttons for categories are simpler for server-side single select, 
-                                 but if user wants multiple, we need checkboxes with same name 'categorie' or custom handling.
-                                 Controller accepts 'int? categorie', so legacy was single select. 
-                                 Let's stick to single select logic for 'categorie' param, or 'categories' list if we changed it.
-                                 The Controller HAS 'int? categorie'. So single select. 
-                                 Let's use Radio buttons for now since Controller takes 'int?'.
-                            -->
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="radio" name="categorie" value="" id="cat-all" @(ViewBag.SelectedCategorie == null ? "checked" : "") onchange="this.form.submit()" />
                                 <label class="form-check-label cursor-pointer" for="cat-all">Toutes les catégories</label>
@@ -147,19 +196,11 @@
                     <!-- Cooperatives -->
                     <div class="mb-4">
                         <h4 class="h6 fw-semibold mb-3">Coopératives</h4>
-                        <div class="filter-cooperatives" style="max-height: 300px; overflow-y: auto;">
-                            <!-- We need to submit 'coops' as comma separated string or multiple inputs with same name?
-                                 Controller expects 'string coops' (comma separated).
-                                 So we need JS to join them on submit? Or use separate inputs and let MVC bind?
-                                 MVC binds 'coops=1&coops=2' to List<int> or string array usually. 
-                                 But I defined 'string coops'.
-                                 Solution: Use checkboxes with name="coopIds" and a hidden input 'coops', update on submit.
-                                 OR simpler: change Controller to 'List<int> coops'. NOT POSSIBLE EASILY without custom model binder or using valid naming.
-                                 Let's stick to update-on-submit JS. -->
+                        <div class="filter-cooperatives" style="max-height: 200px; overflow-y: auto;">
                             <input type="hidden" name="coops" id="coops-hidden" value="@(ViewBag.SelectedCoops != null ? string.Join(",", ViewBag.SelectedCoops) : "")" />
                             @foreach (var cooperative in cooperatives)
                             {
-                                var selectedCoops = ViewBag.SelectedCoops as List<int>;
+                                var selectedCoops = (ViewBag.SelectedCoops as IEnumerable<int>)?.ToList();
                                 var isChecked = selectedCoops != null && selectedCoops.Contains(cooperative.CooperativeId);
                                 <div class="form-check mb-2">
                                     <input class="form-check-input filter-cooperative-checkbox" type="checkbox" value="@cooperative.CooperativeId" id="coop-@cooperative.CooperativeId" @(isChecked ? "checked" : "") />
@@ -168,6 +209,34 @@
                                     </label>
                                 </div>
                             }
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Ratings -->
+                    <div class="mb-4">
+                        <h4 class="h6 fw-semibold mb-3">Notes clients</h4>
+                        <div class="filter-ratings">
+                            @{ var currentRating = ViewBag.MinRating as int?; }
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="minRating" value="4" id="rating-4" @(currentRating == 4 ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label cursor-pointer" for="rating-4">
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i></span>
+                                    <span class="small text-muted">& plus</span>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="minRating" value="3" id="rating-3" @(currentRating == 3 ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label cursor-pointer" for="rating-3">
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i></span>
+                                    <span class="small text-muted">& plus</span>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="minRating" value="" id="rating-all" @(!currentRating.HasValue ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label cursor-pointer small" for="rating-all">
+                                    Toutes les notes
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -185,7 +254,7 @@
                     <a href="@Url.Action("Index", "Catalogue")" class="btn btn-outline-secondary w-100">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle me-2" viewBox="0 0 16 16">
                             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
                         </svg>
                         Effacer les filtres
                     </a>
@@ -203,12 +272,18 @@
                     <div class="mb-4">
                         <h4 class="h6 fw-semibold mb-3">Prix (MAD)</h4>
                         <div class="px-2">
-                            <input type="range" class="form-range" id="price-range-min-mobile" min="0" max="1500" step="10" value="0" />
-                            <input type="range" class="form-range" id="price-range-max-mobile" min="0" max="1500" step="10" value="1500" />
+                             @{
+                                 var globalMaxM = ViewBag.GlobalMaxPrice ?? 1500m;
+                                 var globalMinM = ViewBag.GlobalMinPrice ?? 0m;
+                                 var currentMinM = ViewBag.MinPrice ?? globalMinM;
+                                 var currentMaxM = ViewBag.MaxPrice ?? globalMaxM;
+                             }
+                            <input type="range" class="form-range" id="price-range-min-mobile" min="@globalMinM" max="@globalMaxM" step="10" value="@currentMinM" />
+                            <input type="range" class="form-range" id="price-range-max-mobile" min="@globalMinM" max="@globalMaxM" step="10" value="@currentMaxM" />
                         </div>
                         <div class="d-flex justify-content-between mt-2">
-                            <span class="small text-muted" id="price-min-mobile">0 MAD</span>
-                            <span class="small text-muted" id="price-max-mobile">1500 MAD</span>
+                            <span class="small text-muted" id="price-min-mobile">@currentMinM MAD</span>
+                            <span class="small text-muted" id="price-max-mobile">@currentMaxM MAD</span>
                         </div>
                     </div>
 
@@ -237,8 +312,10 @@
                         <div class="filter-cooperatives-mobile" style="max-height: 300px; overflow-y: auto;">
                             @foreach (var cooperative in cooperatives)
                             {
+                                var selectedCoops = (ViewBag.SelectedCoops as IEnumerable<int>)?.ToList();
+                                var isChecked = selectedCoops != null && selectedCoops.Contains(cooperative.CooperativeId);
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input filter-cooperative-mobile" type="checkbox" value="@cooperative.CooperativeId" id="coop-mobile-@cooperative.CooperativeId" />
+                                    <input class="form-check-input filter-cooperative-mobile" type="checkbox" value="@cooperative.CooperativeId" id="coop-mobile-@cooperative.CooperativeId" @(isChecked ? "checked" : "") />
                                     <label class="form-check-label cursor-pointer" for="coop-mobile-@cooperative.CooperativeId">
                                         <span class="small">@cooperative.Nom</span>
                                     </label>
@@ -247,20 +324,53 @@
                         </div>
                     </div>
 
+                    <!-- Customer Ratings -->
+                    <div class="mb-4">
+                        <h4 class="h6 fw-semibold mb-3">Notes clients</h4>
+                        <div class="filter-ratings-mobile">
+                            @{ var currentRatingM = ViewBag.MinRating as int?; }
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-rating-mobile" type="radio" name="minRatingMobile" value="4" id="rating-mobile-4" @(currentRatingM == 4 ? "checked" : "") />
+                                <label class="form-check-label cursor-pointer" for="rating-mobile-4">
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i></span>
+                                    <span class="small text-muted">& plus</span>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-rating-mobile" type="radio" name="minRatingMobile" value="3" id="rating-mobile-3" @(currentRatingM == 3 ? "checked" : "") />
+                                <label class="form-check-label cursor-pointer" for="rating-mobile-3">
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i></span>
+                                    <span class="small text-muted">& plus</span>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input filter-rating-mobile" type="radio" name="minRatingMobile" value="" id="rating-mobile-all" @(!currentRatingM.HasValue ? "checked" : "") />
+                                <label class="form-check-label cursor-pointer small" for="rating-mobile-all">
+                                    Toutes les notes
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Availability -->
                     <div class="mb-4">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="only-available-mobile" />
+                            <input class="form-check-input" type="checkbox" id="only-available-mobile" @(ViewBag.OnlyAvailable == true ? "checked" : "") />
                             <label class="form-check-label cursor-pointer" for="only-available-mobile">
                                 <span class="small fw-medium">En stock uniquement</span>
                             </label>
                         </div>
                     </div>
 
-                    <!-- Clear Filters -->
-                    <button type="button" class="btn btn-outline-secondary w-100" id="clear-filters-mobile">
-                        Effacer les filtres
-                    </button>
+                    <!-- Actions -->
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary text-white" onclick="applyMobileFilters()">
+                            Appliquer les filtres
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="clear-filters-mobile">
+                            Effacer les filtres
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -295,24 +405,53 @@
                             var currentPage = (int)ViewBag.CurrentPage;
                             var totalPages = (int)ViewBag.TotalPages;
 
-                            <nav aria-label="Page navigation" class="mt-5">
+                            <nav aria-label="Page navigation">
                                 <ul class="pagination justify-content-center">
-                                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                        <a class="page-link" href="@Url.Action("Index", new { page = currentPage - 1, categorie = ViewBag.SelectedCategorie, search = ViewBag.SearchTerm, sort = ViewBag.CurrentSort })" aria-label="Précédent">
-                                            <span aria-hidden="true">&laquo;</span>
-                                        </a>
-                                    </li>
-                                    @for (int i = 1; i <= totalPages; i++)
+                                    @{
+                                        var routeValues = new System.Web.Routing.RouteValueDictionary();
+                                        if (!string.IsNullOrEmpty(ViewBag.SearchTerm)) { routeValues["search"] = ViewBag.SearchTerm; }
+                                        if (!string.IsNullOrEmpty(ViewBag.CurrentSort)) { routeValues["sort"] = ViewBag.CurrentSort; }
+                                        if (ViewBag.SelectedCategorie != null) { routeValues["categorie"] = ViewBag.SelectedCategorie; }
+                                        if (ViewBag.MinPrice != null) { routeValues["minPrice"] = ViewBag.MinPrice; }
+                                        if (ViewBag.MaxPrice != null) { routeValues["maxPrice"] = ViewBag.MaxPrice; }
+                                        if (ViewBag.SelectedCoops != null) {
+                                             var coopsList = ViewBag.SelectedCoops as List<int>;
+                                             if(coopsList != null && coopsList.Any()) 
+                                             { 
+                                                 routeValues["coops"] = string.Join(",", coopsList); 
+                                             }
+                                        }
+                                        if (ViewBag.OnlyAvailable == true) { routeValues["onlyAvailable"] = true; }
+                                        if (ViewBag.MinRating != null) { routeValues["minRating"] = ViewBag.MinRating; }
+                                    }
+
+                                    @if (ViewBag.CurrentPage > 1)
                                     {
-                                        <li class="page-item @(i == currentPage ? "active" : "")">
-                                            <a class="page-link" href="@Url.Action("Index", new { page = i, categorie = ViewBag.SelectedCategorie, search = ViewBag.SearchTerm, sort = ViewBag.CurrentSort })">@i</a>
+                                        routeValues["page"] = ViewBag.CurrentPage - 1;
+                                        <li class="page-item">
+                                            <a class="page-link text-terracotta" href="@Url.Action("Index", "Catalogue", routeValues)" aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </a>
                                         </li>
                                     }
-                                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                        <a class="page-link" href="@Url.Action("Index", new { page = currentPage + 1, categorie = ViewBag.SelectedCategorie, search = ViewBag.SearchTerm, sort = ViewBag.CurrentSort })" aria-label="Suivant">
-                                            <span aria-hidden="true">&raquo;</span>
-                                        </a>
-                                    </li>
+
+                                    @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                                    {
+                                        routeValues["page"] = i;
+                                        <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                            <a class="page-link @(i == ViewBag.CurrentPage ? "bg-terracotta border-terracotta text-white" : "text-terracotta")" href="@Url.Action("Index", "Catalogue", routeValues)">@i</a>
+                                        </li>
+                                    }
+
+                                    @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                                    {
+                                        routeValues["page"] = ViewBag.CurrentPage + 1;
+                                        <li class="page-item">
+                                            <a class="page-link text-terracotta" href="@Url.Action("Index", "Catalogue", routeValues)" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                                    }
                                 </ul>
                             </nav>
                         }

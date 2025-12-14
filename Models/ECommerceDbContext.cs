@@ -86,7 +86,47 @@ namespace E_Commerce_Cooperatives.Models
             return cooperatives;
         }
 
-        public List<Produit> GetProduits(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null, int page = 1, int pageSize = 9, string search = null, string sortOrder = "popular", decimal? minPrice = null, decimal? maxPrice = null, List<int> cooperativeIds = null, bool inStockOnly = false)
+        public decimal GetMaxPrice()
+        {
+            decimal maxPrice = 1500; // Default fallback
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT MAX(Prix) FROM Produits WHERE EstDisponible = 1";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    var result = command.ExecuteScalar();
+                    if (result != DBNull.Value)
+                    {
+                        maxPrice = (decimal)result;
+                    }
+                }
+            }
+            // Round up to nearest 100
+            return Math.Ceiling(maxPrice / 100) * 100;
+        }
+
+        public decimal GetMinPrice()
+        {
+            decimal minPrice = 0; // Default fallback
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT MIN(Prix) FROM Produits WHERE EstDisponible = 1";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    var result = command.ExecuteScalar();
+                    if (result != DBNull.Value)
+                    {
+                        minPrice = (decimal)result;
+                    }
+                }
+            }
+            // Round down to nearest 10 (or keep exact floor)
+            return Math.Floor(minPrice / 10) * 10;
+        }
+
+        public List<Produit> GetProduits(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null, int page = 1, int pageSize = 9, string search = null, string sortOrder = "popular", decimal? minPrice = null, decimal? maxPrice = null, List<int> cooperativeIds = null, bool inStockOnly = false, int? minRating = null)
         {
             var produits = new List<Produit>();
             using (var connection = new SqlConnection(connectionString))
@@ -125,6 +165,13 @@ namespace E_Commerce_Cooperatives.Models
 
                 if (inStockOnly)
                     query += " AND p.StockTotal > 0";
+
+                if (minRating.HasValue)
+                {
+                    query += @" AND (SELECT AVG(CAST(Note AS FLOAT)) 
+                                     FROM AvisProduits 
+                                     WHERE ProduitId = p.ProduitId) >= @MinRating";
+                }
 
                 if (!string.IsNullOrEmpty(search))
                     query += " AND (p.Nom LIKE @Search OR p.Description LIKE @Search)";
@@ -179,6 +226,9 @@ namespace E_Commerce_Cooperatives.Models
                     if (maxPrice.HasValue)
                         command.Parameters.AddWithValue("@MaxPrice", maxPrice.Value);
                     
+                    if (minRating.HasValue)
+                        command.Parameters.AddWithValue("@MinRating", minRating.Value);
+
                     if (estEnVedette.HasValue)
                         command.Parameters.AddWithValue("@EstEnVedette", estEnVedette.Value);
                     if (estNouveau.HasValue)
@@ -246,7 +296,7 @@ namespace E_Commerce_Cooperatives.Models
             return produits;
         }
 
-        public int GetProduitsCount(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null, string search = null, decimal? minPrice = null, decimal? maxPrice = null, List<int> cooperativeIds = null, bool inStockOnly = false)
+        public int GetProduitsCount(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null, string search = null, decimal? minPrice = null, decimal? maxPrice = null, List<int> cooperativeIds = null, bool inStockOnly = false, int? minRating = null)
         {
             int count = 0;
             using (var connection = new SqlConnection(connectionString))
@@ -276,6 +326,13 @@ namespace E_Commerce_Cooperatives.Models
 
                 if (inStockOnly)
                     query += " AND p.StockTotal > 0";
+                
+                if (minRating.HasValue)
+                {
+                    query += @" AND (SELECT AVG(CAST(Note AS FLOAT)) 
+                                     FROM AvisProduits 
+                                     WHERE ProduitId = p.ProduitId) >= @MinRating";
+                }
 
                 using (var command = new SqlCommand(query, connection))
                 {
@@ -291,6 +348,9 @@ namespace E_Commerce_Cooperatives.Models
                         command.Parameters.AddWithValue("@MinPrice", minPrice.Value);
                     if (maxPrice.HasValue)
                         command.Parameters.AddWithValue("@MaxPrice", maxPrice.Value);
+                    
+                    if (minRating.HasValue)
+                        command.Parameters.AddWithValue("@MinRating", minRating.Value);
 
                     count = (int)command.ExecuteScalar();
                 }

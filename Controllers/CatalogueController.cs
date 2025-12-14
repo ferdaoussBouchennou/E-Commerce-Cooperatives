@@ -9,7 +9,7 @@ namespace E_Commerce_Cooperatives.Controllers
 {
     public class CatalogueController : Controller
     {
-        public ActionResult Index(int? categorie, string search = null, string sort = "popular", int page = 1, decimal? minPrice = null, decimal? maxPrice = null, string coops = null, bool onlyAvailable = false)
+        public ActionResult Index(int? categorie, string search = null, string sort = "popular", int page = 1, decimal? minPrice = null, decimal? maxPrice = null, string coops = null, bool onlyAvailable = false, int? minRating = null)
         {
             int pageSize = 9;
 
@@ -22,11 +22,15 @@ namespace E_Commerce_Cooperatives.Controllers
                     cooperativeIds = coops.Split(',').Select(int.Parse).ToList();
                 }
 
+                // Get dynamic max and min price from DB
+                var dbMaxPrice = db.GetMaxPrice();
+                var dbMinPrice = db.GetMinPrice();
+
                 // Récupérer les produits pour la page actuelle
-                var produits = db.GetProduits(null, null, categorie, page, pageSize, search, sort, minPrice, maxPrice, cooperativeIds, onlyAvailable);
+                var produits = db.GetProduits(null, null, categorie, page, pageSize, search, sort, minPrice, maxPrice, cooperativeIds, onlyAvailable, minRating);
                 
                 // Récupérer le nombre total de produits pour cette catégorie
-                var totalProduits = db.GetProduitsCount(null, null, categorie, search, minPrice, maxPrice, cooperativeIds, onlyAvailable);
+                var totalProduits = db.GetProduitsCount(null, null, categorie, search, minPrice, maxPrice, cooperativeIds, onlyAvailable, minRating);
                 
                 // Calculer le nombre de pages
                 var totalPages = (int)Math.Ceiling((double)totalProduits / pageSize);
@@ -50,10 +54,13 @@ namespace E_Commerce_Cooperatives.Controllers
                 ViewBag.SelectedCategorie = categorie;
                 ViewBag.SearchTerm = search;
                 ViewBag.CurrentSort = sort;
-                ViewBag.MinPrice = minPrice;
-                ViewBag.MaxPrice = maxPrice;
+                ViewBag.MinPrice = minPrice ?? dbMinPrice; // Use selected or default DB min
+                ViewBag.MaxPrice = maxPrice ?? dbMaxPrice; // Use selected or default DB max
+                ViewBag.GlobalMaxPrice = dbMaxPrice; // Pass global max for slider attributes
+                ViewBag.GlobalMinPrice = dbMinPrice; // Pass global min for slider attributes
                 ViewBag.SelectedCoops = cooperativeIds;
                 ViewBag.OnlyAvailable = onlyAvailable;
+                ViewBag.MinRating = minRating;
                 ViewBag.CurrentPage = page;
                 ViewBag.TotalPages = totalPages;
                 
