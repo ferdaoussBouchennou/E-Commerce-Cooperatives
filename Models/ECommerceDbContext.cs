@@ -86,6 +86,33 @@ namespace E_Commerce_Cooperatives.Models
             return cooperatives;
         }
 
+        public Dictionary<int, int> GetProductCountsByCooperative()
+        {
+            var counts = new Dictionary<int, int>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT CooperativeId, COUNT(*) as ProductCount 
+                    FROM Produits 
+                    WHERE EstDisponible = 1 AND CooperativeId IS NOT NULL
+                    GROUP BY CooperativeId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var cooperativeId = reader.GetInt32(0);
+                            var count = reader.GetInt32(1);
+                            counts[cooperativeId] = count;
+                        }
+                    }
+                }
+            }
+            return counts;
+        }
+
         public decimal GetMaxPrice()
         {
             decimal maxPrice = 1500; // Default fallback

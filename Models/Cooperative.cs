@@ -32,6 +32,9 @@ namespace E_Commerce_Cooperatives.Models
         
         public virtual ICollection<Produit> Produits { get; set; }
         
+        // Propriété calculée pour la vue (non mappée à la base de données)
+        public int ProductCount { get; set; }
+        
         public Cooperative()
         {
             Produits = new HashSet<Produit>();

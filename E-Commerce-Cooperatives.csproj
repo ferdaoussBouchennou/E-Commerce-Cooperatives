@@ -238,6 +238,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\CatalogueController.cs" />
+    <Compile Include="Controllers\CooperativesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Models\AvisProduit.cs" />
     <Compile Include="Models\Categorie.cs" />
@@ -304,6 +305,7 @@
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Catalogue\Index.cshtml" />
+    <Content Include="Views\Cooperatives\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

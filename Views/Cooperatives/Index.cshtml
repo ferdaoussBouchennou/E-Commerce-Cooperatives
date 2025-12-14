@@ -1,0 +1,303 @@
+@using E_Commerce_Cooperatives.Models
+@{
+    ViewBag.Title = "Nos Coopératives - CoopShop";
+    var cooperatives = ViewBag.Cooperatives as List<Cooperative>;
+    var searchTerm = ViewBag.SearchTerm as string;
+    var totalCooperatives = ViewBag.TotalCooperatives != null ? (int)ViewBag.TotalCooperatives : 0;
+    var totalProducts = ViewBag.TotalProducts != null ? (int)ViewBag.TotalProducts : 0;
+    var uniqueRegions = ViewBag.UniqueRegions != null ? (int)ViewBag.UniqueRegions : 0;
+}
+
+@Html.Partial("_Header")
+
+<main>
+    <!-- Hero Section - Asymmetric design -->
+    <section class="cooperatives-hero position-relative overflow-hidden">
+        <div class="cooperatives-hero-bg position-absolute top-0 start-0 w-100 h-100" style="background-color: #E8DCC2;"></div>
+        <div class="cooperatives-hero-diagonal position-absolute top-0 end-0 w-50 h-100 d-none d-lg-block" style="background-color: #305C7D; clip-path: polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%);"></div>
+        
+        <div class="container position-relative py-5 py-md-5" style="min-height: 500px;">
+            <div class="row align-items-center h-100">
+                <!-- Left content -->
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <div class="d-inline-flex align-items-center gap-2 mb-3" style="color: #C06C50; font-size: 0.875rem; font-weight: 500;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62 62 0 0 1 5.072.56"/>
+                            <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+                        </svg>
+                        <span>Commerce équitable & solidaire</span>
+                    </div>
+                    
+                    <h1 class="display-3 fw-bold mb-4" style="color: #305C7D; line-height: 1.2;">
+                        Rencontrez nos<br />
+                        <span style="color: #305C7D;">Coopératives</span>
+                    </h1>
+                    
+                    <p class="lead mb-4" style="color: #5a6c7d; max-width: 500px;">
+                        Des femmes passionnées qui perpétuent les traditions artisanales 
+                        marocaines avec fierté et excellence.
+                    </p>
+
+                    <!-- Search -->
+                    <form method="get" action="@Url.Action("Index", "Cooperatives")" class="cooperative-search-form">
+                        <div class="position-relative d-flex align-items-center" style="max-width: 400px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#5a6c7d" class="position-absolute" style="left: 16px; top: 50%; transform: translateY(-50%); z-index: 10; pointer-events: none;" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                            </svg>
+                            <input type="text" 
+                                   name="search" 
+                                   id="cooperative-search-input"
+                                   value="@searchTerm" 
+                                   placeholder="Rechercher..." 
+                                   class="form-control ps-5 pe-5 py-3" 
+                                   style="background-color: white; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;"
+                                   onfocus="this.style.borderColor='#305C7D';"
+                                   onblur="this.style.borderColor='#e0e0e0';"
+                                   onkeypress="if(event.key === 'Enter') { this.form.submit(); }">
+                            <button type="submit" class="btn position-absolute" style="right: 8px; background: transparent; border: none; padding: 8px; z-index: 10;" title="Rechercher">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#305C7D" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right - Stats cards -->
+                <div class="col-lg-6">
+                    <div class="row g-3 g-md-4">
+                        <div class="col-4">
+                            <div class="cooperative-stat-card text-center p-4 rounded-3" style="background-color: white; border: 1px solid #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                <p class="display-6 fw-bold mb-1" style="color: #305C7D; font-size: 2.5rem;">
+                                    @totalCooperatives
+                                </p>
+                                <p class="small mb-0" style="color: #5a6c7d; font-size: 0.875rem;">
+                                    Coopératives
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="cooperative-stat-card text-center p-4 rounded-3" style="background-color: #C06C50; color: white; transform: translateY(-16px); box-shadow: 0 4px 12px rgba(192, 108, 80, 0.3);">
+                                <p class="display-6 fw-bold mb-1" style="color: white; font-size: 2.5rem;">
+                                    @totalProducts
+                                </p>
+                                <p class="small mb-0" style="color: rgba(255,255,255,0.9); font-size: 0.875rem;">
+                                    Produits
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="cooperative-stat-card text-center p-4 rounded-3" style="background-color: white; border: 1px solid #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                <p class="display-6 fw-bold mb-1" style="color: #305C7D; font-size: 2.5rem;">
+                                    @uniqueRegions
+                                </p>
+                                <p class="small mb-0" style="color: #5a6c7d; font-size: 0.875rem;">
+                                    Régions
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cooperatives Grid -->
+    <section class="py-5" style="background-color: #F5F3EF;">
+        <div class="container">
+            @if (cooperatives != null && cooperatives.Any())
+            {
+                <div class="row g-4">
+                    @{ int index = 0; }
+                    @foreach (var coop in cooperatives)
+                    {
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Index", "Catalogue", new { coops = coop.CooperativeId.ToString() })" 
+                               class="cooperative-card text-decoration-none d-block" 
+                               data-coop-id="@coop.CooperativeId">
+                                <article class="position-relative p-4 rounded-3 border-2 h-100 transition-all" 
+                                         style="border-color: #e0e0e0; background-color: white; transition: all 0.3s ease;">
+                                    <!-- Number badge -->
+                                    <div class="position-absolute rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm" 
+                                         style="width: 40px; height: 40px; background-color: #305C7D; top: -12px; left: -12px; font-size: 1.125rem;">
+                                        @String.Format("{0:D2}", index + 1)
+                                    </div>
+
+                                    <div class="ps-3">
+                                        <!-- Header -->
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div class="flex-grow-1">
+                                                <h2 class="h4 fw-semibold mb-2 cooperative-card-title" style="color: #2d3748;">
+                                                    @coop.Nom
+                                                </h2>
+                                                @if (!string.IsNullOrEmpty(coop.Ville))
+                                                {
+                                                    <p class="d-flex align-items-center gap-1 small mb-0" style="color: #7D8453;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path fill-rule="evenodd" d="M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-9zm1 1v7h8V7h-8z"/>
+                                                            <path d="M6.878.392a.5.5 0 0 1 .224 0l3 1a.5.5 0 0 1 .098.044l2.5.5a.5.5 0 0 1 .47.47l.5 2.5a.5.5 0 0 1 .044.098l1 3a.5.5 0 0 1 0 .224l-1 3a.5.5 0 0 1-.044.098l-.5 2.5a.5.5 0 0 1-.47.47l-2.5.5a.5.5 0 0 1-.098.044l-3 1a.5.5 0 0 1-.224 0l-3-1a.5.5 0 0 1-.098-.044l-2.5-.5a.5.5 0 0 1-.47-.47l-.5-2.5a.5.5 0 0 1-.044-.098l-1-3a.5.5 0 0 1 0-.224l1-3a.5.5 0 0 1 .044-.098l.5-2.5a.5.5 0 0 1 .47-.47l2.5-.5a.5.5 0 0 1 .098-.044zM7.5 1.308l-2 .667-.667 2-.667 2.5-.667 2.5.667 2.5.667 2.5.667 2 2 .667 2-.667.667-2 .667-2.5.667-2.5-.667-2.5-.667-2.5-.667-2z"/>
+                                                            <path d="M8 4.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5m0 4a.5.5 0 1 1 0 1 .5.5 0 0 1 0-1"/>
+                                                        </svg>
+                                                        @coop.Ville
+                                                    </p>
+                                                }
+                                            </div>
+                                            <div class="cooperative-card-arrow rounded-circle d-flex align-items-center justify-content-center" 
+                                                 style="width: 40px; height: 40px; background-color: #E8DCC2; color: #5a6c7d; flex-shrink: 0; transition: all 0.3s ease;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <!-- Description -->
+                                        @if (!string.IsNullOrEmpty(coop.Description))
+                                        {
+                                            <p class="small mb-3 text-muted" style="line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                                @coop.Description
+                                            </p>
+                                        }
+
+                                        <!-- Footer -->
+                                        <div class="d-flex align-items-center gap-4 pt-3 border-top" style="border-color: #e0e0e0;">
+                                            @if (!string.IsNullOrEmpty(coop.Telephone))
+                                            {
+                                                <span class="d-flex align-items-center gap-1 small" style="color: #5a6c7d;">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                        <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122L9.65 11.21a.678.678 0 0 1-.195-.302l-.792-2.207a.68.68 0 0 0-.122-.58L6.884 4.515a.678.678 0 0 0-.58-.122L4.198 4.72a.68.68 0 0 0-.302.195l-1.794 2.307a.678.678 0 0 0-.063 1.015z"/>
+                                                    </svg>
+                                                    @coop.Telephone
+                                                </span>
+                                            }
+                                            <span class="d-flex align-items-center gap-1 small fw-medium" style="color: #305C7D;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M8.186 1.113a.5.5 0 0 0-.372.664L9.5 5.5v8.5a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V5.5L7.186 1.777a.5.5 0 0 0-.372-.664zm-1.5.5L5.5 5.5v8.5h3V5.5L6.686 1.613z"/>
+                                                    <path d="M1.5 0a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm0 3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/>
+                                                </svg>
+                                                @coop.ProductCount produits
+                                            </span>
+                                        </div>
+                                    </div>
+                                </article>
+                            </a>
+                        </div>
+                        index++;
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <p class="text-muted mb-4" style="font-size: 1.125rem;">
+                        Aucune coopérative trouvée pour "@searchTerm"
+                    </p>
+                    <a href="@Url.Action("Index", "Cooperatives")" class="btn btn-outline-primary">
+                        Réinitialiser
+                    </a>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="py-5 text-white" style="background-color: #305C7D;">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8 mb-3 mb-md-0">
+                    <h2 class="h3 fw-bold mb-2">
+                        Prêt à découvrir nos produits ?
+                    </h2>
+                    <p class="mb-0" style="color: rgba(255,255,255,0.8);">
+                        Explorez notre catalogue de produits artisanaux authentiques
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="@Url.Action("Index", "Catalogue")" class="btn btn-lg px-4" style="background-color: #C06C50; color: white; border: none;">
+                        Voir le catalogue
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+@Html.Partial("_Footer")
+
+@section scripts {
+    <script>
+        // Hover effects for cooperative cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.cooperative-card');
+            
+            cards.forEach(card => {
+                const article = card.querySelector('article');
+                const arrow = card.querySelector('.cooperative-card-arrow');
+                const title = card.querySelector('.cooperative-card-title');
+                
+                card.addEventListener('mouseenter', function() {
+                    article.style.borderColor = '#C06C50';
+                    article.style.backgroundColor = '#F5F3EF';
+                    article.style.boxShadow = '0 4px 12px rgba(192, 108, 80, 0.15)';
+                    if (arrow) {
+                        arrow.style.backgroundColor = '#C06C50';
+                        arrow.style.color = 'white';
+                        arrow.style.transform = 'translateX(4px)';
+                    }
+                    if (title) {
+                        title.style.color = '#305C7D';
+                    }
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    article.style.borderColor = '#e0e0e0';
+                    article.style.backgroundColor = 'white';
+                    article.style.boxShadow = 'none';
+                    if (arrow) {
+                        arrow.style.backgroundColor = '#E8DCC2';
+                        arrow.style.color = '#5a6c7d';
+                        arrow.style.transform = 'translateX(0)';
+                    }
+                    if (title) {
+                        title.style.color = '#2d3748';
+                    }
+                });
+            });
+            
+            // Recherche avec touche Entrée
+            const searchInput = document.getElementById('cooperative-search-input');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.form.submit();
+                    }
+                });
+            }
+        });
+    </script>
+}
+
+<style>
+    .cooperatives-hero {
+        min-height: 500px;
+    }
+    
+    
+    .cooperative-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .cooperative-card:hover {
+        text-decoration: none;
+        transform: translateY(-4px);
+    }
+    
+    .cooperative-search-form input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(48, 92, 125, 0.1);
+    }
+</style>
+
