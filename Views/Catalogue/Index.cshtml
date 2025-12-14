@@ -401,16 +401,6 @@
                         </div>
                     </div>
 
-                    <!-- Availability -->
-                    <div class="mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="onlyAvailable" value="true" id="only-available" @(ViewBag.OnlyAvailable == true ? "checked" : "") onchange="this.form.submit()" />
-                            <label class="form-check-label cursor-pointer" for="only-available">
-                                <span class="small fw-medium">En stock uniquement</span>
-                            </label>
-                        </div>
-                    </div>
-
                     <!-- Clear Filters -->
                     <a href="@Url.Action("Index", "Catalogue")" class="btn btn-outline-secondary w-100">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle me-2" viewBox="0 0 16 16">
