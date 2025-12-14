@@ -1,0 +1,256 @@
+@using E_Commerce_Cooperatives.Models
+@{
+    ViewBag.Title = "Catalogue - CoopShop";
+    var produits = ViewBag.Produits as List<Produit> ?? new List<Produit>();
+    var categories = ViewBag.Categories as List<Categorie> ?? new List<Categorie>();
+    var cooperatives = ViewBag.Cooperatives as List<Cooperative> ?? new List<Cooperative>();
+    var productCountByCategory = ViewBag.ProductCountByCategory as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var selectedCategorie = ViewBag.SelectedCategorie as int?;
+}
+
+@Html.Partial("_Header")
+
+<main style="min-height: calc(100vh - 200px);">
+    <div class="container py-5">
+        <!-- Page Header -->
+        <div class="mb-4">
+            <h1 class="display-5 fw-bold mb-2">
+                @if (selectedCategorie.HasValue)
+                {
+                    var selectedCat = categories.FirstOrDefault(c => c.CategorieId == selectedCategorie.Value);
+                    @(selectedCat?.Nom ?? "Catalogue")
+                }
+                else
+                {
+                    <text>Catalogue</text>
+                }
+            </h1>
+            <p class="text-muted">
+                <span id="product-count">@produits.Count</span> produit@(produits.Count > 1 ? "s" : "") trouvé@(produits.Count > 1 ? "s" : "")
+            </p>
+        </div>
+
+        <!-- Search & Controls -->
+        <div class="row mb-4">
+            <div class="col-12 col-md-8 col-lg-9 mb-3 mb-md-0">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                    </span>
+                    <input type="search" id="search-input" class="form-control border-0 bg-light" placeholder="Rechercher un produit..." />
+                </div>
+            </div>
+            <div class="col-12 col-md-4 col-lg-3">
+                <select id="sort-select" class="form-select border-0 bg-light">
+                    <option value="popular">Popularité</option>
+                    <option value="newest">Nouveautés</option>
+                    <option value="price-asc">Prix croissant</option>
+                    <option value="price-desc">Prix décroissant</option>
+                    <option value="rating">Meilleures notes</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Mobile Filter Button -->
+        <div class="mb-4 d-lg-none">
+            <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel me-2" viewBox="0 0 16 16">
+                    <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>
+                </svg>
+                Filtres
+            </button>
+        </div>
+
+        <div class="row">
+            <!-- Desktop Sidebar Filters -->
+            <aside class="col-lg-3 d-none d-lg-block">
+                <div class="bg-white rounded-3 p-4 shadow-sm sticky-top" style="top: 100px;">
+                    <h3 class="h5 fw-bold mb-4">Filtres</h3>
+                    
+                    <!-- Price Range -->
+                    <div class="mb-4">
+                        <h4 class="h6 fw-semibold mb-3">Prix (MAD)</h4>
+                        <div class="px-2">
+                            <input type="range" class="form-range" id="price-range-min" min="0" max="1500" step="10" value="0" />
+                            <input type="range" class="form-range" id="price-range-max" min="0" max="1500" step="10" value="1500" />
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <span class="small text-muted" id="price-min">0 MAD</span>
+                            <span class="small text-muted" id="price-max">1500 MAD</span>
+                        </div>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="mb-4">
+                        <h4 class="h6 fw-semibold mb-3">Catégories</h4>
+                        <div class="filter-categories">
+                            @foreach (var category in categories)
+                            {
+                                var count = productCountByCategory.ContainsKey(category.CategorieId) ? productCountByCategory[category.CategorieId] : 0;
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input filter-category" type="checkbox" value="@category.CategorieId" id="cat-@category.CategorieId" 
+                                           @(selectedCategorie == category.CategorieId ? "checked" : "") />
+                                    <label class="form-check-label w-100 d-flex justify-content-between cursor-pointer" for="cat-@category.CategorieId">
+                                        <span class="small">@category.Nom</span>
+                                        <span class="small text-muted">(@count)</span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Cooperatives -->
+                    <div class="mb-4">
+                        <h4 class="h6 fw-semibold mb-3">Coopératives</h4>
+                        <div class="filter-cooperatives" style="max-height: 300px; overflow-y: auto;">
+                            @foreach (var cooperative in cooperatives)
+                            {
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input filter-cooperative" type="checkbox" value="@cooperative.CooperativeId" id="coop-@cooperative.CooperativeId" />
+                                    <label class="form-check-label cursor-pointer" for="coop-@cooperative.CooperativeId">
+                                        <span class="small">@cooperative.Nom</span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Availability -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="only-available" />
+                            <label class="form-check-label cursor-pointer" for="only-available">
+                                <span class="small fw-medium">En stock uniquement</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Clear Filters -->
+                    <button type="button" class="btn btn-outline-secondary w-100" id="clear-filters">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle me-2" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                        Effacer les filtres
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Mobile Offcanvas Filters -->
+            <div class="offcanvas offcanvas-start" tabindex="-1" id="filterOffcanvas">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title">Filtres</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <!-- Price Range -->
+                    <div class="mb-4">
+                        <h4 class="h6 fw-semibold mb-3">Prix (MAD)</h4>
+                        <div class="px-2">
+                            <input type="range" class="form-range" id="price-range-min-mobile" min="0" max="1500" step="10" value="0" />
+                            <input type="range" class="form-range" id="price-range-max-mobile" min="0" max="1500" step="10" value="1500" />
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <span class="small text-muted" id="price-min-mobile">0 MAD</span>
+                            <span class="small text-muted" id="price-max-mobile">1500 MAD</span>
+                        </div>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="mb-4">
+                        <h4 class="h6 fw-semibold mb-3">Catégories</h4>
+                        <div class="filter-categories-mobile">
+                            @foreach (var category in categories)
+                            {
+                                var count = productCountByCategory.ContainsKey(category.CategorieId) ? productCountByCategory[category.CategorieId] : 0;
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input filter-category-mobile" type="checkbox" value="@category.CategorieId" id="cat-mobile-@category.CategorieId" 
+                                           @(selectedCategorie == category.CategorieId ? "checked" : "") />
+                                    <label class="form-check-label w-100 d-flex justify-content-between cursor-pointer" for="cat-mobile-@category.CategorieId">
+                                        <span class="small">@category.Nom</span>
+                                        <span class="small text-muted">(@count)</span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Cooperatives -->
+                    <div class="mb-4">
+                        <h4 class="h6 fw-semibold mb-3">Coopératives</h4>
+                        <div class="filter-cooperatives-mobile" style="max-height: 300px; overflow-y: auto;">
+                            @foreach (var cooperative in cooperatives)
+                            {
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input filter-cooperative-mobile" type="checkbox" value="@cooperative.CooperativeId" id="coop-mobile-@cooperative.CooperativeId" />
+                                    <label class="form-check-label cursor-pointer" for="coop-mobile-@cooperative.CooperativeId">
+                                        <span class="small">@cooperative.Nom</span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Availability -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="only-available-mobile" />
+                            <label class="form-check-label cursor-pointer" for="only-available-mobile">
+                                <span class="small fw-medium">En stock uniquement</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Clear Filters -->
+                    <button type="button" class="btn btn-outline-secondary w-100" id="clear-filters-mobile">
+                        Effacer les filtres
+                    </button>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="col-lg-9">
+                <div id="products-container">
+                    @if (produits.Any())
+                    {
+                        <div class="row g-4" id="products-grid">
+                            @foreach (var produit in produits)
+                            {
+                                <div class="col-sm-6 col-xl-4 product-item" 
+                                     data-produit-id="@produit.ProduitId"
+                                     data-categorie-id="@(produit.CategorieId ?? 0)"
+                                     data-cooperative-id="@(produit.CooperativeId ?? 0)"
+                                     data-prix="@produit.Prix"
+                                     data-note="@produit.NoteMoyenne"
+                                     data-nombre-avis="@produit.NombreAvis"
+                                     data-est-nouveau="@(produit.EstNouveau ? "true" : "false")"
+                                     data-est-disponible="@(produit.EstDisponible ? "true" : "false")"
+                                     data-stock="@produit.StockTotal"
+                                     data-nom="@produit.Nom.ToLower()"
+                                     data-description="@(produit.Description ?? "").ToLower()">
+                                    @Html.Partial("_ProductCard", produit)
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <p class="text-muted mb-4">Aucun produit ne correspond à vos critères</p>
+                            <button type="button" class="btn btn-outline-secondary" id="reset-filters-btn">Réinitialiser les filtres</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@Html.Partial("_Footer")
+
+@section scripts {
+    <script src="~/Scripts/catalogue.js"></script>
+}
+

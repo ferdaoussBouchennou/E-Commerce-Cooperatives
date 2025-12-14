@@ -27,7 +27,7 @@
                     Soutenez l'économie solidaire tout en vous faisant plaisir.
                 </p>
                 <div class="d-flex flex-wrap gap-3">
-                    <a href="#catalogue" class="btn btn-accent btn-lg px-4 py-3">
+                    <a href="@Url.Action("Index", "Catalogue")" class="btn btn-accent btn-lg px-4 py-3">
                         Explorer le catalogue
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
@@ -112,7 +112,7 @@
                         <h2 class="display-5 fw-bold mb-2">Nos Catégories</h2>
                         <p class="text-muted">Explorez notre sélection de produits artisanaux</p>
                     </div>
-                    <a href="#catalogue" class="btn btn-link text-decoration-none d-none d-md-inline-flex align-items-center">
+                    <a href="@Url.Action("Index", "Catalogue")" class="btn btn-link text-decoration-none d-none d-md-inline-flex align-items-center">
                         Voir tout
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
@@ -124,7 +124,7 @@
                     @foreach (var category in categories.Take(4))
                     {
                         <div class="col-md-6 col-lg-3">
-                            <a href="#catalogue?categorie=@category.CategorieId" class="category-card text-decoration-none">
+                            <a href="@Url.Action("Index", "Catalogue", new { categorie = category.CategorieId })" class="category-card text-decoration-none">
                                 <div class="position-relative overflow-hidden rounded-3" style="aspect-ratio: 3/2;">
                                     <img src="@(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
                                          alt="@category.Nom" 
@@ -162,7 +162,7 @@
                         <h2 class="display-5 fw-bold mb-2">Produits Vedettes</h2>
                         <p class="text-muted">Les coups de cœur de nos clients</p>
                     </div>
-                    <a href="#catalogue" class="btn btn-link text-decoration-none d-none d-md-inline-flex align-items-center">
+                    <a href="@Url.Action("Index", "Catalogue")" class="btn btn-link text-decoration-none d-none d-md-inline-flex align-items-center">
                         Voir tout
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>

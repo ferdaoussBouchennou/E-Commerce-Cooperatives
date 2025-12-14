@@ -54,6 +54,38 @@ namespace E_Commerce_Cooperatives.Models
             return categories;
         }
 
+        public List<Cooperative> GetCooperatives()
+        {
+            var cooperatives = new List<Cooperative>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT CooperativeId, Nom, Description, Adresse, Ville, Telephone, Logo, EstActive, DateCreation FROM Cooperatives WHERE EstActive = 1 ORDER BY Nom";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            cooperatives.Add(new Cooperative
+                            {
+                                CooperativeId = reader.GetInt32(0),
+                                Nom = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                Adresse = reader.IsDBNull(3) ? null : reader.GetString(3),
+                                Ville = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                Telephone = reader.IsDBNull(5) ? null : reader.GetString(5),
+                                Logo = reader.IsDBNull(6) ? null : reader.GetString(6),
+                                EstActive = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
+                            });
+                        }
+                    }
+                }
+            }
+            return cooperatives;
+        }
+
         public List<Produit> GetProduits(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null)
         {
             var produits = new List<Produit>();
