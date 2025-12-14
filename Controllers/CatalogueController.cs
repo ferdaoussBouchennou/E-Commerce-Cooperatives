@@ -9,18 +9,20 @@ namespace E_Commerce_Cooperatives.Controllers
 {
     public class CatalogueController : Controller
     {
-        public ActionResult Index(int? categorie)
+        public ActionResult Index(int? categorie, int page = 1)
         {
+            int pageSize = 9;
+
             using (var db = new ECommerceDbContext())
             {
-                // Récupérer tous les produits disponibles
-                var produits = db.GetProduits();
+                // Récupérer les produits pour la page actuelle
+                var produits = db.GetProduits(null, null, categorie, page, pageSize);
                 
-                // Si une catégorie est spécifiée dans l'URL, filtrer
-                if (categorie.HasValue)
-                {
-                    produits = produits.Where(p => p.CategorieId == categorie.Value).ToList();
-                }
+                // Récupérer le nombre total de produits pour cette catégorie
+                var totalProduits = db.GetProduitsCount(null, null, categorie);
+                
+                // Calculer le nombre de pages
+                var totalPages = (int)Math.Ceiling((double)totalProduits / pageSize);
                 
                 // Récupérer les catégories pour les filtres
                 var categories = db.GetCategories();
@@ -39,6 +41,8 @@ namespace E_Commerce_Cooperatives.Controllers
                 ViewBag.Cooperatives = cooperatives;
                 ViewBag.ProductCountByCategory = productCountByCategory;
                 ViewBag.SelectedCategorie = categorie;
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
                 
                 // Vérifier si l'utilisateur est authentifié
                 ViewBag.IsAuthenticated = Session["UserId"] != null || Session["ClientId"] != null;

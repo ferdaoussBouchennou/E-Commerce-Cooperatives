@@ -371,3 +371,24 @@ select,
 textarea {
     max-width: 100%;
 }
+
+/* Pagination Styling */
+.page-link {
+    color: var(--terracota-calido);
+}
+
+.page-link:hover {
+    color: var(--azul-profundo);
+    background-color: var(--background-warm);
+    border-color: var(--background-warm);
+}
+
+.page-item.active .page-link {
+    background-color: var(--terracota-calido);
+    border-color: var(--terracota-calido);
+    color: white;
+}
+
+.page-item.disabled .page-link {
+    color: var(--text-muted);
+}

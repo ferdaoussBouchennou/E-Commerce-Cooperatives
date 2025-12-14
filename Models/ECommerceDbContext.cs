@@ -86,7 +86,7 @@ namespace E_Commerce_Cooperatives.Models
             return cooperatives;
         }
 
-        public List<Produit> GetProduits(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null)
+        public List<Produit> GetProduits(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null, int page = 1, int pageSize = 9)
         {
             var produits = new List<Produit>();
             using (var connection = new SqlConnection(connectionString))
@@ -110,10 +110,12 @@ namespace E_Commerce_Cooperatives.Models
                 if (categorieId.HasValue)
                     query += " AND p.CategorieId = @CategorieId";
 
-                query += " ORDER BY p.DateCreation DESC";
+                query += " ORDER BY p.DateCreation DESC OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
 
                 using (var command = new SqlCommand(query, connection))
                 {
+                    command.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
+                    command.Parameters.AddWithValue("@PageSize", pageSize);
                     if (estEnVedette.HasValue)
                         command.Parameters.AddWithValue("@EstEnVedette", estEnVedette.Value);
                     if (estNouveau.HasValue)
@@ -179,6 +181,36 @@ namespace E_Commerce_Cooperatives.Models
             }
 
             return produits;
+        }
+
+        public int GetProduitsCount(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null)
+        {
+            int count = 0;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT COUNT(*) FROM Produits p WHERE p.EstDisponible = 1";
+
+                if (estEnVedette.HasValue)
+                    query += " AND p.EstEnVedette = @EstEnVedette";
+                if (estNouveau.HasValue)
+                    query += " AND p.EstNouveau = @EstNouveau";
+                if (categorieId.HasValue)
+                    query += " AND p.CategorieId = @CategorieId";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    if (estEnVedette.HasValue)
+                        command.Parameters.AddWithValue("@EstEnVedette", estEnVedette.Value);
+                    if (estNouveau.HasValue)
+                        command.Parameters.AddWithValue("@EstNouveau", estNouveau.Value);
+                    if (categorieId.HasValue)
+                        command.Parameters.AddWithValue("@CategorieId", categorieId.Value);
+
+                    count = (int)command.ExecuteScalar();
+                }
+            }
+            return count;
         }
 
         private List<ImageProduit> GetImagesProduit(int produitId)
