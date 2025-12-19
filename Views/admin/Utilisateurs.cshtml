@@ -1,0 +1,423 @@
+@model List<E_Commerce_Cooperatives.Models.Utilisateur>
+@{
+    ViewBag.Title = "Gestion des Utilisateurs";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+    
+    var stats = ViewBag.Stats as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var searchTerm = ViewBag.SearchTerm as string ?? "";
+    var typeFilter = ViewBag.TypeFilter as string ?? "all";
+    var estActifFilter = ViewBag.EstActifFilter as string ?? "all";
+}
+
+<div class="admin-page">
+    <div class="admin-page-header">
+        <h1 class="admin-page-title">Gestion des Utilisateurs</h1>
+        <p class="admin-page-subtitle">Gérez les comptes utilisateurs et leurs profils</p>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="admin-filters">
+        <form method="get" action="@Url.Action("Utilisateurs", "Admin")" class="filter-form">
+            <div class="filters-row">
+                <div class="search-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="search-icon">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
+                    <input type="text" name="searchTerm" class="form-control search-input" placeholder="Rechercher par nom, prénom ou email..." value="@searchTerm" />
+                </div>
+                <div class="status-filter-wrapper">
+                    <select name="typeFilter" class="status-filter">
+                        <option value="all" @(typeFilter == "all" ? "selected" : "")>Tous les types</option>
+                        <option value="Client" @(typeFilter == "Client" ? "selected" : "")>Clients</option>
+                        <option value="Admin" @(typeFilter == "Admin" ? "selected" : "")>Administrateurs</option>
+                    </select>
+                </div>
+                <div class="status-filter-wrapper">
+                    <select name="estActifFilter" class="status-filter">
+                        <option value="all" @(estActifFilter == "all" ? "selected" : "")>Tous les statuts</option>
+                        <option value="actif" @(estActifFilter == "actif" ? "selected" : "")>Actifs</option>
+                        <option value="inactif" @(estActifFilter == "inactif" ? "selected" : "")>Inactifs</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter-apply">Appliquer</button>
+                    <a href="@Url.Action("Utilisateurs", "Admin")" class="btn-filter-reset">Réinitialiser</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-cards">
+        <div class="stat-card stat-total">
+            <div class="stat-value">@(stats.ContainsKey("Total") ? stats["Total"] : 0)</div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card stat-pending">
+            <div class="stat-value">@(stats.ContainsKey("Clients") ? stats["Clients"] : 0)</div>
+            <div class="stat-label">Clients</div>
+        </div>
+        <div class="stat-card stat-preparation">
+            <div class="stat-value">@(stats.ContainsKey("Admins") ? stats["Admins"] : 0)</div>
+            <div class="stat-label">Administrateurs</div>
+        </div>
+        <div class="stat-card stat-shipped">
+            <div class="stat-value">@(stats.ContainsKey("Actifs") ? stats["Actifs"] : 0)</div>
+            <div class="stat-label">Actifs</div>
+        </div>
+        <div class="stat-card stat-delivered">
+            <div class="stat-value">@(stats.ContainsKey("Inactifs") ? stats["Inactifs"] : 0)</div>
+            <div class="stat-label">Inactifs</div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="admin-table-container">
+        <table class="table admin-table">
+            <thead>
+                <tr>
+                    <th>Nom & Prénom</th>
+                    <th>Email</th>
+                    <th>Type</th>
+                    <th>Téléphone</th>
+                    <th>Date d'inscription</th>
+                    <th>Dernière connexion</th>
+                    <th>Statut</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                @foreach (var utilisateur in Model)
+                {
+                    <tr class="user-row" data-user-id="@utilisateur.UtilisateurId">
+                        <td>
+                            <div class="client-info">
+                                @if (utilisateur.Client != null)
+                                {
+                                    <a href="#" class="client-name" onclick="showUserDetails(@utilisateur.UtilisateurId); return false;">
+                                        @(utilisateur.Client.Prenom ?? "") @(utilisateur.Client.Nom ?? "")
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="client-name">@utilisateur.Email</span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="client-email">@utilisateur.Email</div>
+                        </td>
+                        <td>
+                            <span class="badge badge-type badge-@(utilisateur.TypeUtilisateur?.ToLower() ?? "client")">
+                                @utilisateur.TypeUtilisateur
+                            </span>
+                        </td>
+                        <td>
+                            @if (utilisateur.Client != null && !string.IsNullOrEmpty(utilisateur.Client.Telephone))
+                            {
+                                <span>@utilisateur.Client.Telephone</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </td>
+                        <td>@utilisateur.DateCreation.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (utilisateur.Client != null && utilisateur.Client.DerniereConnexion.HasValue)
+                            {
+                                <span>@utilisateur.Client.DerniereConnexion.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Jamais</span>
+                            }
+                        </td>
+                        <td>
+                            @if (utilisateur.Client != null)
+                            {
+                                var isActive = utilisateur.Client.EstActif;
+                                <span class="badge badge-status @(isActive ? "badge-actif" : "badge-inactif")">
+                                    @(isActive ? "Actif" : "Inactif")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-status badge-actif">Actif</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="user-actions">
+                                @if (utilisateur.Client != null)
+                                {
+                                    <button class="btn-action" onclick="showUserDetails(@utilisateur.UtilisateurId)" title="Voir les détails">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="btn-action btn-toggle-status" 
+                                            onclick="toggleUserStatus(@utilisateur.Client.ClientId, @(utilisateur.Client.EstActif ? "false" : "true"))" 
+                                            title="@(utilisateur.Client.EstActif ? "Désactiver" : "Activer")">
+                                        @if (utilisateur.Client.EstActif)
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+                                            </svg>
+                                        }
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn-action" onclick="showUserDetails(@utilisateur.UtilisateurId)" title="Voir les détails">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                                        </svg>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1" role="dialog" aria-labelledby="userDetailsModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userDetailsModalLabel">Profil Utilisateur</h5>
+                <button type="button" class="close" onclick="closeUserModal()" aria-label="Close" style="border: none; background: none; font-size: 1.5rem; cursor: pointer; color: #666; padding: 0; margin-left: auto; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                    <span aria-hidden="true" style="font-size: 1.5rem; line-height: 1;">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="userDetailsContent">
+                <div style="text-align: center; padding: 20px;">
+                    <p>Chargement des détails...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function showUserDetails(utilisateurId) {
+            if (!utilisateurId || utilisateurId <= 0) {
+                alert('Erreur : ID utilisateur invalide');
+                return;
+            }
+            
+            var url = '@Url.Action("GetUtilisateurDetails", "Admin")';
+            
+            $('#userDetailsContent').html('<div style="text-align: center; padding: 40px;"><p>Chargement des détails...</p></div>');
+            
+            $.get(url, { id: utilisateurId })
+                .done(function (data) {
+                    if (!data) {
+                        alert('Erreur : Impossible de charger les détails de l\'utilisateur');
+                        return;
+                    }
+                
+                    var html = '<div class="user-details">';
+                    
+                    // Informations générales
+                    html += '<div class="row mb-4">';
+                    html += '<div class="col-md-6 mb-3 mb-md-0">';
+                    html += '<div class="detail-card">';
+                    html += '<h6 class="detail-title">Informations du compte</h6>';
+                    html += '<p class="mb-1"><strong>Email:</strong> ' + (data.Email || 'N/A') + '</p>';
+                    html += '<p class="mb-1"><strong>Type:</strong> ' + (data.TypeUtilisateur || 'N/A') + '</p>';
+                    html += '<p class="mb-1"><strong>Date de création:</strong> ' + (data.DateCreation ? new Date(data.DateCreation).toLocaleDateString('fr-FR') : 'N/A') + '</p>';
+                    html += '</div>';
+                    html += '</div>';
+                    
+                    if (data.Client) {
+                        html += '<div class="col-md-6">';
+                        html += '<div class="detail-card">';
+                        html += '<h6 class="detail-title">Informations personnelles</h6>';
+                        html += '<p class="mb-1"><strong>Nom complet:</strong> ' + (data.Client.NomComplet || 'N/A') + '</p>';
+                        html += '<p class="mb-1"><strong>Téléphone:</strong> ' + (data.Client.Telephone || 'N/A') + '</p>';
+                        if (data.Client.DateNaissance) {
+                            html += '<p class="mb-1"><strong>Date de naissance:</strong> ' + new Date(data.Client.DateNaissance).toLocaleDateString('fr-FR') + '</p>';
+                        }
+                        html += '<p class="mb-1"><strong>Statut:</strong> <span class="badge badge-status ' + (data.Client.EstActif ? 'badge-actif' : 'badge-inactif') + '">' + (data.Client.EstActif ? 'Actif' : 'Inactif') + '</span></p>';
+                        if (data.Client.DerniereConnexion) {
+                            html += '<p class="mb-1"><strong>Dernière connexion:</strong> ' + new Date(data.Client.DerniereConnexion).toLocaleString('fr-FR') + '</p>';
+                        }
+                        html += '</div>';
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
+                    
+                    // Adresses (si client)
+                    if (data.Client && data.Client.Adresses && data.Client.Adresses.length > 0) {
+                        html += '<div class="user-addresses-section">';
+                        html += '<h6 class="detail-title mb-3">Adresses (' + data.Client.Adresses.length + ')</h6>';
+                        html += '<div class="addresses-list">';
+                        
+                        data.Client.Adresses.forEach(function(address) {
+                            html += '<div class="address-card">';
+                            html += '<div class="address-header">';
+                            if (address.EstParDefaut) {
+                                html += '<span class="badge badge-default">Par défaut</span>';
+                            }
+                            html += '</div>';
+                            html += '<p class="mb-1"><strong>' + (address.AdresseComplete || 'N/A') + '</strong></p>';
+                            html += '<p class="text-muted small mb-1">' + (address.Ville || '') + ', ' + (address.CodePostal || '') + '</p>';
+                            html += '<p class="text-muted small">' + (address.Pays || 'Maroc') + '</p>';
+                            html += '</div>';
+                        });
+                        
+                        html += '</div>';
+                        html += '</div>';
+                    } else if (data.Client) {
+                        html += '<div class="user-addresses-section">';
+                        html += '<h6 class="detail-title mb-3">Adresses</h6>';
+                        html += '<p class="text-muted">Aucune adresse enregistrée</p>';
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
+                    
+                    $('#userDetailsContent').html(html);
+                    
+                    // Ouvrir la modal
+                    var $modal = $('#userDetailsModal');
+                    $modal.removeClass('show');
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open');
+                    $('body').css({overflow: '', paddingRight: ''});
+                    
+                    setTimeout(function() {
+                        try {
+                            $modal.modal({
+                                backdrop: 'static',
+                                keyboard: false,
+                                show: true
+                            });
+                            
+                            $modal.addClass('show');
+                            $modal.css({
+                                'display': 'block',
+                                'padding-right': '0px'
+                            });
+                            
+                            $modal.off('click.modal-backdrop').on('click.modal-backdrop', function(e) {
+                                if ($(e.target).is('#userDetailsModal')) {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    return false;
+                                }
+                            });
+                            
+                            $modal.find('.modal-content').off('click').on('click', function(e) {
+                                e.stopPropagation();
+                            });
+                        } catch (error) {
+                            console.error('Erreur lors de l\'ouverture de la modal:', error);
+                            $modal.addClass('show');
+                            $modal.css('display', 'block');
+                            $('body').addClass('modal-open');
+                            if ($('.modal-backdrop').length === 0) {
+                                $('body').append('<div class="modal-backdrop fade show"></div>');
+                            }
+                        }
+                    }, 100);
+                })
+                .fail(function(xhr, status, error) {
+                    console.error('Erreur lors du chargement des détails:', error);
+                    alert('Erreur : Impossible de charger les détails de l\'utilisateur. Veuillez réessayer.');
+                });
+        }
+        
+        function closeUserModal() {
+            var $modal = $('#userDetailsModal');
+            
+            if ($modal.length === 0) {
+                return;
+            }
+            
+            $modal.modal('hide');
+            
+            setTimeout(function() {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                $('body').css({
+                    overflow: '',
+                    paddingRight: ''
+                });
+                
+                $modal.removeClass('show');
+                $modal.css('display', 'none');
+            }, 300);
+        }
+        
+        function toggleUserStatus(clientId, newStatus) {
+            if (!clientId || clientId <= 0) {
+                alert('Erreur : ID client invalide');
+                return;
+            }
+            
+            var isActivating = newStatus === 'true' || newStatus === true;
+            var confirmMessage = isActivating 
+                ? 'Êtes-vous sûr de vouloir activer ce compte ?'
+                : 'Êtes-vous sûr de vouloir désactiver ce compte ?';
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            $.post('@Url.Action("UpdateClientStatus", "Admin")', { 
+                clientId: clientId, 
+                estActif: isActivating 
+            }, function (result) {
+                if (result && result.success) {
+                    alert('✅ ' + result.message);
+                    location.reload();
+                } else {
+                    var errorMsg = result && result.message ? result.message : 'Erreur lors de la mise à jour';
+                    alert('❌ Erreur : ' + errorMsg);
+                }
+            }).fail(function(xhr, status, error) {
+                var errorMessage = 'Une erreur est survenue lors de la mise à jour du statut';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                alert('❌ Erreur : ' + errorMessage);
+            });
+        }
+        
+        // Empêcher la fermeture de la modal au clic sur le backdrop
+        $(document).on('click', '#userDetailsModal', function(e) {
+            if ($(e.target).is('#userDetailsModal')) {
+                e.stopPropagation();
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        $(document).on('click', '#userDetailsModal .modal-content', function(e) {
+            e.stopPropagation();
+        });
+        
+        $('#userDetailsModal').on('hidden.bs.modal', function() {
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+            $('body').css({overflow: '', paddingRight: ''});
+        });
+    </script>
+}
+
