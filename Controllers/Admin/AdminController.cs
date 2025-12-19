@@ -81,14 +81,14 @@ namespace E_Commerce_Cooperatives.Controllers
                 ViewBag.CategorieFilter = categorieFilter;
                 ViewBag.StatutFilter = statutFilter;
 
-                return View(produits);
+                return View("Admin_Produit", produits);
             }
             catch (Exception ex)
             {
                 // Logger l'erreur
                 System.Diagnostics.Debug.WriteLine($"Erreur dans Produits: {ex.Message}");
                 TempData["ErrorMessage"] = "Erreur lors du chargement des produits";
-                return View(new List<Produit>());
+                return View("Admin_Produit", new List<Produit>());
             }
         }
 
