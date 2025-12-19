@@ -25,6 +25,87 @@ namespace E_Commerce_Cooperatives.Models
             }
         }
 
+        // Collection properties for LINQ support (used by AdminController)
+        public IQueryable<Produit> Produits
+        {
+            get
+            {
+                var produits = new List<Produit>();
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    var query = @"SELECT ProduitId, Nom, Description, Prix, ImageUrl, CategorieId, CooperativeId, 
+                                        StockTotal, SeuilAlerte, EstDisponible, EstEnVedette, EstNouveau, DateCreation, DateModification
+                                  FROM Produits";
+                    using (var command = new SqlCommand(query, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            produits.Add(new Produit
+                            {
+                                ProduitId = reader.GetInt32(0),
+                                Nom = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                Prix = reader.GetDecimal(3),
+                                ImageUrl = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                CategorieId = reader.IsDBNull(5) ? (int?)null : reader.GetInt32(5),
+                                CooperativeId = reader.IsDBNull(6) ? (int?)null : reader.GetInt32(6),
+                                StockTotal = reader.GetInt32(7),
+                                SeuilAlerte = reader.GetInt32(8),
+                                EstDisponible = reader.GetBoolean(9),
+                                EstEnVedette = reader.GetBoolean(10),
+                                EstNouveau = reader.GetBoolean(11),
+                                DateCreation = reader.GetDateTime(12),
+                                DateModification = reader.IsDBNull(13) ? (DateTime?)null : reader.GetDateTime(13)
+                            });
+                        }
+                    }
+                }
+                return produits.AsQueryable();
+            }
+        }
+
+        public IQueryable<Categorie> Categories
+        {
+            get { return GetCategories().AsQueryable(); }
+        }
+
+        public IQueryable<Cooperative> Cooperatives
+        {
+            get { return GetCooperatives().AsQueryable(); }
+        }
+
+        public IQueryable<CommandeItem> CommandeItems
+        {
+            get
+            {
+                var items = new List<CommandeItem>();
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    var query = "SELECT CommandeItemId, CommandeId, ProduitId, VarianteId, Quantite, PrixUnitaire FROM CommandeItems";
+                    using (var command = new SqlCommand(query, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            items.Add(new CommandeItem
+                            {
+                                CommandeItemId = reader.GetInt32(0),
+                                CommandeId = reader.GetInt32(1),
+                                ProduitId = reader.GetInt32(2),
+                                VarianteId = reader.IsDBNull(3) ? (int?)null : reader.GetInt32(3),
+                                Quantite = reader.GetInt32(4),
+                                PrixUnitaire = reader.GetDecimal(5)
+                            });
+                        }
+                    }
+                }
+                return items.AsQueryable();
+            }
+        }
+
         public List<Categorie> GetCategories()
         {
             var categories = new List<Categorie>();
@@ -1358,6 +1439,198 @@ namespace E_Commerce_Cooperatives.Models
                     return command.ExecuteNonQuery() > 0;
                 }
             }
+        }
+
+        // ============================================
+        // CRUD METHODS FOR ADMINCONTROLLER SUPPORT
+        // ============================================
+
+        // Temporary storage for pending changes (simulating EF change tracking)
+        private List<Produit> _produitsToAdd = new List<Produit>();
+        private List<Produit> _produitsToRemove = new List<Produit>();
+        private Dictionary<int, Produit> _produitsToUpdate = new Dictionary<int, Produit>();
+
+        public class DbSetWrapper<T> where T : class
+        {
+            private ECommerceDbContext _context;
+            private Func<ECommerceDbContext, IQueryable<T>> _getter;
+            private Action<T> _adder;
+
+            public DbSetWrapper(ECommerceDbContext context, Func<ECommerceDbContext, IQueryable<T>> getter, Action<T> adder)
+            {
+                _context = context;
+                _getter = getter;
+                _adder = adder;
+            }
+
+            public void Add(T entity)
+            {
+                _adder(entity);
+            }
+
+            public void Remove(T entity)
+            {
+                if (entity is Produit produit)
+                {
+                    _context._produitsToRemove.Add(produit);
+                }
+            }
+
+            public T Find(params object[] keyValues)
+            {
+                if (typeof(T) == typeof(Produit) && keyValues.Length > 0 && keyValues[0] is int id)
+                {
+                    return _context.FindProduit(id) as T;
+                }
+                return null;
+            }
+
+            public IQueryable<T> Include(string navigationProperty)
+            {
+                // For simplicity, just return the queryable - navigation properties will be loaded separately
+                return _getter(_context);
+            }
+        }
+
+        // Expose Produits as a DbSet-like wrapper
+        private DbSetWrapper<Produit> _produitsWrapper;
+        public DbSetWrapper<Produit> ProduitsSet
+        {
+            get
+            {
+                if (_produitsWrapper == null)
+                {
+                    _produitsWrapper = new DbSetWrapper<Produit>(
+                        this,
+                        ctx => ctx.Produits,
+                        produit => _produitsToAdd.Add(produit)
+                    );
+                }
+                return _produitsWrapper;
+            }
+        }
+
+        public Produit FindProduit(int id)
+        {
+            Produit produit = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"SELECT ProduitId, Nom, Description, Prix, ImageUrl, CategorieId, CooperativeId, 
+                                    StockTotal, SeuilAlerte, EstDisponible, EstEnVedette, EstNouveau, DateCreation, DateModification
+                              FROM Produits WHERE ProduitId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            produit = new Produit
+                            {
+                                ProduitId = reader.GetInt32(0),
+                                Nom = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                Prix = reader.GetDecimal(3),
+                                ImageUrl = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                CategorieId = reader.IsDBNull(5) ? (int?)null : reader.GetInt32(5),
+                                CooperativeId = reader.IsDBNull(6) ? (int?)null : reader.GetInt32(6),
+                                StockTotal = reader.GetInt32(7),
+                                SeuilAlerte = reader.GetInt32(8),
+                                EstDisponible = reader.GetBoolean(9),
+                                EstEnVedette = reader.GetBoolean(10),
+                                EstNouveau = reader.GetBoolean(11),
+                                DateCreation = reader.GetDateTime(12),
+                                DateModification = reader.IsDBNull(13) ? (DateTime?)null : reader.GetDateTime(13)
+                            };
+                        }
+                    }
+                }
+            }
+            return produit;
+        }
+
+        public void SaveChanges()
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                // Add new products
+                foreach (var produit in _produitsToAdd)
+                {
+                    var query = @"INSERT INTO Produits (Nom, Description, Prix, ImageUrl, CategorieId, CooperativeId, 
+                                                        StockTotal, SeuilAlerte, EstDisponible, EstEnVedette, EstNouveau, DateCreation)
+                                  VALUES (@Nom, @Description, @Prix, @ImageUrl, @CategorieId, @CooperativeId, 
+                                          @StockTotal, @SeuilAlerte, @EstDisponible, @EstEnVedette, @EstNouveau, @DateCreation)";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Nom", produit.Nom);
+                        command.Parameters.AddWithValue("@Description", (object)produit.Description ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@Prix", produit.Prix);
+                        command.Parameters.AddWithValue("@ImageUrl", (object)produit.ImageUrl ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@CategorieId", (object)produit.CategorieId ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@CooperativeId", (object)produit.CooperativeId ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@StockTotal", produit.StockTotal);
+                        command.Parameters.AddWithValue("@SeuilAlerte", produit.SeuilAlerte);
+                        command.Parameters.AddWithValue("@EstDisponible", produit.EstDisponible);
+                        command.Parameters.AddWithValue("@EstEnVedette", produit.EstEnVedette);
+                        command.Parameters.AddWithValue("@EstNouveau", produit.EstNouveau);
+                        command.Parameters.AddWithValue("@DateCreation", produit.DateCreation);
+                        command.ExecuteNonQuery();
+                    }
+                }
+
+                // Update existing products
+                foreach (var kvp in _produitsToUpdate)
+                {
+                    var produit = kvp.Value;
+                    var query = @"UPDATE Produits SET Nom = @Nom, Description = @Description, Prix = @Prix, 
+                                                      ImageUrl = @ImageUrl, CategorieId = @CategorieId, CooperativeId = @CooperativeId,
+                                                      StockTotal = @StockTotal, SeuilAlerte = @SeuilAlerte, EstDisponible = @EstDisponible,
+                                                      EstEnVedette = @EstEnVedette, EstNouveau = @EstNouveau, DateModification = @DateModification
+                                  WHERE ProduitId = @ProduitId";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@ProduitId", produit.ProduitId);
+                        command.Parameters.AddWithValue("@Nom", produit.Nom);
+                        command.Parameters.AddWithValue("@Description", (object)produit.Description ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@Prix", produit.Prix);
+                        command.Parameters.AddWithValue("@ImageUrl", (object)produit.ImageUrl ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@CategorieId", (object)produit.CategorieId ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@CooperativeId", (object)produit.CooperativeId ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@StockTotal", produit.StockTotal);
+                        command.Parameters.AddWithValue("@SeuilAlerte", produit.SeuilAlerte);
+                        command.Parameters.AddWithValue("@EstDisponible", produit.EstDisponible);
+                        command.Parameters.AddWithValue("@EstEnVedette", produit.EstEnVedette);
+                        command.Parameters.AddWithValue("@EstNouveau", produit.EstNouveau);
+                        command.Parameters.AddWithValue("@DateModification", (object)produit.DateModification ?? DBNull.Value);
+                        command.ExecuteNonQuery();
+                    }
+                }
+
+                // Remove products
+                foreach (var produit in _produitsToRemove)
+                {
+                    var query = "DELETE FROM Produits WHERE ProduitId = @ProduitId";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@ProduitId", produit.ProduitId);
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+
+            // Clear pending changes
+            _produitsToAdd.Clear();
+            _produitsToRemove.Clear();
+            _produitsToUpdate.Clear();
+        }
+
+        // Method to track updates to existing products
+        public void UpdateProduit(Produit produit)
+        {
+            _produitsToUpdate[produit.ProduitId] = produit;
         }
 
         public void Dispose()

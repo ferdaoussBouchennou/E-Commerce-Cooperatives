@@ -248,6 +248,7 @@
     <Compile Include="Controllers\CooperativesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ProduitController.cs" />
+    <Compile Include="Models\AdminController.cs" />
     <Compile Include="Models\Adresse.cs" />
     <Compile Include="Models\AvisProduit.cs" />
     <Compile Include="Models\Categorie.cs" />
@@ -308,6 +309,7 @@
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Scripts\site.js" />
     <Content Include="Scripts\admin.js" />
+    <Content Include="style\Admin_Produits.css" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -328,6 +330,7 @@
     <Content Include="Views\Admin\_AdminLayout.cshtml" />
     <Content Include="Views\Admin\_ViewStart.cshtml" />
     <Content Include="Views\Admin\Commandes.cshtml" />
+    <Content Include="Views\Admin\Admin_Produit.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

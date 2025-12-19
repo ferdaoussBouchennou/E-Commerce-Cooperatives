@@ -1,0 +1,339 @@
+﻿@model List<E_Commerce_Cooperatives.Models.Produit>
+@{
+    ViewBag.Title = "Gestion des Produits";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+
+    var stats = ViewBag.Stats as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var searchTerm = ViewBag.SearchTerm as string ?? "";
+    var categorieFilter = ViewBag.CategorieFilter as string ?? "all";
+    var statutFilter = ViewBag.StatutFilter as string ?? "all";
+}
+
+<div class="admin-page">
+    <!-- En-tête de page -->
+    <div class="admin-page-header">
+        <div>
+            <h1 class="admin-page-title">Gestion des Produits</h1>
+            <p class="admin-page-subtitle">Gérez votre catalogue de produits</p>
+        </div>
+        <div>
+            <a href="@Url.Action("AjouterProduit", "Admin")" class="btn-primary-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
+                </svg>
+                Ajouter un produit
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres de recherche -->
+    <div class="admin-filters">
+        <form method="get" action="@Url.Action("Produits", "Admin")" class="filter-form">
+            <div class="filters-row">
+                <!-- Barre de recherche -->
+                <div class="search-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="search-icon">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                    </svg>
+                    <input type="text" name="searchTerm" class="form-control search-input"
+                           placeholder="Rechercher un produit..." value="@searchTerm" />
+                </div>
+
+                <!-- Filtre par catégorie -->
+                <div class="filter-select-wrapper">
+                    <select name="categorieFilter" class="filter-select">
+                        <option value="all" @(categorieFilter == "all" ? "selected" : "")>Toutes les catégories</option>
+                        <option value="1" @(categorieFilter == "1" ? "selected" : "")>Cosmétiques</option>
+                        <option value="2" @(categorieFilter == "2" ? "selected" : "")>Alimentaire</option>
+                        <option value="3" @(categorieFilter == "3" ? "selected" : "")>Poterie & Céramique</option>
+                        <option value="4" @(categorieFilter == "4" ? "selected" : "")>Textiles & Vannerie</option>
+                    </select>
+                </div>
+
+                <!-- Filtre par statut -->
+                <div class="filter-select-wrapper">
+                    <select name="statutFilter" class="filter-select">
+                        <option value="all" @(statutFilter == "all" ? "selected" : "")>Tous les statuts</option>
+                        <option value="disponible" @(statutFilter == "disponible" ? "selected" : "")>Disponible</option>
+                        <option value="vedette" @(statutFilter == "vedette" ? "selected" : "") ">En vedette</option>
+                        <option value="stock-faible" @(statutFilter == "stock-faible" ? "selected" : "") ">Stock faible</option>
+                    </select>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter-apply">Appliquer</button>
+                    <a href="@Url.Action("Produits", "Admin")" class="btn-filter-reset">Réinitialiser</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="stats-cards">
+        <div class="stat-card stat-total">
+            <div class="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6z" />
+                </svg>
+            </div>
+            <div>
+                <div class="stat-value">@(stats.ContainsKey("Total") ? stats["Total"] : 0)</div>
+                <div class="stat-label">Total produits</div>
+            </div>
+        </div>
+
+        <div class="stat-card stat-disponible">
+            <div class="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
+                </svg>
+            </div>
+            <div>
+                <div class="stat-value">@(stats.ContainsKey("Disponibles") ? stats["Disponibles"] : 0)</div>
+                <div class="stat-label">Disponibles</div>
+            </div>
+        </div>
+
+        <div class="stat-card stat-vedette">
+            <div class="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
+                </svg>
+            </div>
+            <div>
+                <div class="stat-value">@(stats.ContainsKey("EnVedette") ? stats["EnVedette"] : 0)</div>
+                <div class="stat-label">En vedette</div>
+            </div>
+        </div>
+
+        <div class="stat-card stat-stock-faible">
+            <div class="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057z" />
+                </svg>
+            </div>
+            <div>
+                <div class="stat-value">@(stats.ContainsKey("StockFaible") ? stats["StockFaible"] : 0)</div>
+                <div class="stat-label">Stock faible</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des produits -->
+    <div class="admin-table-container">
+        <table class="table admin-table products-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;"></th>
+                    <th>Produit</th>
+                    <th>Catégorie</th>
+                    <th>Prix</th>
+                    <th>Stock</th>
+                    <th>Statut</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="productsTableBody">
+                @foreach (var produit in Model)
+                {
+                    var stockClass = produit.StockTotal <= produit.SeuilAlerte ? "stock-faible" : "stock-ok";
+                    var disponibleClass = produit.EstDisponible ? "dispo" : "indisponible";
+
+                    <tr class="product-row">
+                        <td>
+                            <div class="product-image-thumb">
+                                @if (!string.IsNullOrEmpty(produit.ImageUrl))
+                                {
+                                    <img src="@Url.Content(produit.ImageUrl)" alt="@produit.Nom" />
+                                }
+                                else
+                                {
+                                    <div class="no-image">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
+                                            <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z" />
+                                        </svg>
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="product-info">
+                                <div class="product-name">@produit.Nom</div>
+                                @if (produit.Cooperative != null)
+                                {
+                                    <div class="product-cooperative">@produit.Cooperative.Nom</div>
+                                }
+                                <div class="product-badges">
+                                    @if (produit.EstEnVedette)
+                                    {
+                                        <span class="badge badge-vedette">Vedette</span>
+                                    }
+                                    @if (produit.EstNouveau)
+                                    {
+                                        <span class="badge badge-nouveau">Nouveau</span>
+                                    }
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            @if (produit.Categorie != null)
+                            {
+                                <span class="badge badge-categorie badge-cat-@produit.CategorieId">
+                                    @produit.Categorie.Nom
+                                </span>
+                            }
+                        </td>
+                        <td class="product-price">@produit.Prix.ToString("0.00") MAD</td>
+                        <td>
+                            <span class="badge badge-stock badge-@stockClass">
+                                @produit.StockTotal
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-status badge-@disponibleClass">
+                                @if (produit.EstDisponible)
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
+                                    </svg>
+                                    <text>Dispo</text>
+                                }
+                                else
+                                {
+                                    <text>Indisponible</text>
+                                }
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="action-buttons">
+                                <button class="btn-action btn-view" onclick="viewProduct(@produit.ProduitId)" title="Voir">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
+                                    </svg>
+                                </button>
+                                <a href="@Url.Action("ModifierProduit", "Admin", new { id = produit.ProduitId })" class="btn-action btn-edit" title="Modifier">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
+                                    </svg>
+                                </a>
+                                <button class="btn-action btn-delete" onclick="deleteProduct(@produit.ProduitId, '@produit.Nom')" title="Supprimer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div id="productsPagination" class="products-pagination" style="display: none;">
+            <!-- Pagination controls will be inserted here by JavaScript -->
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        // Pagination - 6 produits par page
+        var productsPerPage = 6;
+        var currentPage = 1;
+        var totalPages = 1;
+
+        $(document).ready(function() {
+            initializePagination();
+        });
+
+        function initializePagination() {
+            var allRows = $('.product-row');
+            var totalProducts = allRows.length;
+            totalPages = Math.ceil(totalProducts / productsPerPage);
+
+            if (totalPages > 1) {
+                $('#productsPagination').show();
+                createPagination();
+            }
+
+            renderPage(1);
+        }
+
+        function renderPage(page) {
+            var allRows = $('.product-row');
+            var start = (page - 1) * productsPerPage;
+            var end = start + productsPerPage;
+
+            allRows.hide();
+            allRows.slice(start, end).show();
+
+            currentPage = page;
+            updatePaginationControls();
+        }
+
+        function createPagination() {
+            var html = '<div class="pagination-controls">' +
+                '<button class="btn-pagination btn-prev" onclick="changePage(-1)" disabled>' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">' +
+                '<path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>' +
+                '</svg></button>' +
+                '<div class="pagination-pages">';
+
+            for (var i = 1; i <= totalPages; i++) {
+                html += '<button class="btn-page' + (i === 1 ? ' active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+            }
+
+            html += '</div>' +
+                '<button class="btn-pagination btn-next" onclick="changePage(1)">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">' +
+                '<path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>' +
+                '</svg></button>' +
+                '</div>';
+
+            $('#productsPagination').html(html);
+        }
+
+        function changePage(direction) {
+            var newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                renderPage(newPage);
+            }
+        }
+
+        function goToPage(page) {
+            if (page >= 1 && page <= totalPages) {
+                renderPage(page);
+            }
+        }
+
+        function updatePaginationControls() {
+            $('.btn-prev').prop('disabled', currentPage === 1);
+            $('.btn-next').prop('disabled', currentPage === totalPages);
+            $('.btn-page').removeClass('active');
+            $('.btn-page').eq(currentPage - 1).addClass('active');
+        }
+
+        function viewProduct(id) {
+            window.location.href = '@Url.Action("DetailsProduit", "Admin")?id=' + id;
+        }
+
+        function deleteProduct(id, nom) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer le produit "' + nom + '" ?')) {
+                $.post('@Url.Action("SupprimerProduit", "Admin")', { id: id }, function(result) {
+                    if (result.success) {
+                        alert('Produit supprimé avec succès');
+                        location.reload();
+                    } else {
+                        alert('Erreur: ' + result.message);
+                    }
+                }).fail(function() {
+                    alert('Erreur lors de la suppression');
+                });
+            }
+        }
+    </script>
+}
