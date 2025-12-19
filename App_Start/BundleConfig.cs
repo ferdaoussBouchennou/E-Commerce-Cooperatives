@@ -1,4 +1,4 @@
-﻿using System.Web;
+using System.Web;
 using System.Web.Optimization;
 
 namespace E_Commerce_Cooperatives
@@ -29,6 +29,12 @@ namespace E_Commerce_Cooperatives
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       "~/Content/bootstrap.css",
                       "~/Content/site.css"));
+
+            bundles.Add(new StyleBundle("~/Content/admin").Include(
+                      "~/Content/admin.css"));
+
+            bundles.Add(new ScriptBundle("~/bundles/admin").Include(
+                      "~/Scripts/admin.js"));
         }
     }
 }
