@@ -212,7 +212,7 @@
                                         data-variant-price="@variantPrice"
                                         data-variant-stock="@variant.Stock"
                                         style="border: 2px solid #e0e0e0; background-color: white; color: #2d3748; transition: all 0.3s;"
-                                        onclick="selectVariant(this, @variant.VarianteId, @variantPrice, @variant.Stock)">
+                                        onclick="selectVariant(this, @variant.VarianteId, '@variantPrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)', @variant.Stock)">
                                     @(variant.Taille ?? variant.Couleur ?? "Standard")
                                     @if (variant.PrixSupplementaire > 0)
                                     {
@@ -397,9 +397,9 @@
     <script>
         let currentQuantity = 1;
         let selectedVariantId = null;
-        let selectedVariantPrice = @produit.Prix;
+        let selectedVariantPrice = @produit.Prix.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
         let selectedVariantStock = @(variantes.Any() ? variantes.First().Stock : produit.StockTotal);
-        const basePrice = @produit.Prix;
+        const basePrice = @produit.Prix.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
         const productId = @produit.ProduitId;
 
         function changeMainImage(imageSrc, element) {

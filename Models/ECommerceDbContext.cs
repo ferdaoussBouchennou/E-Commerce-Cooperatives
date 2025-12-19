@@ -491,10 +491,18 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = @"SELECT VarianteId, Taille, Couleur, Stock, PrixSupplementaire, SKU, EstDisponible, DateCreation
-                             FROM Variantes 
-                             WHERE ProduitId = @ProduitId AND EstDisponible = 1
-                             ORDER BY Taille, Couleur";
+                var query = @"SELECT v.VarianteId, v.Taille, v.Couleur, 
+                                    (v.Stock - ISNULL((
+                                        SELECT SUM(ci.Quantite) 
+                                        FROM CommandeItems ci 
+                                        INNER JOIN Commandes cmd ON ci.CommandeId = cmd.CommandeId 
+                                        WHERE ci.VarianteId = v.VarianteId 
+                                        AND cmd.Statut != 'Annulée'
+                                    ), 0)) as Stock, 
+                                    v.PrixSupplementaire, v.SKU, v.EstDisponible, v.DateCreation
+                             FROM Variantes v
+                             WHERE v.ProduitId = @ProduitId AND v.EstDisponible = 1
+                             ORDER BY v.Taille, v.Couleur";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@ProduitId", produitId);
@@ -528,7 +536,15 @@ namespace E_Commerce_Cooperatives.Models
                 connection.Open();
                 var query = @"
                     SELECT p.ProduitId, p.Nom, p.Description, p.Prix, p.ImageUrl, p.CategorieId, p.CooperativeId, 
-                           p.StockTotal, p.SeuilAlerte, p.EstDisponible, p.EstEnVedette, p.EstNouveau,
+                           (p.StockTotal - ISNULL((
+                                SELECT SUM(ci.Quantite) 
+                                FROM CommandeItems ci 
+                                INNER JOIN Commandes cmd ON ci.CommandeId = cmd.CommandeId 
+                                WHERE ci.ProduitId = p.ProduitId 
+                                AND ci.VarianteId IS NULL 
+                                AND cmd.Statut != 'Annulée'
+                           ), 0)) as StockTotal, 
+                           p.SeuilAlerte, p.EstDisponible, p.EstEnVedette, p.EstNouveau,
                            p.DateCreation, p.DateModification,
                            c.CategorieId, c.Nom as CategorieNom, c.Description as CategorieDescription,
                            coop.CooperativeId, coop.Nom as CooperativeNom, coop.Description as CooperativeDescription,
