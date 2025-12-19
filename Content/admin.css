@@ -883,19 +883,112 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 }
 
 /* Modal styles - Matching image design */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    outline: 0;
+    background-color: transparent;
+}
+
+.modal.show {
+    display: block !important;
+    pointer-events: auto;
+}
+
+.modal.fade {
+    opacity: 0;
+    transition: opacity 0.15s linear;
+}
+
+.modal.fade.show {
+    opacity: 1;
+}
+
 .modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 1.75rem auto;
     max-width: 800px;
+    pointer-events: none;
+    z-index: 1051;
+}
+
+.modal-dialog.modal-lg {
+    max-width: 900px !important;
+    width: 900px !important;
+}
+
+@media (min-width: 992px) {
+    .modal-dialog.modal-lg {
+        max-width: 900px !important;
+        width: 900px !important;
+    }
+}
+
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
+}
+
+.modal.show .modal-dialog {
+    transform: none;
 }
 
 .modal-content {
-    border-radius: 8px;
-    border: none;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    pointer-events: auto;
     background-color: #ffffff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    outline: 0;
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+}
+
+.modal-lg .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.modal-lg .order-details {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.modal-lg .order-actions-section {
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1040;
+    width: 100vw;
+    height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+}
+
+.modal-backdrop.fade {
+    opacity: 0;
+    transition: opacity 0.15s linear;
+}
+
+.modal-backdrop.show {
+    opacity: 1;
 }
 
 .modal-header {
@@ -905,6 +998,23 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.modal-header .close {
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    appearance: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.modal-header .close:hover {
+    opacity: 1;
 }
 
 .modal-title {
@@ -928,12 +1038,24 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 }
 
 .modal-body {
+    position: relative;
+    flex: 1 1 auto;
     padding: 20px;
     background-color: #ffffff;
+    overflow-y: auto;
+    max-height: calc(100vh - 150px);
+}
+
+/* Empêcher le scroll du body quand la modal est ouverte */
+body.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important;
 }
 
 .order-details {
     padding: 0;
+    width: 100%;
+    max-width: 100%;
 }
 
 .order-details .row.mb-4 {
@@ -1235,10 +1357,20 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid var(--border-table);
-    display: flex;
+    display: flex !important;
     gap: 12px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start;
+    width: 100%;
+    flex-direction: row !important;
+}
+
+@media (min-width: 992px) {
+    .order-actions-section {
+        flex-wrap: nowrap !important;
+        flex-direction: row !important;
+    }
 }
 
 .btn-cancel-order {
@@ -1252,10 +1384,12 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     font-family: var(--font-sans);
     text-decoration: none;
+    flex-shrink: 0 !important;
+    min-width: auto;
 }
 
 .btn-cancel-order:hover {
@@ -1366,9 +1500,11 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
     font-size: 14px;
     text-decoration: none;
     transition: all 0.2s;
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     white-space: nowrap;
+    flex-shrink: 0 !important;
+    min-width: auto;
 }
 
 .btn-print:hover {
@@ -1464,6 +1600,11 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
     .admin-main {
         margin-left: 0;
     }
+    
+    .modal-dialog.modal-lg {
+        max-width: 95% !important;
+        width: 95% !important;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1499,6 +1640,18 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
         flex-direction: column;
     }
     
+    /* Sur les petits écrans, permettre le wrap */
+    .order-actions-section {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .order-actions-section .btn-cancel-order,
+    .order-actions-section .btn-print {
+        flex: 1 1 auto;
+        min-width: 140px;
+    }
+    
     .order-items-table td {
         display: block;
         width: 100% !important;
@@ -1508,6 +1661,19 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
     .order-item-price {
         text-align: left !important;
         margin-top: 8px;
+    }
+    
+    .modal-dialog.modal-lg {
+        max-width: calc(100% - 32px) !important;
+        width: calc(100% - 32px) !important;
+    }
+}
+
+/* Forcer nowrap sur les écrans moyens et grands */
+@media (min-width: 769px) {
+    .order-actions-section {
+        flex-wrap: nowrap !important;
+        flex-direction: row !important;
     }
 }
 
