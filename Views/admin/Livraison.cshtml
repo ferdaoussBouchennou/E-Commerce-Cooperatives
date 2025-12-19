@@ -32,7 +32,7 @@
                 </svg>
             </div>
             <div>
-                <div class="stat-value">7</div>
+                <div class="stat-value">@(stats.ContainsKey("TotalZones") ? stats["TotalZones"] : 0)</div>
                 <div class="stat-label">Zones couvertes</div>
             </div>
         </div>
@@ -115,10 +115,6 @@
                         <div style="margin-top: 12px;">
                             <span class="badge badge-inactive">Inactif</span>
                         </div>
-                    }
-                    @if (!mode.EstActif)
-                    {
-                        <span class="badge badge-inactive">Inactif</span>
                     }
                 </div>
             }
@@ -440,10 +436,7 @@
         function deleteMode(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce mode de livraison ?')) {
                 fetch('@Url.Action("DeleteModeLivraison", "Admin")?id=' + id, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
+                    method: 'POST'
                 })
                 .then(response => response.json())
                 .then(result => {
@@ -547,10 +540,7 @@
         function deleteZone(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer cette zone de livraison ?')) {
                 fetch('@Url.Action("DeleteZoneLivraison", "Admin")?id=' + id, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
+                    method: 'POST'
                 })
                 .then(response => response.json())
                 .then(result => {

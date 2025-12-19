@@ -607,11 +607,747 @@ namespace E_Commerce_Cooperatives.Models
             return produit;
         }
 
+        // ============================================
+        // GESTION DES COMMANDES
+        // ============================================
+
+        public List<Commande> GetCommandes(string searchTerm = null, string statutFilter = null, DateTime? dateFrom = null, DateTime? dateTo = null, decimal? montantMin = null, decimal? montantMax = null)
+        {
+            var commandes = new List<Commande>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT c.CommandeId, c.NumeroCommande, c.ClientId, c.AdresseId, c.ModeLivraisonId, 
+                           c.DateCommande, c.FraisLivraison, c.TotalHT, c.MontantTVA, c.TotalTTC, 
+                           c.Statut, c.Commentaire, c.DateAnnulation, c.RaisonAnnulation,
+                           cl.Nom, cl.Prenom, cl.Telephone, 
+                           u.Email,
+                           ml.Nom as ModeLivraisonNom
+                    FROM Commandes c
+                    INNER JOIN Clients cl ON c.ClientId = cl.ClientId
+                    INNER JOIN Utilisateurs u ON cl.UtilisateurId = u.UtilisateurId
+                    LEFT JOIN ModesLivraison ml ON c.ModeLivraisonId = ml.ModeLivraisonId
+                    WHERE 1=1";
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                    query += " AND (c.NumeroCommande LIKE @SearchTerm OR cl.Nom LIKE @SearchTerm OR cl.Prenom LIKE @SearchTerm OR u.Email LIKE @SearchTerm)";
+                
+                if (!string.IsNullOrEmpty(statutFilter) && statutFilter != "all")
+                    query += " AND c.Statut = @StatutFilter";
+                
+                if (dateFrom.HasValue)
+                    query += " AND c.DateCommande >= @DateFrom";
+                
+                if (dateTo.HasValue)
+                    query += " AND c.DateCommande <= @DateTo";
+                
+                if (montantMin.HasValue)
+                    query += " AND c.TotalTTC >= @MontantMin";
+                
+                if (montantMax.HasValue)
+                    query += " AND c.TotalTTC <= @MontantMax";
+
+                query += " ORDER BY c.DateCommande DESC";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    if (!string.IsNullOrEmpty(searchTerm))
+                        command.Parameters.AddWithValue("@SearchTerm", "%" + searchTerm + "%");
+                    if (!string.IsNullOrEmpty(statutFilter) && statutFilter != "all")
+                        command.Parameters.AddWithValue("@StatutFilter", statutFilter);
+                    if (dateFrom.HasValue)
+                        command.Parameters.AddWithValue("@DateFrom", dateFrom.Value);
+                    if (dateTo.HasValue)
+                        command.Parameters.AddWithValue("@DateTo", dateTo.Value);
+                    if (montantMin.HasValue)
+                        command.Parameters.AddWithValue("@MontantMin", montantMin.Value);
+                    if (montantMax.HasValue)
+                        command.Parameters.AddWithValue("@MontantMax", montantMax.Value);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            commandes.Add(new Commande
+                            {
+                                CommandeId = reader.GetInt32(0),
+                                NumeroCommande = reader.GetString(1),
+                                ClientId = reader.GetInt32(2),
+                                AdresseId = reader.GetInt32(3),
+                                ModeLivraisonId = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
+                                DateCommande = reader.GetDateTime(5),
+                                FraisLivraison = reader.GetDecimal(6),
+                                TotalHT = reader.GetDecimal(7),
+                                MontantTVA = reader.GetDecimal(8),
+                                TotalTTC = reader.GetDecimal(9),
+                                Statut = reader.IsDBNull(10) ? null : reader.GetString(10),
+                                Commentaire = reader.IsDBNull(11) ? null : reader.GetString(11),
+                                DateAnnulation = reader.IsDBNull(12) ? (DateTime?)null : reader.GetDateTime(12),
+                                RaisonAnnulation = reader.IsDBNull(13) ? null : reader.GetString(13),
+                                Client = new Client
+                                {
+                                    ClientId = reader.GetInt32(2),
+                                    Nom = reader.GetString(14),
+                                    Prenom = reader.GetString(15),
+                                    Telephone = reader.IsDBNull(16) ? null : reader.GetString(16),
+                                    Email = reader.GetString(17)
+                                },
+                                ModeLivraison = reader.IsDBNull(18) ? null : new ModeLivraison
+                                {
+                                    Nom = reader.GetString(18)
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Charger les adresses et items pour chaque commande
+            foreach (var commande in commandes)
+            {
+                commande.Adresse = GetAdresse(commande.AdresseId);
+                commande.Items = GetCommandeItems(commande.CommandeId);
+                commande.SuiviLivraison = GetLivraisonSuivi(commande.CommandeId);
+            }
+
+            return commandes;
+        }
+
+        public Commande GetCommandeDetails(int commandeId)
+        {
+            Commande commande = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT c.CommandeId, c.NumeroCommande, c.ClientId, c.AdresseId, c.ModeLivraisonId, 
+                           c.DateCommande, c.FraisLivraison, c.TotalHT, c.MontantTVA, c.TotalTTC, 
+                           c.Statut, c.Commentaire, c.DateAnnulation, c.RaisonAnnulation,
+                           cl.Nom, cl.Prenom, cl.Telephone, 
+                           u.Email,
+                           ml.ModeLivraisonId, ml.Nom as ModeLivraisonNom, ml.Description as ModeLivraisonDesc, ml.Tarif
+                    FROM Commandes c
+                    INNER JOIN Clients cl ON c.ClientId = cl.ClientId
+                    INNER JOIN Utilisateurs u ON cl.UtilisateurId = u.UtilisateurId
+                    LEFT JOIN ModesLivraison ml ON c.ModeLivraisonId = ml.ModeLivraisonId
+                    WHERE c.CommandeId = @CommandeId";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@CommandeId", commandeId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            commande = new Commande
+                            {
+                                CommandeId = reader.GetInt32(0),
+                                NumeroCommande = reader.GetString(1),
+                                ClientId = reader.GetInt32(2),
+                                AdresseId = reader.GetInt32(3),
+                                ModeLivraisonId = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
+                                DateCommande = reader.GetDateTime(5),
+                                FraisLivraison = reader.GetDecimal(6),
+                                TotalHT = reader.GetDecimal(7),
+                                MontantTVA = reader.GetDecimal(8),
+                                TotalTTC = reader.GetDecimal(9),
+                                Statut = reader.IsDBNull(10) ? null : reader.GetString(10),
+                                Commentaire = reader.IsDBNull(11) ? null : reader.GetString(11),
+                                DateAnnulation = reader.IsDBNull(12) ? (DateTime?)null : reader.GetDateTime(12),
+                                RaisonAnnulation = reader.IsDBNull(13) ? null : reader.GetString(13),
+                                Client = new Client
+                                {
+                                    ClientId = reader.GetInt32(2),
+                                    Nom = reader.GetString(14),
+                                    Prenom = reader.GetString(15),
+                                    Telephone = reader.IsDBNull(16) ? null : reader.GetString(16),
+                                    Email = reader.GetString(17)
+                                },
+                                ModeLivraison = reader.IsDBNull(18) ? null : new ModeLivraison
+                                {
+                                    ModeLivraisonId = reader.GetInt32(18),
+                                    Nom = reader.GetString(19),
+                                    Description = reader.IsDBNull(20) ? null : reader.GetString(20),
+                                    Tarif = reader.IsDBNull(21) ? 0 : reader.GetDecimal(21)
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+
+            if (commande != null)
+            {
+                commande.Adresse = GetAdresse(commande.AdresseId);
+                commande.Items = GetCommandeItems(commande.CommandeId);
+                commande.SuiviLivraison = GetLivraisonSuivi(commande.CommandeId);
+            }
+
+            return commande;
+        }
+
+        private Adresse GetAdresse(int adresseId)
+        {
+            Adresse adresse = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT AdresseId, ClientId, AdresseComplete, Ville, CodePostal, Pays, EstParDefaut, DateCreation FROM Adresses WHERE AdresseId = @AdresseId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@AdresseId", adresseId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            adresse = new Adresse
+                            {
+                                AdresseId = reader.GetInt32(0),
+                                ClientId = reader.GetInt32(1),
+                                AdresseComplete = reader.GetString(2),
+                                Ville = reader.GetString(3),
+                                CodePostal = reader.GetString(4),
+                                Pays = reader.IsDBNull(5) ? "Maroc" : reader.GetString(5),
+                                EstParDefaut = reader.GetBoolean(6),
+                                DateCreation = reader.GetDateTime(7)
+                            };
+                        }
+                    }
+                }
+            }
+            return adresse;
+        }
+
+        private List<CommandeItem> GetCommandeItems(int commandeId)
+        {
+            var items = new List<CommandeItem>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT ci.CommandeItemId, ci.CommandeId, ci.ProduitId, ci.VarianteId, ci.Quantite, ci.PrixUnitaire, ci.TotalLigne,
+                           p.Nom as ProduitNom, p.ImageUrl as ProduitImage
+                    FROM CommandeItems ci
+                    INNER JOIN Produits p ON ci.ProduitId = p.ProduitId
+                    WHERE ci.CommandeId = @CommandeId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@CommandeId", commandeId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            items.Add(new CommandeItem
+                            {
+                                CommandeItemId = reader.GetInt32(0),
+                                CommandeId = reader.GetInt32(1),
+                                ProduitId = reader.GetInt32(2),
+                                VarianteId = reader.IsDBNull(3) ? (int?)null : reader.GetInt32(3),
+                                Quantite = reader.GetInt32(4),
+                                PrixUnitaire = reader.GetDecimal(5),
+                                TotalLigne = reader.GetDecimal(6),
+                                Produit = new Produit
+                                {
+                                    ProduitId = reader.GetInt32(2),
+                                    Nom = reader.GetString(7),
+                                    ImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8)
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            return items;
+        }
+
+        private List<LivraisonSuivi> GetLivraisonSuivi(int commandeId)
+        {
+            var suivi = new List<LivraisonSuivi>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT SuiviId, CommandeId, Statut, Description, NumeroSuivi, DateStatut FROM LivraisonSuivi WHERE CommandeId = @CommandeId ORDER BY DateStatut DESC";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@CommandeId", commandeId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            suivi.Add(new LivraisonSuivi
+                            {
+                                SuiviId = reader.GetInt32(0),
+                                CommandeId = reader.GetInt32(1),
+                                Statut = reader.GetString(2),
+                                Description = reader.IsDBNull(3) ? null : reader.GetString(3),
+                                NumeroSuivi = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                DateStatut = reader.GetDateTime(5)
+                            });
+                        }
+                    }
+                }
+            }
+            return suivi;
+        }
+
+        public Dictionary<string, int> GetCommandeStats()
+        {
+            var stats = new Dictionary<string, int>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT 
+                        COUNT(*) as Total,
+                        SUM(CASE WHEN Statut = 'Validée' THEN 1 ELSE 0 END) as Validees,
+                        SUM(CASE WHEN Statut = 'Préparation' THEN 1 ELSE 0 END) as Preparation,
+                        SUM(CASE WHEN Statut = 'Expédiée' THEN 1 ELSE 0 END) as Expediees,
+                        SUM(CASE WHEN Statut = 'Livrée' THEN 1 ELSE 0 END) as Livrees,
+                        SUM(CASE WHEN Statut = 'Annulée' THEN 1 ELSE 0 END) as Annulees
+                    FROM Commandes";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            stats["Total"] = reader.GetInt32(0);
+                            stats["Validée"] = reader.GetInt32(1);
+                            stats["Préparation"] = reader.GetInt32(2);
+                            stats["Expédiée"] = reader.GetInt32(3);
+                            stats["Livrée"] = reader.GetInt32(4);
+                            stats["Annulée"] = reader.GetInt32(5);
+                        }
+                    }
+                }
+            }
+            return stats;
+        }
+
+        public bool UpdateCommandeStatut(int commandeId, string nouveauStatut)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "UPDATE Commandes SET Statut = @Statut WHERE CommandeId = @CommandeId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Statut", nouveauStatut);
+                    command.Parameters.AddWithValue("@CommandeId", commandeId);
+                    return command.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        public bool AnnulerCommande(int commandeId, string raisonAnnulation)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    
+                    // Vérifier d'abord si la commande existe
+                    var checkQuery = "SELECT COUNT(*) FROM Commandes WHERE CommandeId = @CommandeId";
+                    using (var checkCommand = new SqlCommand(checkQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@CommandeId", commandeId);
+                        var exists = (int)checkCommand.ExecuteScalar() > 0;
+                        if (!exists)
+                        {
+                            return false;
+                        }
+                    }
+                    
+                    // Mettre à jour la commande
+                    var query = "UPDATE Commandes SET Statut = 'Annulée', DateAnnulation = GETDATE(), RaisonAnnulation = @Raison WHERE CommandeId = @CommandeId";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        // Limiter la longueur de la raison à 500 caractères (taille de la colonne)
+                        var raison = raisonAnnulation ?? "";
+                        if (raison.Length > 500)
+                        {
+                            raison = raison.Substring(0, 500);
+                        }
+                        
+                        command.Parameters.AddWithValue("@Raison", raison);
+                        command.Parameters.AddWithValue("@CommandeId", commandeId);
+                        var rowsAffected = command.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                // Gérer les erreurs SQL spécifiques (comme les contraintes CHECK)
+                throw new Exception("Erreur SQL : " + sqlEx.Message, sqlEx);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Erreur lors de l'annulation : " + ex.Message, ex);
+            }
+        }
+
+        // ============================================
+        // GESTION DES MODES DE LIVRAISON
+        // ============================================
+
+        public List<ModeLivraison> GetModesLivraison()
+        {
+            var modes = new List<ModeLivraison>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT ModeLivraisonId, Nom, Description, Tarif, DelaiEstime, EstActif, DateCreation FROM ModesLivraison ORDER BY DateCreation DESC";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            modes.Add(new ModeLivraison
+                            {
+                                ModeLivraisonId = reader.GetInt32(0),
+                                Nom = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                Tarif = reader.GetDecimal(3),
+                                DelaiEstime = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                EstActif = reader.GetBoolean(5),
+                                DateCreation = reader.GetDateTime(6)
+                            });
+                        }
+                    }
+                }
+            }
+            return modes;
+        }
+
+        public ModeLivraison GetModeLivraison(int id)
+        {
+            ModeLivraison mode = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT ModeLivraisonId, Nom, Description, Tarif, DelaiEstime, EstActif, DateCreation FROM ModesLivraison WHERE ModeLivraisonId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            mode = new ModeLivraison
+                            {
+                                ModeLivraisonId = reader.GetInt32(0),
+                                Nom = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                Tarif = reader.GetDecimal(3),
+                                DelaiEstime = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                EstActif = reader.GetBoolean(5),
+                                DateCreation = reader.GetDateTime(6)
+                            };
+                        }
+                    }
+                }
+            }
+            return mode;
+        }
+
+        public bool CreateModeLivraison(ModeLivraison mode)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"INSERT INTO ModesLivraison (Nom, Description, Tarif, DelaiEstime, EstActif, DateCreation) 
+                             VALUES (@Nom, @Description, @Tarif, @DelaiEstime, @EstActif, GETDATE())";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Nom", mode.Nom);
+                    command.Parameters.AddWithValue("@Description", (object)mode.Description ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Tarif", mode.Tarif);
+                    command.Parameters.AddWithValue("@DelaiEstime", (object)mode.DelaiEstime ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstActif", mode.EstActif);
+                    return command.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        public bool UpdateModeLivraison(ModeLivraison mode)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"UPDATE ModesLivraison 
+                             SET Nom = @Nom, Description = @Description, Tarif = @Tarif, 
+                                 DelaiEstime = @DelaiEstime, EstActif = @EstActif 
+                             WHERE ModeLivraisonId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", mode.ModeLivraisonId);
+                    command.Parameters.AddWithValue("@Nom", mode.Nom);
+                    command.Parameters.AddWithValue("@Description", (object)mode.Description ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Tarif", mode.Tarif);
+                    command.Parameters.AddWithValue("@DelaiEstime", (object)mode.DelaiEstime ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstActif", mode.EstActif);
+                    return command.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        public bool DeleteModeLivraison(int id)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                // Vérifier si le mode est utilisé dans des commandes
+                var checkQuery = "SELECT COUNT(*) FROM Commandes WHERE ModeLivraisonId = @Id";
+                using (var checkCommand = new SqlCommand(checkQuery, connection))
+                {
+                    checkCommand.Parameters.AddWithValue("@Id", id);
+                    var count = (int)checkCommand.ExecuteScalar();
+                    if (count > 0)
+                    {
+                        // Si utilisé, on désactive au lieu de supprimer
+                        var updateQuery = "UPDATE ModesLivraison SET EstActif = 0 WHERE ModeLivraisonId = @Id";
+                        using (var updateCommand = new SqlCommand(updateQuery, connection))
+                        {
+                            updateCommand.Parameters.AddWithValue("@Id", id);
+                            return updateCommand.ExecuteNonQuery() > 0;
+                        }
+                    }
+                    else
+                    {
+                        // Si non utilisé, on peut supprimer
+                        var deleteQuery = "DELETE FROM ModesLivraison WHERE ModeLivraisonId = @Id";
+                        using (var deleteCommand = new SqlCommand(deleteQuery, connection))
+                        {
+                            deleteCommand.Parameters.AddWithValue("@Id", id);
+                            return deleteCommand.ExecuteNonQuery() > 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        public Dictionary<string, object> GetLivraisonStats()
+        {
+            var stats = new Dictionary<string, object>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                // Nombre de modes de livraison actifs
+                var modesQuery = "SELECT COUNT(*) FROM ModesLivraison WHERE EstActif = 1";
+                using (var command = new SqlCommand(modesQuery, connection))
+                {
+                    stats["ModesActifs"] = (int)command.ExecuteScalar();
+                }
+
+                // Nombre total de modes
+                var totalModesQuery = "SELECT COUNT(*) FROM ModesLivraison";
+                using (var command = new SqlCommand(totalModesQuery, connection))
+                {
+                    stats["TotalModes"] = (int)command.ExecuteScalar();
+                }
+
+                // Nombre de livraisons ce mois
+                var livraisonsQuery = @"SELECT COUNT(*) FROM Commandes 
+                                       WHERE MONTH(DateCommande) = MONTH(GETDATE()) 
+                                       AND YEAR(DateCommande) = YEAR(GETDATE())
+                                       AND Statut IN ('Expédiée', 'Livrée')";
+                using (var command = new SqlCommand(livraisonsQuery, connection))
+                {
+                    stats["LivraisonsMois"] = (int)command.ExecuteScalar();
+                }
+
+                // Tarif moyen
+                var tarifQuery = "SELECT AVG(Tarif) FROM ModesLivraison WHERE EstActif = 1";
+                using (var command = new SqlCommand(tarifQuery, connection))
+                {
+                    var result = command.ExecuteScalar();
+                    stats["TarifMoyen"] = result != DBNull.Value ? (decimal)result : 0;
+                }
+
+                // Nombre total de zones de livraison
+                var zonesQuery = "SELECT COUNT(*) FROM ZonesLivraison";
+                using (var command = new SqlCommand(zonesQuery, connection))
+                {
+                    stats["TotalZones"] = (int)command.ExecuteScalar();
+                }
+            }
+            return stats;
+        }
+
+        // ============================================
+        // ZONES DE LIVRAISON
+        // ============================================
+
+        public List<ZoneLivraison> GetZonesLivraison()
+        {
+            var zones = new List<ZoneLivraison>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation FROM ZonesLivraison ORDER BY ZoneVille ASC";
+                using (var command = new SqlCommand(query, connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        zones.Add(new ZoneLivraison
+                        {
+                            ZoneLivraisonId = reader.GetInt32(0),
+                            ZoneVille = reader.GetString(1),
+                            Supplement = reader.GetDecimal(2),
+                            DelaiEstime = reader.GetString(3),
+                            EstActif = reader.GetBoolean(4),
+                            DateCreation = reader.GetDateTime(5)
+                        });
+                    }
+                }
+            }
+            return zones;
+        }
+
+        public PagedResult<ZoneLivraison> GetZonesLivraisonPaged(int pageNumber, int pageSize)
+        {
+            var result = new PagedResult<ZoneLivraison>
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Items = new List<ZoneLivraison>()
+            };
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                // Compter le total
+                var countQuery = "SELECT COUNT(*) FROM ZonesLivraison";
+                using (var countCommand = new SqlCommand(countQuery, connection))
+                {
+                    result.TotalCount = (int)countCommand.ExecuteScalar();
+                }
+
+                // Récupérer les données paginées
+                var query = @"SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation 
+                             FROM ZonesLivraison 
+                             ORDER BY ZoneVille ASC
+                             OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+                
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                    command.Parameters.AddWithValue("@PageSize", pageSize);
+                    
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Items.Add(new ZoneLivraison
+                            {
+                                ZoneLivraisonId = reader.GetInt32(0),
+                                ZoneVille = reader.GetString(1),
+                                Supplement = reader.GetDecimal(2),
+                                DelaiEstime = reader.GetString(3),
+                                EstActif = reader.GetBoolean(4),
+                                DateCreation = reader.GetDateTime(5)
+                            });
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
+        public ZoneLivraison GetZoneLivraison(int id)
+        {
+            ZoneLivraison zone = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation FROM ZonesLivraison WHERE ZoneLivraisonId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            zone = new ZoneLivraison
+                            {
+                                ZoneLivraisonId = reader.GetInt32(0),
+                                ZoneVille = reader.GetString(1),
+                                Supplement = reader.GetDecimal(2),
+                                DelaiEstime = reader.GetString(3),
+                                EstActif = reader.GetBoolean(4),
+                                DateCreation = reader.GetDateTime(5)
+                            };
+                        }
+                    }
+                }
+            }
+            return zone;
+        }
+
+        public bool CreateZoneLivraison(ZoneLivraison zone)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"INSERT INTO ZonesLivraison (ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation)
+                             VALUES (@ZoneVille, @Supplement, @DelaiEstime, @EstActif, GETDATE())";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ZoneVille", zone.ZoneVille);
+                    command.Parameters.AddWithValue("@Supplement", zone.Supplement);
+                    command.Parameters.AddWithValue("@DelaiEstime", zone.DelaiEstime);
+                    command.Parameters.AddWithValue("@EstActif", zone.EstActif);
+                    return command.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        public bool UpdateZoneLivraison(ZoneLivraison zone)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"UPDATE ZonesLivraison
+                             SET ZoneVille = @ZoneVille, Supplement = @Supplement, DelaiEstime = @DelaiEstime, EstActif = @EstActif
+                             WHERE ZoneLivraisonId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", zone.ZoneLivraisonId);
+                    command.Parameters.AddWithValue("@ZoneVille", zone.ZoneVille);
+                    command.Parameters.AddWithValue("@Supplement", zone.Supplement);
+                    command.Parameters.AddWithValue("@DelaiEstime", zone.DelaiEstime);
+                    command.Parameters.AddWithValue("@EstActif", zone.EstActif);
+                    return command.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        public bool DeleteZoneLivraison(int id)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                // Vérifier si la zone est utilisée dans des commandes (via adresses)
+                // Pour l'instant, on supprime directement
+                var deleteQuery = "DELETE FROM ZonesLivraison WHERE ZoneLivraisonId = @Id";
+                using (var command = new SqlCommand(deleteQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    return command.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
         public void Dispose()
         {
             // Nothing to dispose in this implementation
         }
     }
 }
-
 

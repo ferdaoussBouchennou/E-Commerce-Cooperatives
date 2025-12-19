@@ -103,8 +103,15 @@
                         <td class="order-number">@commande.NumeroCommande</td>
                         <td>
                             <div class="client-info">
-                                <a href="#" class="client-name">@commande.Client.Prenom @commande.Client.Nom</a>
-                                <div class="client-email">@commande.Client.Email</div>
+                                @if (commande.Client != null)
+                                {
+                                    <a href="#" class="client-name">@(commande.Client.Prenom ?? "") @(commande.Client.Nom ?? "")</a>
+                                    <div class="client-email">@(commande.Client.Email ?? "N/A")</div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Client non disponible</span>
+                                }
                             </div>
                         </td>
                         <td>@commande.DateCommande.ToString("yyyy-MM-dd")</td>
@@ -116,8 +123,10 @@
                         </td>
                         <td>
                             @{
-                                var statutDisplay = commande.Statut;
-                                var statutClass = commande.Statut.ToLower().Replace(" ", "-").Replace("é", "e").Replace("è", "e");
+                                var statutDisplay = commande.Statut ?? "Non défini";
+                                var statutClass = !string.IsNullOrEmpty(commande.Statut) 
+                                    ? commande.Statut.ToLower().Replace(" ", "-").Replace("é", "e").Replace("è", "e") 
+                                    : "non-defini";
                             }
                             <span class="badge badge-status badge-@statutClass">
                                 @if (commande.Statut == "Validée")
@@ -135,9 +144,8 @@
                                 }
                                 else if (commande.Statut == "Expédiée")
                                 {
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16" class="badge-icon">
-                                        <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .316.938l-.026 4.243a1.5 1.5 0 0 1-1.472 1.345H1.5A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-.146-.354l-1.48-1.85A.5.5 0 0 0 12.52 6H12v-.5a.5.5 0 0 0-.5-.5h-9z"/>
-                                        <path fill-rule="evenodd" d="M3 8.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 24 24" class="badge-icon">
+                                        <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
                                     </svg>
                                 }
                                 else if (commande.Statut == "Livrée")
@@ -175,15 +183,19 @@
 </div>
 
 <!-- Order Details Modal -->
-<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" role="dialog" aria-labelledby="orderDetailsModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Détails de la commande <span id="modalOrderNumber"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="orderDetailsModalLabel">Détails de la commande <span id="modalOrderNumber"></span></h5>
+                <button type="button" class="close" onclick="closeOrderModal()" aria-label="Close" style="border: none; background: none; font-size: 1.5rem; cursor: pointer; color: #666; padding: 0; margin-left: auto; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                    <span aria-hidden="true" style="font-size: 1.5rem; line-height: 1;">&times;</span>
+                </button>
             </div>
             <div class="modal-body" id="orderDetailsContent">
-                <!-- Content loaded via AJAX -->
+                <div style="text-align: center; padding: 20px;">
+                    <p>Chargement des détails...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -288,9 +300,36 @@
         }
         
         function showOrderDetails(commandeId) {
-            $.get('@Url.Action("Details", "Admin")', { id: commandeId }, function (data) {
+            console.log('Chargement des détails de la commande:', commandeId);
+            
+            // Vérifier que jQuery est disponible
+            if (typeof jQuery === 'undefined' || typeof $ === 'undefined') {
+                alert('Erreur : jQuery n\'est pas chargé. Veuillez rafraîchir la page.');
+                console.error('jQuery n\'est pas disponible');
+                return;
+            }
+            
+            if (!commandeId || commandeId <= 0) {
+                alert('Erreur : ID de commande invalide');
+                return;
+            }
+            
+            var url = '@Url.Action("Details", "Admin")';
+            console.log('URL:', url);
+            
+            // Afficher un message de chargement
+            $('#orderDetailsContent').html('<div style="text-align: center; padding: 40px;"><p>Chargement des détails...</p></div>');
+            
+            $.get(url, { id: commandeId })
+                .done(function (data) {
+                    console.log('Données reçues:', data);
+                    if (!data) {
+                        alert('Erreur : Impossible de charger les détails de la commande');
+                        return;
+                    }
+                
                 var order = data;
-                $('#modalOrderNumber').text(order.NumeroCommande);
+                $('#modalOrderNumber').text(order.NumeroCommande || 'N/A');
                 
                 // Map status for display (using actual database statuses)
                 var statusMap = {
@@ -303,29 +342,42 @@
                 
                 // Pagination settings - 4 produits par page
                 var itemsPerPage = 4;
-                var totalItems = order.Items.length;
+                var items = order.Items || [];
+                var totalItems = items.length;
                 var totalPages = Math.ceil(totalItems / itemsPerPage);
                 
                 // Store items data for pagination
-                window.orderItemsData = order.Items;
+                window.orderItemsData = items;
                 window.orderItemsCurrentPage = 1;
                 window.orderItemsPerPage = itemsPerPage;
                 window.orderItemsTotalPages = totalPages;
+                
+                // Client info
+                var clientName = 'Client non disponible';
+                var clientEmail = 'N/A';
+                if (order.Client) {
+                    var prenom = order.Client.Prenom || '';
+                    var nom = order.Client.Nom || '';
+                    clientName = (prenom + ' ' + nom).trim() || 'Client non disponible';
+                    clientEmail = order.Client.Email || 'N/A';
+                }
                 
                 var html = '<div class="order-details">' +
                     '<div class="row mb-4">' +
                     '<div class="col-md-6 mb-3 mb-md-0">' +
                     '<div class="detail-card">' +
                     '<h6 class="detail-title">Client</h6>' +
-                    '<p class="mb-1">' + order.Client.Prenom + ' ' + order.Client.Nom + '</p>' +
-                    '<p class="text-muted small">' + order.Client.Email + '</p>' +
+                    '<p class="mb-1">' + clientName + '</p>' +
+                    '<p class="text-muted small">' + clientEmail + '</p>' +
                     '</div>' +
                     '</div>' +
                     '<div class="col-md-6">' +
                     '<div class="detail-card">' +
                     '<h6 class="detail-title">Livraison</h6>' +
-                    '<p class="mb-1">' + (order.ModeLivraison ? order.ModeLivraison.Nom : 'Standard') + '</p>' +
-                    (order.Adresse ? '<p class="text-muted small">' + order.Adresse.AdresseComplete + ', ' + order.Adresse.Ville + '</p>' : '<p class="text-muted small">Adresse non disponible</p>') +
+                    '<p class="mb-1">' + (order.ModeLivraison && order.ModeLivraison.Nom ? order.ModeLivraison.Nom : 'Standard') + '</p>' +
+                    (order.Adresse && order.Adresse.AdresseComplete 
+                        ? '<p class="text-muted small">' + order.Adresse.AdresseComplete + ', ' + (order.Adresse.Ville || '') + '</p>' 
+                        : '<p class="text-muted small">Adresse non disponible</p>') +
                     '</div>' +
                     '</div>' +
                     '</div>' +
@@ -342,16 +394,18 @@
                 var start = 0;
                 var end = Math.min(itemsPerPage, totalItems);
                 for (var i = start; i < end; i++) {
-                    var item = order.Items[i];
-                    html += '<tr class="order-item-row">' +
-                        '<td style="width: 70%;">' +
-                        '<div class="order-item-name">' + item.Produit.Nom + '</div>' +
-                        '<div class="order-item-quantity">Quantité: ' + item.Quantite + '</div>' +
-                        '</td>' +
-                        '<td style="width: 30%;" class="order-item-price">' +
-                        '<strong>' + item.TotalLigne.toFixed(2) + ' MAD</strong>' +
-                        '</td>' +
-                        '</tr>';
+                    var item = items[i];
+                    if (item && item.Produit) {
+                        html += '<tr class="order-item-row">' +
+                            '<td style="width: 70%;">' +
+                            '<div class="order-item-name">' + (item.Produit.Nom || 'Produit inconnu') + '</div>' +
+                            '<div class="order-item-quantity">Quantité: ' + (item.Quantite || 0) + '</div>' +
+                            '</td>' +
+                            '<td style="width: 30%;" class="order-item-price">' +
+                            '<strong>' + (item.TotalLigne || 0).toFixed(2) + ' MAD</strong>' +
+                            '</td>' +
+                            '</tr>';
+                    }
                 }
                 
                 html += '</tbody></table>' +
@@ -380,7 +434,7 @@
                 
                 html += '<div class="order-total-section">' +
                     '<span class="order-total-label">Total</span>' +
-                    '<span class="order-total-amount">' + order.TotalTTC.toFixed(2) + ' MAD</span>' +
+                    '<span class="order-total-amount">' + (order.TotalTTC || 0).toFixed(2) + ' MAD</span>' +
                     '</div>' +
                     '</div>' +
                     '<div class="order-status-update">' +
@@ -392,32 +446,32 @@
                     '<option value="Expédiée"' + (order.Statut === "Expédiée" ? " selected" : "") + '>Expédiée</option>' +
                     '<option value="Livrée"' + (order.Statut === "Livrée" ? " selected" : "") + '>Livrée</option>' +
                     '</select>' +
-                    '<button class="btn-update-status" onclick="updateOrderStatus(' + order.CommandeId + ')">Mettre à jour</button>' +
+                    '<button class="btn-update-status" onclick="updateOrderStatus(' + (order.CommandeId || 0) + ')">Mettre à jour</button>' +
                     '</div>';
                 
                 // Section d'actions (annulation + impression) - alignées horizontalement
                 html += '<div class="order-actions-section">';
                 
                 // Bouton d'annulation - visible seulement si la commande n'est pas déjà annulée
-                if (order.Statut !== "Annulée") {
+                if (order.Statut !== "Annulée" && order.Statut) {
                     html += '<button type="button" class="btn-cancel-order" onclick="showCancelForm(' + order.CommandeId + ')">' +
                         '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 6px;">' +
                         '<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>' +
                         '</svg>Annuler la commande</button>';
                 }
                 
-                html += '<a href="@Url.Action("PrintInvoice", "Admin")?id=' + order.CommandeId + '" class="btn-print" target="_blank">Imprimer facture</a>' +
-                    '<a href="@Url.Action("PrintDeliverySlip", "Admin")?id=' + order.CommandeId + '" class="btn-print" target="_blank">Bordereau de livraison</a>' +
+                html += '<a href="@Url.Action("PrintInvoice", "Admin")?id=' + (order.CommandeId || 0) + '" class="btn-print" target="_blank">Imprimer facture</a>' +
+                    '<a href="@Url.Action("PrintDeliverySlip", "Admin")?id=' + (order.CommandeId || 0) + '" class="btn-print" target="_blank">Bordereau de livraison</a>' +
                     '</div>';
                 
                 // Formulaire d'annulation (affiché séparément en dessous)
-                if (order.Statut !== "Annulée") {
-                    html += '<div id="cancelForm_' + order.CommandeId + '" class="cancel-form" style="display: none; margin-top: 12px;">' +
+                if (order.Statut !== "Annulée" && order.Statut) {
+                    html += '<div id="cancelForm_' + (order.CommandeId || 0) + '" class="cancel-form" style="display: none; margin-top: 12px;">' +
                         '<label class="form-label">Raison d\'annulation <span style="color: #dc3545;">*</span></label>' +
-                        '<textarea id="raisonAnnulation_' + order.CommandeId + '" class="form-control cancel-reason-input" rows="3" placeholder="Veuillez indiquer la raison de l\'annulation..." required></textarea>' +
+                        '<textarea id="raisonAnnulation_' + (order.CommandeId || 0) + '" class="form-control cancel-reason-input" rows="3" placeholder="Veuillez indiquer la raison de l\'annulation..." required></textarea>' +
                         '<div class="cancel-form-actions" style="margin-top: 10px;">' +
-                        '<button type="button" class="btn-confirm-cancel" onclick="cancelOrder(' + order.CommandeId + ')">Confirmer l\'annulation</button>' +
-                        '<button type="button" class="btn-cancel-cancel" onclick="hideCancelForm(' + order.CommandeId + ')">Annuler</button>' +
+                        '<button type="button" class="btn-confirm-cancel" onclick="cancelOrder(' + (order.CommandeId || 0) + ')">Confirmer l\'annulation</button>' +
+                        '<button type="button" class="btn-cancel-cancel" onclick="hideCancelForm(' + (order.CommandeId || 0) + ')">Annuler</button>' +
                         '</div>' +
                         '</div>';
                 }
@@ -425,10 +479,134 @@
                 html += '</div>';
                 
                 $('#orderDetailsContent').html(html);
-                var modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
-                modal.show();
-            });
+                
+                // Ouvrir la modal avec jQuery/Bootstrap
+                var $modal = $('#orderDetailsModal');
+                
+                if ($modal.length === 0) {
+                    alert('Erreur : La modal n\'a pas été trouvée dans le DOM');
+                    console.error('Modal #orderDetailsModal non trouvée');
+                    return;
+                }
+                
+                // Nettoyer d'abord toute instance existante
+                $modal.removeClass('show');
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                $('body').css({overflow: '', paddingRight: ''});
+                
+                // Attendre un peu pour s'assurer que le nettoyage est terminé
+                setTimeout(function() {
+                    try {
+                        // Initialiser la modal avec Bootstrap (jQuery)
+                        $modal.modal({
+                            backdrop: 'static',
+                            keyboard: false,
+                            show: true
+                        });
+                        
+                        // S'assurer que la modal est visible
+                        $modal.addClass('show');
+                        $modal.css({
+                            'display': 'block',
+                            'padding-right': '0px'
+                        });
+                        
+                        // Empêcher la fermeture au clic sur le backdrop
+                        $modal.off('click.modal-backdrop').on('click.modal-backdrop', function(e) {
+                            if ($(e.target).is('#orderDetailsModal')) {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                return false;
+                            }
+                        });
+                        
+                        // Empêcher la propagation des clics dans le contenu
+                        $modal.find('.modal-content').off('click').on('click', function(e) {
+                            e.stopPropagation();
+                        });
+                        
+                        console.log('Modal ouverte avec succès');
+                    } catch (error) {
+                        console.error('Erreur lors de l\'ouverture de la modal:', error);
+                        // Fallback : afficher manuellement
+                        $modal.addClass('show');
+                        $modal.css('display', 'block');
+                        $('body').addClass('modal-open');
+                        if ($('.modal-backdrop').length === 0) {
+                            $('body').append('<div class="modal-backdrop fade show"></div>');
+                        }
+                    }
+                }, 100);
+                })
+                .fail(function(xhr, status, error) {
+                    console.error('Erreur lors du chargement des détails:', error);
+                    console.error('Status:', status);
+                    console.error('Response:', xhr.responseText);
+                    alert('Erreur : Impossible de charger les détails de la commande. Veuillez réessayer.\n\nErreur: ' + error);
+                });
         }
+        
+        function closeOrderModal() {
+            console.log('Fermeture de la modal...');
+            
+            var $modal = $('#orderDetailsModal');
+            
+            if ($modal.length === 0) {
+                console.warn('Modal element non trouvé');
+                return;
+            }
+            
+            // Fermer la modal avec Bootstrap/jQuery
+            $modal.modal('hide');
+            
+            // Nettoyer après un court délai pour s'assurer que Bootstrap a terminé
+            setTimeout(function() {
+                // Supprimer tous les backdrops
+                $('.modal-backdrop').remove();
+                
+                // Réinitialiser le body
+                $('body').removeClass('modal-open');
+                $('body').css({
+                    overflow: '',
+                    paddingRight: ''
+                });
+                
+                // S'assurer que la modal est cachée
+                $modal.removeClass('show');
+                $modal.css('display', 'none');
+                
+                console.log('Modal fermée');
+            }, 300);
+        }
+        
+        // Exposer la fonction globalement pour pouvoir l'appeler depuis la console
+        window.closeOrderModal = closeOrderModal;
+        
+        // Gestion globale de la fermeture de modal avec Escape (désactivée car keyboard: false)
+        // La modal ne se fermera pas avec Escape grâce à keyboard: false
+        
+        // Empêcher la fermeture de la modal au clic sur le backdrop
+        $(document).on('click', '#orderDetailsModal', function(e) {
+            // Si le clic est directement sur la modal (pas sur le contenu), ne pas fermer
+            if ($(e.target).is('#orderDetailsModal')) {
+                e.stopPropagation();
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Empêcher la propagation des clics à l'intérieur du contenu de la modal
+        $(document).on('click', '#orderDetailsModal .modal-content', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Écouter les événements de fermeture de Bootstrap pour nettoyer
+        $('#orderDetailsModal').on('hidden.bs.modal', function() {
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+            $('body').css({overflow: '', paddingRight: ''});
+        });
 
         function updateOrderStatus(commandeId) {
             var newStatus = $('#newStatus').val();
@@ -441,18 +619,18 @@
             
             $.post('@Url.Action("UpdateStatus", "Admin")', { commandeId: commandeId, nouveauStatut: newStatus }, function (result) {
                 if (result && result.success) {
-                    alert('✅ Statut mis à jour avec succès');
+                    alert(' Statut mis à jour avec succès');
                     location.reload();
                 } else {
                     var errorMsg = result && result.message ? result.message : 'Erreur lors de la mise à jour';
-                    alert('❌ Erreur : ' + errorMsg);
+                    alert(' Erreur : ' + errorMsg);
                 }
             }).fail(function(xhr, status, error) {
                 var errorMessage = 'Une erreur est survenue lors de la mise à jour du statut';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
                 }
-                alert('❌ Erreur : ' + errorMessage);
+                alert(' Erreur : ' + errorMessage);
             });
         }
         
@@ -579,15 +757,17 @@
             
             var html = '';
             pageItems.forEach(function(item) {
-                html += '<tr class="order-item-row">' +
-                    '<td style="width: 70%;">' +
-                    '<div class="order-item-name">' + item.Produit.Nom + '</div>' +
-                    '<div class="order-item-quantity">Quantité: ' + item.Quantite + '</div>' +
-                    '</td>' +
-                    '<td style="width: 30%;" class="order-item-price">' +
-                    '<strong>' + item.TotalLigne.toFixed(2) + ' MAD</strong>' +
-                    '</td>' +
-                    '</tr>';
+                if (item && item.Produit) {
+                    html += '<tr class="order-item-row">' +
+                        '<td style="width: 70%;">' +
+                        '<div class="order-item-name">' + (item.Produit.Nom || 'Produit inconnu') + '</div>' +
+                        '<div class="order-item-quantity">Quantité: ' + (item.Quantite || 0) + '</div>' +
+                        '</td>' +
+                        '<td style="width: 30%;" class="order-item-price">' +
+                        '<strong>' + (item.TotalLigne || 0).toFixed(2) + ' MAD</strong>' +
+                        '</td>' +
+                        '</tr>';
+                }
             });
             
             $('#orderItemsBody').html(html);

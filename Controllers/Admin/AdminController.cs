@@ -292,7 +292,7 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                 info1.Add(new Chunk("Date\n", labelFont));
                 info1.Add(new Chunk(commande.DateCommande.ToString("dd/MM/yyyy") + "\n\n", normalFont));
                 info1.Add(new Chunk("Statut\n", labelFont));
-                info1.Add(new Chunk(commande.Statut, FontFactory.GetFont(FontFactory.TIMES_BOLD, 10, secondaryColor)));
+                info1.Add(new Chunk(commande.Statut ?? "Non défini", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10, secondaryColor)));
                 infoCell1.AddElement(info1);
                 infoTable.AddCell(infoCell1);
 
@@ -302,8 +302,15 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                 infoCell2.Padding = 10;
                 Paragraph info2 = new Paragraph();
                 info2.Add(new Chunk("CLIENT\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 12, primaryColor)));
-                info2.Add(new Chunk(commande.Client.NomComplet + "\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                info2.Add(new Chunk(commande.Client.Email + "\n", normalFont));
+                if (commande.Client != null)
+                {
+                    info2.Add(new Chunk(commande.Client.NomComplet + "\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
+                    info2.Add(new Chunk(commande.Client.Email ?? "N/A" + "\n", normalFont));
+                }
+                else
+                {
+                    info2.Add(new Chunk("Client non disponible\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
+                }
                 if (commande.Adresse != null)
                 {
                     info2.Add(new Chunk("\n" + commande.Adresse.AdresseComplete + "\n", normalFont));
@@ -337,12 +344,16 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
 
                 // Lignes de produits avec alternance de couleurs
                 bool alternate = false;
-                foreach (var item in commande.Items)
+                if (commande.Items != null && commande.Items.Any())
                 {
-                    BaseColor rowColor = alternate ? backgroundLight : BaseColor.WHITE;
-                    alternate = !alternate;
+                    foreach (var item in commande.Items)
+                    {
+                        if (item?.Produit == null) continue;
+                        
+                        BaseColor rowColor = alternate ? backgroundLight : BaseColor.WHITE;
+                        alternate = !alternate;
 
-                    PdfPCell cell1 = new PdfPCell(new Phrase(item.Produit.Nom, normalFont));
+                        PdfPCell cell1 = new PdfPCell(new Phrase(item.Produit.Nom ?? "Produit inconnu", normalFont));
                     cell1.BackgroundColor = rowColor;
                     cell1.Padding = 8;
                     cell1.BorderColor = borderColor;
@@ -362,12 +373,22 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                     cell3.BorderColor = borderColor;
                     table.AddCell(cell3);
 
-                    PdfPCell cell4 = new PdfPCell(new Phrase(item.TotalLigne.ToString("0.00") + " MAD", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                    cell4.BackgroundColor = rowColor;
-                    cell4.Padding = 8;
-                    cell4.HorizontalAlignment = Element.ALIGN_RIGHT;
-                    cell4.BorderColor = borderColor;
-                    table.AddCell(cell4);
+                        PdfPCell cell4 = new PdfPCell(new Phrase(item.TotalLigne.ToString("0.00") + " MAD", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
+                        cell4.BackgroundColor = rowColor;
+                        cell4.Padding = 8;
+                        cell4.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        cell4.BorderColor = borderColor;
+                        table.AddCell(cell4);
+                    }
+                }
+                else
+                {
+                    // Aucun produit
+                    PdfPCell emptyCell = new PdfPCell(new Phrase("Aucun produit", normalFont));
+                    emptyCell.Colspan = 4;
+                    emptyCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                    emptyCell.Padding = 15;
+                    table.AddCell(emptyCell);
                 }
 
                 document.Add(table);
@@ -563,12 +584,16 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
 
                 // Lignes de produits avec alternance de couleurs
                 bool alternate = false;
-                foreach (var item in commande.Items)
+                if (commande.Items != null && commande.Items.Any())
                 {
-                    BaseColor rowColor = alternate ? backgroundLight : BaseColor.WHITE;
-                    alternate = !alternate;
+                    foreach (var item in commande.Items)
+                    {
+                        if (item?.Produit == null) continue;
+                        
+                        BaseColor rowColor = alternate ? backgroundLight : BaseColor.WHITE;
+                        alternate = !alternate;
 
-                    PdfPCell cell1 = new PdfPCell(new Phrase(item.Produit.Nom, normalFont));
+                        PdfPCell cell1 = new PdfPCell(new Phrase(item.Produit.Nom ?? "Produit inconnu", normalFont));
                     cell1.BackgroundColor = rowColor;
                     cell1.Padding = 8;
                     cell1.BorderColor = borderColor;
@@ -582,14 +607,24 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                     table.AddCell(cell2);
 
                     // Cellule pour cocher avec bordure
-                    PdfPCell cell3 = new PdfPCell(new Phrase("", normalFont));
-                    cell3.BackgroundColor = rowColor;
-                    cell3.Padding = 15;
-                    cell3.HorizontalAlignment = Element.ALIGN_CENTER;
-                    cell3.VerticalAlignment = Element.ALIGN_MIDDLE;
-                    cell3.BorderColor = darkGray;
-                    cell3.BorderWidth = 1.5f;
-                    table.AddCell(cell3);
+                        PdfPCell cell3 = new PdfPCell(new Phrase("", normalFont));
+                        cell3.BackgroundColor = rowColor;
+                        cell3.Padding = 15;
+                        cell3.HorizontalAlignment = Element.ALIGN_CENTER;
+                        cell3.VerticalAlignment = Element.ALIGN_MIDDLE;
+                        cell3.BorderColor = darkGray;
+                        cell3.BorderWidth = 1.5f;
+                        table.AddCell(cell3);
+                    }
+                }
+                else
+                {
+                    // Aucun produit
+                    PdfPCell emptyCell = new PdfPCell(new Phrase("Aucun produit", normalFont));
+                    emptyCell.Colspan = 3;
+                    emptyCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                    emptyCell.Padding = 15;
+                    table.AddCell(emptyCell);
                 }
 
                 document.Add(table);
