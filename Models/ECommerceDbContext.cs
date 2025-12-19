@@ -26,83 +26,109 @@ namespace E_Commerce_Cooperatives.Models
         }
 
         // Collection properties for LINQ support (used by AdminController)
+        // Cache fields to avoid reloading data on every access
+        private List<Produit> _produitsCache = null;
+        private List<Categorie> _categoriesCache = null;
+        private List<Cooperative> _cooperativesCache = null;
+        private List<CommandeItem> _commandeItemsCache = null;
+
         public IQueryable<Produit> Produits
         {
             get
             {
-                var produits = new List<Produit>();
-                using (var connection = new SqlConnection(connectionString))
+                if (_produitsCache == null)
                 {
-                    connection.Open();
-                    var query = @"SELECT ProduitId, Nom, Description, Prix, ImageUrl, CategorieId, CooperativeId, 
-                                        StockTotal, SeuilAlerte, EstDisponible, EstEnVedette, EstNouveau, DateCreation, DateModification
-                                  FROM Produits";
-                    using (var command = new SqlCommand(query, connection))
-                    using (var reader = command.ExecuteReader())
+                    _produitsCache = new List<Produit>();
+                    using (var connection = new SqlConnection(connectionString))
                     {
-                        while (reader.Read())
+                        connection.Open();
+                        var query = @"SELECT ProduitId, Nom, Description, Prix, ImageUrl, CategorieId, CooperativeId, 
+                                            StockTotal, SeuilAlerte, EstDisponible, EstEnVedette, EstNouveau, DateCreation, DateModification
+                                      FROM Produits";
+                        using (var command = new SqlCommand(query, connection))
+                        using (var reader = command.ExecuteReader())
                         {
-                            produits.Add(new Produit
+                            while (reader.Read())
                             {
-                                ProduitId = reader.GetInt32(0),
-                                Nom = reader.GetString(1),
-                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
-                                Prix = reader.GetDecimal(3),
-                                ImageUrl = reader.IsDBNull(4) ? null : reader.GetString(4),
-                                CategorieId = reader.IsDBNull(5) ? (int?)null : reader.GetInt32(5),
-                                CooperativeId = reader.IsDBNull(6) ? (int?)null : reader.GetInt32(6),
-                                StockTotal = reader.GetInt32(7),
-                                SeuilAlerte = reader.GetInt32(8),
-                                EstDisponible = reader.GetBoolean(9),
-                                EstEnVedette = reader.GetBoolean(10),
-                                EstNouveau = reader.GetBoolean(11),
-                                DateCreation = reader.GetDateTime(12),
-                                DateModification = reader.IsDBNull(13) ? (DateTime?)null : reader.GetDateTime(13)
-                            });
+                                _produitsCache.Add(new Produit
+                                {
+                                    ProduitId = reader.GetInt32(0),
+                                    Nom = reader.GetString(1),
+                                    Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                    Prix = reader.GetDecimal(3),
+                                    ImageUrl = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                    CategorieId = reader.IsDBNull(5) ? (int?)null : reader.GetInt32(5),
+                                    CooperativeId = reader.IsDBNull(6) ? (int?)null : reader.GetInt32(6),
+                                    StockTotal = reader.GetInt32(7),
+                                    SeuilAlerte = reader.GetInt32(8),
+                                    EstDisponible = reader.GetBoolean(9),
+                                    EstEnVedette = reader.GetBoolean(10),
+                                    EstNouveau = reader.GetBoolean(11),
+                                    DateCreation = reader.GetDateTime(12),
+                                    DateModification = reader.IsDBNull(13) ? (DateTime?)null : reader.GetDateTime(13)
+                                });
+                            }
                         }
                     }
                 }
-                return produits.AsQueryable();
+                return _produitsCache.AsQueryable();
             }
         }
 
         public IQueryable<Categorie> Categories
         {
-            get { return GetCategories().AsQueryable(); }
+            get
+            {
+                if (_categoriesCache == null)
+                {
+                    _categoriesCache = GetCategories();
+                }
+                return _categoriesCache.AsQueryable();
+            }
         }
 
         public IQueryable<Cooperative> Cooperatives
         {
-            get { return GetCooperatives().AsQueryable(); }
+            get
+            {
+                if (_cooperativesCache == null)
+                {
+                    _cooperativesCache = GetCooperatives();
+                }
+                return _cooperativesCache.AsQueryable();
+            }
         }
 
         public IQueryable<CommandeItem> CommandeItems
         {
             get
             {
-                var items = new List<CommandeItem>();
-                using (var connection = new SqlConnection(connectionString))
+                if (_commandeItemsCache == null)
                 {
-                    connection.Open();
-                    var query = "SELECT CommandeItemId, CommandeId, ProduitId, VarianteId, Quantite, PrixUnitaire FROM CommandeItems";
-                    using (var command = new SqlCommand(query, connection))
-                    using (var reader = command.ExecuteReader())
+                    _commandeItemsCache = new List<CommandeItem>();
+                    using (var connection = new SqlConnection(connectionString))
                     {
-                        while (reader.Read())
+                        connection.Open();
+                        var query = "SELECT CommandeItemId, CommandeId, ProduitId, VarianteId, Quantite, PrixUnitaire FROM CommandeItems";
+                        using (var command = new SqlCommand(query, connection))
+                        using (var reader = command.ExecuteReader())
                         {
-                            items.Add(new CommandeItem
+                            while (reader.Read())
                             {
-                                CommandeItemId = reader.GetInt32(0),
-                                CommandeId = reader.GetInt32(1),
-                                ProduitId = reader.GetInt32(2),
-                                VarianteId = reader.IsDBNull(3) ? (int?)null : reader.GetInt32(3),
-                                Quantite = reader.GetInt32(4),
-                                PrixUnitaire = reader.GetDecimal(5)
-                            });
+                                _commandeItemsCache.Add(new CommandeItem
+                                {
+                                    CommandeItemId = reader.GetInt32(0),
+                                    CommandeId = reader.GetInt32(1),
+                                    ProduitId = reader.GetInt32(2),
+                                    VarianteId = reader.IsDBNull(3) ? (int?)null : reader.GetInt32(3),
+                                    Quantite = reader.GetInt32(4),
+                                    PrixUnitaire = reader.GetDecimal(5)
+                                });
+                            }
                         }
                     }
                 }
-                return items.AsQueryable();
+                return _commandeItemsCache.AsQueryable();
             }
         }
 

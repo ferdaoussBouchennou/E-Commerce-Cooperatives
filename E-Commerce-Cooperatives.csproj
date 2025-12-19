@@ -248,7 +248,6 @@
     <Compile Include="Controllers\CooperativesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ProduitController.cs" />
-    <Compile Include="Models\AdminController.cs" />
     <Compile Include="Models\Adresse.cs" />
     <Compile Include="Models\AvisProduit.cs" />
     <Compile Include="Models\Categorie.cs" />
