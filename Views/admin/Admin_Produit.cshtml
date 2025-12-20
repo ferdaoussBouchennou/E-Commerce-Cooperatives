@@ -4,72 +4,60 @@
     Layout = "~/Views/Admin/_AdminLayout.cshtml";
 
     var stats = ViewBag.Stats as Dictionary<string, int> ?? new Dictionary<string, int>();
-    var searchTerm = ViewBag.SearchTerm as string ?? "";
-    var categorieFilter = ViewBag.CategorieFilter as string ?? "all";
-    var statutFilter = ViewBag.StatutFilter as string ?? "all";
 }
 
 <div class="admin-page">
-    <!-- En-tête de page -->
+    <!-- En-tête de page - SANS le bouton Ajouter -->
     <div class="admin-page-header">
         <div>
             <h1 class="admin-page-title">Gestion des Produits</h1>
             <p class="admin-page-subtitle">Gérez votre catalogue de produits</p>
         </div>
-        <div>
+    </div>
+
+    <!-- Filtres avec le bouton Ajouter À GAUCHE sur la même ligne -->
+    <div class="admin-filters">
+        <div class="filters-row">
+            <!-- Barre de recherche -->
+            <div class="search-box">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="search-icon">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                </svg>
+                <input type="text" id="searchInput" class="form-control search-input"
+                       placeholder="Rechercher un produit..." />
+            </div>
+
+            <!-- Filtre par catégorie - AUTOMATIQUE -->
+            <div class="status-filter-wrapper">
+                <select id="categorieFilter" class="status-filter">
+                    <option value="all">Toutes les catégories</option>
+                    <option value="1">Cosmétiques</option>
+                    <option value="2">Alimentaire</option>
+                    <option value="3">Poterie & Céramique</option>
+                    <option value="4">Textiles & Vannerie</option>
+                </select>
+            </div>
+
+            <!-- Filtre par statut - AUTOMATIQUE -->
+            <div class="status-filter-wrapper">
+                <select id="statutFilter" class="status-filter">
+                    <option value="all">Tous les statuts</option>
+                    <option value="disponible">Disponible</option>
+                    <option value="vedette">En vedette</option>
+                    <option value="stock-faible">Stock faible</option>
+                </select>
+            </div>
+            <!-- Bouton Ajouter à GAUCHE -->
             <a href="@Url.Action("AjouterProduit", "Admin")" class="btn-primary-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
                 </svg>
                 Ajouter un produit
-            </a>    
+            </a>
         </div>
     </div>
 
-    <!-- Filtres de recherche -->
-    <div class="admin-filters">
-        <form method="get" action="@Url.Action("Produits", "Admin")" class="filter-form">
-            <div class="filters-row">
-                <!-- Barre de recherche -->
-                <div class="search-box">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="search-icon">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-                    </svg>
-                    <input type="text" name="searchTerm" class="form-control search-input"
-                           placeholder="Rechercher un produit..." value="@searchTerm" />
-                </div>
-
-                <!-- Filtre par catégorie -->
-                <div class="status-filter-wrapper">
-                    <select name="categorieFilter" class="status-filter">
-                        <option value="all" @(categorieFilter == "all" ? "selected" : "")>Toutes les catégories</option>
-                        <option value="1" @(categorieFilter == "1" ? "selected" : "")>Cosmétiques</option>
-                        <option value="2" @(categorieFilter == "2" ? "selected" : "")>Alimentaire</option>
-                        <option value="3" @(categorieFilter == "3" ? "selected" : "")>Poterie & Céramique</option>
-                        <option value="4" @(categorieFilter == "4" ? "selected" : "")>Textiles & Vannerie</option>
-                    </select>
-                </div>
-
-                <!-- Filtre par statut -->
-                <div class="status-filter-wrapper">
-                    <select name="statutFilter" class="status-filter">
-                        <option value="all" @(statutFilter == "all" ? "selected" : "")>Tous les statuts</option>
-                        <option value="disponible" @(statutFilter == "disponible" ? "selected" : "")>Disponible</option>
-                        <option value="vedette" @(statutFilter == "vedette" ? "selected" : "")>En vedette</option>
-                        <option value="stock-faible" @(statutFilter == "stock-faible" ? "selected" : "")>Stock faible</option>
-                    </select>
-                </div>
-
-                <!-- Boutons d'action -->
-                <div class="filter-actions">
-                    <button type="submit" class="btn-filter-apply">Appliquer</button>
-                    <a href="@Url.Action("Produits", "Admin")" class="btn-filter-reset">Réinitialiser</a>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- Cartes de statistiques -->
+    <!-- Reste du code identique... cartes stats et tableau -->
     <div class="stats-cards">
         <div class="stat-card stat-total">
             <div class="stat-icon">
@@ -140,7 +128,13 @@
                     var stockClass = produit.StockTotal <= produit.SeuilAlerte ? "stock-faible" : "stock-ok";
                     var disponibleClass = produit.EstDisponible ? "dispo" : "indisponible";
 
-                    <tr class="product-row">
+                    <tr class="product-row"
+                        data-categorie="@(produit.CategorieId.HasValue ? produit.CategorieId.Value.ToString() : "")"
+                        data-statut="@(produit.EstDisponible ? "disponible" : "indisponible")"
+                        data-vedette="@(produit.EstEnVedette ? "true" : "false")"
+                        data-stock-faible="@(produit.StockTotal <= produit.SeuilAlerte ? "true" : "false")"
+                        data-nom="@produit.Nom.ToLower()"
+                        data-cooperative="@(produit.Cooperative != null ? produit.Cooperative.Nom.ToLower() : "")">
                         <td>
                             <div class="product-image-thumb">
                                 @if (!string.IsNullOrEmpty(produit.ImageUrl))
@@ -149,12 +143,10 @@
                                 }
                                 else
                                 {
-                                    <div class="no-image">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                                            <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
-                                            <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z" />
-                                        </svg>
-                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
+                                        <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z" />
+                                    </svg>
                                 }
                             </div>
                         </td>
@@ -195,9 +187,6 @@
                             <span class="badge badge-status badge-@disponibleClass">
                                 @if (produit.EstDisponible)
                                 {
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
-                                    </svg>
                                     <text>Dispo</text>
                                 }
                                 else
@@ -232,50 +221,128 @@
             </tbody>
         </table>
 
-        <!-- Pagination -->
         <div id="productsPagination" class="products-pagination" style="display: none;">
-            <!-- Pagination controls will be inserted here by JavaScript -->
         </div>
     </div>
 </div>
 
 @section scripts {
     <script>
-        // Pagination - 6 produits par page
         var productsPerPage = 6;
         var currentPage = 1;
         var totalPages = 1;
+        var allRows = [];
 
         $(document).ready(function() {
+            allRows = $('.product-row').toArray();
+
+            // Filtrage AUTOMATIQUE sur recherche
+            $('#searchInput').on('keyup', function() {
+                applyFilters();
+            });
+
+            // Filtrage AUTOMATIQUE sur changement de catégorie
+            $('#categorieFilter').on('change', function() {
+                applyFilters();
+            });
+
+            // Filtrage AUTOMATIQUE sur changement de statut
+            $('#statutFilter').on('change', function() {
+                applyFilters();
+            });
+
             initializePagination();
         });
 
+        function applyFilters() {
+            var searchTerm = $('#searchInput').val().toLowerCase();
+            var categorieFilter = $('#categorieFilter').val();
+            var statutFilter = $('#statutFilter').val();
+
+            var filteredRows = allRows.filter(function(row) {
+                var $row = $(row);
+                var nom = $row.data('nom') || '';
+                var cooperative = $row.data('cooperative') || '';
+                var categorie = $row.data('categorie') ? $row.data('categorie').toString() : '';
+                var statut = $row.data('statut') || '';
+                var isVedette = $row.data('vedette');
+                var isStockFaible = $row.data('stock-faible');
+
+                // Filtre recherche
+                if (searchTerm && !nom.includes(searchTerm) && !cooperative.includes(searchTerm)) {
+                    return false;
+                }
+
+                // Filtre catégorie
+                if (categorieFilter !== 'all' && categorie !== categorieFilter) {
+                    return false;
+                }
+
+                // Filtre statut
+                if (statutFilter !== 'all') {
+                    if (statutFilter === 'disponible' && statut !== 'disponible') return false;
+                    if (statutFilter === 'vedette' && !isVedette) return false;
+                    if (statutFilter === 'stock-faible' && !isStockFaible) return false;
+                }
+
+                return true;
+            });
+
+            // Cacher toutes les lignes
+            $(allRows).hide();
+
+            // Afficher les lignes filtrées
+            $(filteredRows).show();
+
+            // Réinitialiser la pagination avec les résultats filtrés
+            totalPages = Math.ceil(filteredRows.length / productsPerPage);
+
+            if (totalPages > 1) {
+                $('#productsPagination').show();
+                createPagination(filteredRows);
+                renderFilteredPage(1, filteredRows);
+            } else {
+                $('#productsPagination').hide();
+                $(filteredRows).show();
+            }
+        }
+
         function initializePagination() {
-            var allRows = $('.product-row');
             var totalProducts = allRows.length;
             totalPages = Math.ceil(totalProducts / productsPerPage);
 
             if (totalPages > 1) {
                 $('#productsPagination').show();
-                createPagination();
+                createPagination(allRows);
             }
 
             renderPage(1);
         }
 
         function renderPage(page) {
-            var allRows = $('.product-row');
             var start = (page - 1) * productsPerPage;
             var end = start + productsPerPage;
 
-            allRows.hide();
-            allRows.slice(start, end).show();
+            $(allRows).hide();
+            $(allRows).slice(start, end).show();
 
             currentPage = page;
             updatePaginationControls();
         }
 
-        function createPagination() {
+        function renderFilteredPage(page, filteredRows) {
+            var start = (page - 1) * productsPerPage;
+            var end = start + productsPerPage;
+
+            $(filteredRows).hide();
+            $(filteredRows).slice(start, end).show();
+
+            currentPage = page;
+            updatePaginationControls();
+        }
+
+        function createPagination(rows) {
+            var pages = Math.ceil(rows.length / productsPerPage);
             var html = '<div class="pagination-controls">' +
                 '<button class="btn-pagination btn-prev" onclick="changePage(-1)" disabled>' +
                 '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">' +
@@ -283,7 +350,7 @@
                 '</svg></button>' +
                 '<div class="pagination-pages">';
 
-            for (var i = 1; i <= totalPages; i++) {
+            for (var i = 1; i <= pages; i++) {
                 html += '<button class="btn-page' + (i === 1 ? ' active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
             }
 

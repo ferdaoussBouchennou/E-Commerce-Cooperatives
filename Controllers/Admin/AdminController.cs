@@ -93,6 +93,58 @@ namespace E_Commerce_Cooperatives.Controllers
         }
 
         /// <summary>
+        /// Affiche le formulaire d'ajout de produit
+        /// </summary>
+        public ActionResult AjouterProduit()
+        {
+            try
+            {
+                ViewBag.Categories = db.Categories.ToList();
+                ViewBag.Cooperatives = db.Cooperatives.ToList();
+                return View(new Produit());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterProduit GET: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement du formulaire";
+                return RedirectToAction("Produits");
+            }
+        }
+
+        /// <summary>
+        /// Traite l'ajout d'un nouveau produit
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AjouterProduit(Produit produit)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    produit.DateCreation = DateTime.Now;
+                    db.ProduitsSet.Add(produit);
+                    db.SaveChanges();
+
+                    TempData["SuccessMessage"] = "Produit ajouté avec succès";
+                    return RedirectToAction("Produits");
+                }
+
+                ViewBag.Categories = db.Categories.ToList();
+                ViewBag.Cooperatives = db.Cooperatives.ToList();
+                return View(produit);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterProduit POST: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors de l'ajout du produit";
+                ViewBag.Categories = db.Categories.ToList();
+                ViewBag.Cooperatives = db.Cooperatives.ToList();
+                return View(produit);
+            }
+        }
+
+        /// <summary>
         /// Affiche les détails d'un produit
         /// </summary>
         public ActionResult DetailsProduit(int id)
@@ -123,64 +175,6 @@ namespace E_Commerce_Cooperatives.Controllers
                 System.Diagnostics.Debug.WriteLine($"Erreur dans DetailsProduit: {ex.Message}");
                 TempData["ErrorMessage"] = "Erreur lors du chargement des détails";
                 return RedirectToAction("Produits");
-            }
-        }
-
-        /// <summary>
-        /// Affiche le formulaire d'ajout de produit
-        /// </summary>
-        public ActionResult AjouterProduit()
-        {
-            try
-            {
-                // Charger les catégories et coopératives pour les dropdowns
-                ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();
-                ViewBag.Cooperatives = db.Cooperatives.Where(c => c.EstActive).ToList();
-
-                return View(new Produit());
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterProduit GET: {ex.Message}");
-                TempData["ErrorMessage"] = "Erreur lors du chargement du formulaire";
-                return RedirectToAction("Produits");
-            }
-        }
-
-        /// <summary>
-        /// Traite l'ajout d'un nouveau produit
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult AjouterProduit(Produit produit)
-        {
-            try
-            {
-                if (ModelState.IsValid)
-                {
-                    produit.DateCreation = DateTime.Now;
-                    db.ProduitsSet.Add(produit);
-                    db.SaveChanges();
-
-                    TempData["SuccessMessage"] = "Produit ajouté avec succès";
-                    return RedirectToAction("Produits");
-                }
-
-                // Recharger les listes pour les dropdowns en cas d'erreur
-                ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();
-                ViewBag.Cooperatives = db.Cooperatives.Where(c => c.EstActive).ToList();
-
-                return View(produit);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterProduit POST: {ex.Message}");
-                TempData["ErrorMessage"] = "Erreur lors de l'ajout du produit";
-
-                ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();
-                ViewBag.Cooperatives = db.Cooperatives.Where(c => c.EstActive).ToList();
-
-                return View(produit);
             }
         }
 
