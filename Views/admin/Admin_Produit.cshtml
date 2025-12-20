@@ -22,7 +22,7 @@
                     <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
                 </svg>
                 Ajouter un produit
-            </a>
+            </a>    
         </div>
     </div>
 
@@ -40,8 +40,8 @@
                 </div>
 
                 <!-- Filtre par catégorie -->
-                <div class="filter-select-wrapper">
-                    <select name="categorieFilter" class="filter-select">
+                <div class="status-filter-wrapper">
+                    <select name="categorieFilter" class="status-filter">
                         <option value="all" @(categorieFilter == "all" ? "selected" : "")>Toutes les catégories</option>
                         <option value="1" @(categorieFilter == "1" ? "selected" : "")>Cosmétiques</option>
                         <option value="2" @(categorieFilter == "2" ? "selected" : "")>Alimentaire</option>
@@ -51,12 +51,12 @@
                 </div>
 
                 <!-- Filtre par statut -->
-                <div class="filter-select-wrapper">
-                    <select name="statutFilter" class="filter-select">
+                <div class="status-filter-wrapper">
+                    <select name="statutFilter" class="status-filter">
                         <option value="all" @(statutFilter == "all" ? "selected" : "")>Tous les statuts</option>
                         <option value="disponible" @(statutFilter == "disponible" ? "selected" : "")>Disponible</option>
-                        <option value="vedette" @(statutFilter == "vedette" ? "selected" : "") ">En vedette</option>
-                        <option value="stock-faible" @(statutFilter == "stock-faible" ? "selected" : "") ">Stock faible</option>
+                        <option value="vedette" @(statutFilter == "vedette" ? "selected" : "")>En vedette</option>
+                        <option value="stock-faible" @(statutFilter == "stock-faible" ? "selected" : "")>Stock faible</option>
                     </select>
                 </div>
 
