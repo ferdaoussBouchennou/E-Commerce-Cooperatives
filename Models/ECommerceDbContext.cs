@@ -1663,6 +1663,130 @@ namespace E_Commerce_Cooperatives.Models
         {
             // Nothing to dispose in this implementation
         }
+
+        // ============================================
+        // GESTION DES CATEGORIES
+        // ============================================
+
+        public class CategorieStats : Categorie
+        {
+            public int NombreProduits { get; set; }
+        }
+
+        public List<CategorieStats> GetCategoriesWithStats()
+        {
+            var categories = new List<CategorieStats>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT c.CategorieId, c.Nom, c.Description, c.ImageUrl, c.EstActive, c.DateCreation,
+                           (SELECT COUNT(*) FROM Produits p WHERE p.CategorieId = c.CategorieId) as NombreProduits
+                    FROM Categories c
+                    ORDER BY c.Nom";
+
+                using (var command = new SqlCommand(query, connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        categories.Add(new CategorieStats
+                        {
+                            CategorieId = reader.GetInt32(0),
+                            Nom = reader.GetString(1),
+                            Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                            ImageUrl = reader.IsDBNull(3) ? null : reader.GetString(3),
+                            EstActive = reader.GetBoolean(4),
+                            DateCreation = reader.GetDateTime(5),
+                            NombreProduits = reader.GetInt32(6)
+                        });
+                    }
+                }
+            }
+            return categories;
+        }
+
+        public Categorie GetCategorie(int id)
+        {
+            Categorie categorie = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT CategorieId, Nom, Description, ImageUrl, EstActive, DateCreation FROM Categories WHERE CategorieId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            categorie = new Categorie
+                            {
+                                CategorieId = reader.GetInt32(0),
+                                Nom = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                ImageUrl = reader.IsDBNull(3) ? null : reader.GetString(3),
+                                EstActive = reader.GetBoolean(4),
+                                DateCreation = reader.GetDateTime(5)
+                            };
+                        }
+                    }
+                }
+            }
+            return categorie;
+        }
+
+        public void AddCategorie(Categorie categorie)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"INSERT INTO Categories (Nom, Description, ImageUrl, EstActive, DateCreation) 
+                              VALUES (@Nom, @Description, @ImageUrl, @EstActive, @DateCreation)";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Nom", categorie.Nom);
+                    command.Parameters.AddWithValue("@Description", (object)categorie.Description ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@ImageUrl", (object)categorie.ImageUrl ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstActive", categorie.EstActive);
+                    command.Parameters.AddWithValue("@DateCreation", categorie.DateCreation);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateCategorie(Categorie categorie)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"UPDATE Categories 
+                              SET Nom = @Nom, Description = @Description, ImageUrl = @ImageUrl, EstActive = @EstActive 
+                              WHERE CategorieId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", categorie.CategorieId);
+                    command.Parameters.AddWithValue("@Nom", categorie.Nom);
+                    command.Parameters.AddWithValue("@Description", (object)categorie.Description ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@ImageUrl", (object)categorie.ImageUrl ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstActive", categorie.EstActive);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void ToggleCategorieStatus(int id)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "UPDATE Categories SET EstActive = CASE WHEN EstActive = 1 THEN 0 ELSE 1 END WHERE CategorieId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
     }
 }
-

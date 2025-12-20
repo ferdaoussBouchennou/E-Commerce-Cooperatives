@@ -116,12 +116,27 @@ namespace E_Commerce_Cooperatives.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult AjouterProduit(Produit produit)
+        public ActionResult AjouterProduit(Produit produit, System.Web.HttpPostedFileBase imageFile)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
+                    // Gestion de l'image
+                    if (imageFile != null && imageFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/produits/"), fileName);
+                        
+                        // Créer le répertoire s'il n'existe pas
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        produit.ImageUrl = "~/Content/images/produits/" + fileName;
+                    }
+
                     produit.DateCreation = DateTime.Now;
                     db.ProduitsSet.Add(produit);
                     db.SaveChanges();
@@ -211,7 +226,7 @@ namespace E_Commerce_Cooperatives.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ModifierProduit(Produit produit)
+        public ActionResult ModifierProduit(Produit produit, System.Web.HttpPostedFileBase imageFile)
         {
             try
             {
@@ -225,11 +240,33 @@ namespace E_Commerce_Cooperatives.Controllers
                         return RedirectToAction("Produits");
                     }
 
+                    // Gestion de l'image
+                    if (imageFile != null && imageFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/produits/"), fileName);
+                        
+                        // Créer le répertoire s'il n'existe pas
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        
+                        // Optionnel : Supprimer l'ancienne image si elle existe et n'est pas une image par défaut
+                        
+                        produitExistant.ImageUrl = "~/Content/images/produits/" + fileName;
+                    }
+                    else if (!string.IsNullOrEmpty(produit.ImageUrl))
+                    {
+                        // Si l'utilisateur a modifié l'URL manuellement ou si elle est passée en masqué
+                        produitExistant.ImageUrl = produit.ImageUrl;
+                    }
+
                     // Mettre à jour les propriétés
                     produitExistant.Nom = produit.Nom;
                     produitExistant.Description = produit.Description;
                     produitExistant.Prix = produit.Prix;
-                    produitExistant.ImageUrl = produit.ImageUrl;
                     produitExistant.CategorieId = produit.CategorieId;
                     produitExistant.CooperativeId = produit.CooperativeId;
                     produitExistant.StockTotal = produit.StockTotal;
@@ -334,6 +371,149 @@ namespace E_Commerce_Cooperatives.Controllers
                 db.Dispose();
             }
             base.Dispose(disposing);
+        }
+
+        // ============================================
+        // GESTION DES CATEGORIES
+        // ============================================
+
+        public ActionResult Categories(string searchTerm = "")
+        {
+            try
+            {
+                var categories = db.GetCategoriesWithStats();
+                
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    searchTerm = searchTerm.ToLower();
+                    categories = categories.Where(c => 
+                        c.Nom.ToLower().Contains(searchTerm) || 
+                        (!string.IsNullOrEmpty(c.Description) && c.Description.ToLower().Contains(searchTerm))
+                    ).ToList();
+                }
+
+                ViewBag.SearchTerm = searchTerm;
+                return View(categories);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans Categories: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement des catégories";
+                return RedirectToAction("Index");
+            }
+        }
+
+        public ActionResult AjouterCategorie()
+        {
+            return View(new Categorie { EstActive = true }); // Active par défaut
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AjouterCategorie(Categorie categorie, System.Web.HttpPostedFileBase imageFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    if (imageFile != null && imageFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/categories/"), fileName);
+                        
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        categorie.ImageUrl = "~/Content/images/categories/" + fileName;
+                    }
+
+                    categorie.DateCreation = DateTime.Now;
+                    db.AddCategorie(categorie);
+                    TempData["SuccessMessage"] = "Catégorie ajoutée avec succès";
+                    return RedirectToAction("Categories");
+                }
+                return View(categorie);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterCategorie: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors de l'ajout";
+                return View(categorie);
+            }
+        }
+
+        public ActionResult ModifierCategorie(int id)
+        {
+            var categorie = db.GetCategorie(id);
+            if (categorie == null)
+            {
+                TempData["ErrorMessage"] = "Catégorie non trouvée";
+                return RedirectToAction("Categories");
+            }
+            return View(categorie);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ModifierCategorie(Categorie categorie, System.Web.HttpPostedFileBase imageFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var existing = db.GetCategorie(categorie.CategorieId);
+                    if (existing == null)
+                    {
+                        TempData["ErrorMessage"] = "Catégorie non trouvée";
+                        return RedirectToAction("Categories");
+                    }
+
+                    if (imageFile != null && imageFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/categories/"), fileName);
+                        
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        categorie.ImageUrl = "~/Content/images/categories/" + fileName;
+                    }
+                    else
+                    {
+                        categorie.ImageUrl = existing.ImageUrl; // Garder l'ancienne image
+                    }
+
+                    db.UpdateCategorie(categorie);
+                    TempData["SuccessMessage"] = "Catégorie mise à jour avec succès";
+                    return RedirectToAction("Categories");
+                }
+                return View(categorie);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans ModifierCategorie: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors de la modification";
+                return View(categorie);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ToggleCategorieStatus(int id)
+        {
+            try
+            {
+                db.ToggleCategorieStatus(id);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans ToggleCategorieStatus: {ex.Message}");
+                return Json(new { success = false, message = "Erreur serveur" });
+            }
         }
     }
 }

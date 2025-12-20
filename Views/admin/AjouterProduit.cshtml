@@ -14,7 +14,7 @@
             <a href="@Url.Action("Produits")" class="modal-close-btn">&times;</a>
         </div>
 
-        @using (Html.BeginForm("AjouterProduit", "Admin", FormMethod.Post, new { @class = "premium-form" }))
+        @using (Html.BeginForm("AjouterProduit", "Admin", FormMethod.Post, new { @class = "premium-form", enctype = "multipart/form-data" }))
         {
             @Html.AntiForgeryToken()
 
@@ -72,6 +72,29 @@
                 </div>
             </div>
 
+            <div class="form-group">
+                <label>Photo du produit</label>
+                <div class="image-upload-wrapper">
+                    <div class="image-preview" id="imagePreview">
+                        <div class="preview-placeholder">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                            </svg>
+                            <span>Aucune photo sélectionnée</span>
+                        </div>
+                        <img src="" alt="Aperçu" style="display:none;" />
+                    </div>
+                    <div class="image-upload-controls">
+                        <button type="button" class="btn-secondary-action" onclick="document.getElementById('imageFile').click()">
+                            Choisir une photo
+                        </button>
+                        <input type="file" name="imageFile" id="imageFile" accept="image/*" style="display:none;" onchange="previewImage(this)" />
+                        <p class="upload-tip">Formats acceptés : JPG, PNG. Taille max : 2Mo</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-row toggles-row">
                 <div class="toggle-group">
                     <label class="switch">
@@ -104,6 +127,28 @@
                 <button type="submit" class="btn-primary-action-save">Enregistrer</button>
             </div>
         }
+    </div>
+</div>
+
+<script>
+    function previewImage(input) {
+        var preview = document.getElementById('imagePreview');
+        var img = preview.querySelector('img');
+        var placeholder = preview.querySelector('.preview-placeholder');
+        
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+            
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
     </div>
 </div>
 
@@ -174,6 +219,66 @@
         border-color: #C06C50;
         outline: none;
         box-shadow: 0 0 0 3px rgba(192, 108, 80, 0.1);
+    }
+
+    /* Image Upload Styles */
+    .image-upload-wrapper {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        background: #F8F9FA;
+        padding: 20px;
+        border-radius: 12px;
+        border: 2px dashed #DEE2E6;
+    }
+
+    .image-preview {
+        width: 120px;
+        height: 120px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #EAEAEA;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .image-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .preview-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        color: #ADB5BD;
+        font-size: 11px;
+        padding: 10px;
+    }
+
+    .preview-placeholder svg {
+        margin-bottom: 8px;
+        opacity: 0.5;
+    }
+
+    .image-upload-controls {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 120px;
+    }
+
+    .upload-tip {
+        font-size: 12px;
+        color: #6D6C6A;
+        margin-top: 10px;
+        margin-bottom: 0;
     }
 
     /* Style for custom select to match image */
