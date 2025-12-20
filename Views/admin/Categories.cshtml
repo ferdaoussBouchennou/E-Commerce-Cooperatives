@@ -10,12 +10,12 @@
 <div class="admin-page">
     <!-- Top Header with Search -->
     <div class="admin-page-header-row">
-        <form action="@Url.Action("Categories")" method="get" class="search-form">
+        <div class="search-form">
             <div class="search-input-wrapper">
                 <i class="fas fa-search search-icon"></i>
-                <input type="text" name="searchTerm" value="@ViewBag.SearchTerm" placeholder="Rechercher..." class="search-input-field" />
+                <input type="text" id="searchInput" placeholder="Rechercher..." class="search-input-field" autocomplete="off" />
             </div>
-        </form>
+        </div>
         <div class="header-notifications">
            <!-- Placeholder for visual consistency with image -->
         </div>
@@ -29,17 +29,21 @@
 
     <!-- Controls Row -->
     <div class="categories-controls">
-        <p class="categories-count">@totalCategories catégories au total</p>
+        <p class="categories-count"><span id="displayedCount">@totalCategories</span> catégories au total</p>
         <a href="@Url.Action("AjouterCategorie")" class="btn-primary-action">
             <i class="fas fa-plus"></i> Nouvelle catégorie
         </a>
     </div>
 
     <!-- Grid -->
-    <div class="categories-grid">
+    <div class="categories-grid" id="categoriesGrid">
         @foreach (var cat in Model)
         {
-            <div class="category-card">
+            <div class="category-card" 
+                 data-name="@cat.Nom.ToLower()" 
+                 data-description="@(cat.Description ?? "").ToLower()"
+                 data-products="@cat.NombreProduits"
+                 data-status="@(cat.EstActive ? "active" : "inactive")">
                 <!-- Header Image/Icon -->
                 <div class="category-card-header">
                     @if (!string.IsNullOrEmpty(cat.ImageUrl))
@@ -84,51 +88,57 @@
             </div>
         }
     </div>
+
+    <!-- Message si aucun résultat -->
+    <div id="noResultsMessage" style="display: none; text-align: center; padding: 60px 20px;">
+        <i class="fas fa-search" style="font-size: 48px; color: #95A5A6; margin-bottom: 20px;"></i>
+        <h3 style="color: #2D4C61; font-size: 20px; margin-bottom: 10px;">Aucune catégorie trouvée</h3>
+        <p style="color: #7F8C8D;">Essayez avec d'autres mots-clés</p>
+    </div>
 </div>
 
 @section scripts {
 <script>
-     // ca pour le filtrage automatique sans cmliquer entre 
-      $(document).ready(function() {
-        var allCards = $('.category-card').toArray();
-        var totalCategories = allCards.length;
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sélection des éléments
+        const searchInput = document.getElementById('searchInput');
+        const cards = document.querySelectorAll('.category-card');
+        const noResults = document.getElementById('noResultsMessage');
+        const countDisplay = document.getElementById('displayedCount');
+        const totalCount = cards.length;
 
-        $('#searchInput').on('keyup', function() {
-            var searchTerm = $(this).val().toLowerCase().trim();
-            
-            if (searchTerm === '') {
-                // Afficher toutes les cartes
-                $(allCards).show();
-                $('#noResultsMessage').hide();
-                $('#displayedCount').text(totalCategories);
-                return;
-            }
+        // Fonction de recherche temps réel
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            let visibleCount = 0;
 
-            // Filtrer les cartes
-            var visibleCount = 0;
-            
-            $(allCards).each(function() {
-                var $card = $(this);
-                var name = $card.data('name') || '';
-                var description = $card.data('description') || '';
-                
-                // Vérifier si le terme de recherche est dans le nom ou la description
-                if (name.includes(searchTerm) || description.includes(searchTerm)) {
-                    $card.show();
+            cards.forEach(card => {
+                // Récupération des données data-* (plus rapide que le DOM)
+                const name = card.dataset.name || '';
+                const desc = card.dataset.description || '';
+
+                if (name.includes(searchTerm) || desc.includes(searchTerm)) {
+                    card.style.display = ""; // Afficher
+                    // Animation d'apparition si c'était caché
+                    if(card.style.display !== "none") {
+                        card.style.animation = "fadeInCard 0.3s ease-in";
+                    }
                     visibleCount++;
                 } else {
-                    $card.hide();
+                    card.style.display = "none"; // Masquer
                 }
             });
 
-            // Mettre à jour le compteur
-            $('#displayedCount').text(visibleCount);
+            // Mise à jour du compteur
+            if (countDisplay) {
+                countDisplay.textContent = visibleCount;
+            }
 
-            // Afficher/masquer le message "aucun résultat"
+            // Gestion du message "Aucun résultat"
             if (visibleCount === 0) {
-                $('#noResultsMessage').show();
+                noResults.style.display = "block";
             } else {
-                $('#noResultsMessage').hide();
+                noResults.style.display = "none";
             }
         });
     });
@@ -173,28 +183,43 @@
         top: 50%;
         transform: translateY(-50%);
         color: #95A5A6;
+        pointer-events: none;
     }
 
     .search-input-field {
         width: 100%;
         padding: 12px 12px 12px 40px;
-        border-radius: 8px; /* Slightly rounded as per image */
-        border: 1px solid #D09E86; /* The brownish border color from image */
+        border-radius: 8px;
+        border: 1px solid #D09E86;
         background: white;
         font-size: 14px;
         outline: none;
         color: #555;
+        transition: all 0.3s ease;
     }
 
-    .page-title-section { margin-bottom: 25px; }
+    .search-input-field:focus {
+        border-color: #2D4C61;
+        box-shadow: 0 0 0 3px rgba(45, 76, 97, 0.1);
+    }
+
+    .page-title-section { 
+        margin-bottom: 25px; 
+    }
+    
     .main-title {
-        font-family: 'Georgia', serif; /* Serif font as in image */
-        color: #2D4C61; /* Dark blue/teal */
+        font-family: 'Georgia', serif;
+        color: #2D4C61;
         font-size: 28px;
         font-weight: 700;
         margin-bottom: 5px;
     }
-    .sub-title { color: #7F8C8D; font-size: 14px; margin: 0; }
+    
+    .sub-title { 
+        color: #7F8C8D; 
+        font-size: 14px; 
+        margin: 0; 
+    }
 
     .categories-controls {
         display: flex;
@@ -203,8 +228,19 @@
         margin-bottom: 20px;
     }
 
+    .categories-count {
+        color: #7F8C8D;
+        font-size: 15px;
+        margin: 0;
+    }
+
+    #displayedCount {
+        font-weight: 600;
+        color: #2D4C61;
+    }
+
     .btn-primary-action {
-        background-color: #2D4C61; /* Matches button in image */
+        background-color: #2D4C61;
         color: white;
         padding: 10px 20px;
         border-radius: 8px;
@@ -214,37 +250,59 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        transition: all 0.2s;
     }
-    .btn-primary-action:hover { background-color: #1a3344; color: white; }
+    
+    .btn-primary-action:hover { 
+        background-color: #1a3344; 
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(45, 76, 97, 0.2);
+    }
 
     /* Grid & Cards */
     .categories-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 24px;
+        margin-bottom: 30px;
     }
 
     .category-card {
-        background: #FDFBF7; /* Very light beige/white bg */
+        background: #FDFBF7;
         border-radius: 12px;
         overflow: hidden;
         border: none;
         box-shadow: 0 4px 15px rgba(0,0,0,0.03);
         display: flex;
         flex-direction: column;
+        transition: all 0.3s ease;
+    }
+
+    .category-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
     }
 
     .category-card-header {
         height: 160px;
-        background-color: #F1EBE4; /* darker beige header */
+        background-color: #F1EBE4;
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
     }
 
-    .category-folder-icon { font-size: 50px; color: #A0A0A0; }
-    .category-image-real { width: 100%; height: 100%; object-fit: cover; }
+    .category-folder-icon { 
+        font-size: 50px; 
+        color: #A0A0A0; 
+    }
+    
+    .category-image-real { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+    }
 
     /* Action Buttons - Bottom Right of Header */
     .card-actions {
@@ -258,7 +316,7 @@
     .btn-action-icon {
         width: 32px;
         height: 32px;
-        border-radius: 8px; /* Squared with rounded corners */
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -269,22 +327,33 @@
         font-size: 14px;
     }
 
-    /* Edit: Beige/Yellowish bg, dark icon */
     .btn-edit-icon {
         background-color: #EADBC0; 
         color: #2C3E50;
     }
-    .btn-edit-icon:hover { background-color: #dcc8a4; }
+    
+    .btn-edit-icon:hover { 
+        background-color: #dcc8a4;
+        transform: scale(1.05);
+    }
 
-    /* Delete: Red bg, white icon */
     .btn-delete-icon {
         background-color: #EB5757;
         color: white;
     }
-    .btn-delete-icon:hover { background-color: #c0392b; }
+    
+    .btn-delete-icon:hover { 
+        background-color: #c0392b;
+        transform: scale(1.05);
+    }
 
     /* Body */
-    .category-card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+    .category-card-body { 
+        padding: 20px; 
+        flex: 1; 
+        display: flex; 
+        flex-direction: column; 
+    }
     
     .card-title-row {
         display: flex;
@@ -308,8 +377,16 @@
         font-weight: 700;
         text-transform: uppercase;
     }
-    .status-badge.active { background-color: #6B8E23; color: white; }
-    .status-badge.inactive { background-color: #95A5A6; color: white; }
+    
+    .status-badge.active { 
+        background-color: #6B8E23; 
+        color: white; 
+    }
+    
+    .status-badge.inactive { 
+        background-color: #95A5A6; 
+        color: white; 
+    }
 
     .category-desc {
         font-size: 13px;
@@ -323,5 +400,47 @@
         color: #2D4C61;
         font-weight: 600;
         font-size: 13px;
+    }
+
+    /* Message aucun résultat */
+    #noResultsMessage {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Animation pour les cartes qui apparaissent/disparaissent */
+    .category-card {
+        animation: fadeInCard 0.3s ease-in;
+    }
+
+    @@keyframes fadeInCard {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .search-input-wrapper {
+            width: 100%;
+        }
+
+        .admin-page-header-row {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .categories-controls {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .categories-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
