@@ -126,6 +126,237 @@ body {
     opacity: 0.9;
 }
 
+
+/* Categories Page Styles - Design Mockup Match */
+.categories-hero-dark {
+    background-color: var(--arena-suave);
+    min-height: 450px;
+    display: flex;
+    align-items: center;
+    padding: 4rem 0;
+}
+
+.categories-hero-dark.text-white {
+    color: var(--text-dark) !important;
+}
+
+.categories-hero-dark.text-white h1 {
+    color: var(--azul-profundo) !important;
+}
+
+.categories-hero-dark.text-white p {
+    color: var(--text-muted) !important;
+}
+
+.category-badge-beige {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    color: var(--text-dark) !important;
+    border: none;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #C06C50;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: capitalize;
+    font-weight: 500;
+}
+
+.category-search-bg {
+    background-color: white !important;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.search-container .form-control {
+    padding: 0.75rem 1rem;
+    background-color: white !important;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.search-container .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(48, 92, 125, 0.15);
+    background-color: white !important;
+    border-color: var(--azul-profundo);
+}
+
+.search-container .input-group {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.view-toggle-btn {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 8px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.view-toggle-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.view-toggle-btn.active {
+    background-color: #e3f2fd;
+    color: var(--azul-profundo);
+    border-color: var(--azul-profundo);
+}
+
+.category-card-modern {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.category-card-modern:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.category-card-modern .category-image {
+    transition: transform 0.5s ease;
+}
+
+.category-card-modern:hover .category-image {
+    transform: scale(1.1);
+}
+
+.category-overlay-modern {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
+    transition: background 0.3s ease;
+}
+
+.category-card-modern:hover .category-overlay-modern {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+}
+
+.category-content-modern {
+    z-index: 2;
+}
+
+.popular-category-box {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.popular-category-box:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.popular-product-item {
+    background-color: #f8f9fa;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.popular-product-item:hover {
+    background-color: white;
+    border-color: #dee2e6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateX(5px);
+}
+
+/* Category List View Styles */
+.category-list-card {
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.category-list-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    transform: translateX(5px);
+    border-color: #dee2e6;
+}
+
+.category-active-badge {
+    background-color: #7D8453 !important;
+    color: white !important;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.category-list-image-container {
+    overflow: hidden;
+}
+
+/* Popular Products Section Background */
+.popular-product-image-container {
+    overflow: hidden;
+}
+
+/* Fade-in Animation - DISABLED to prevent disappearing elements */
+/*
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.fade-in.visible {
+    opacity: 1;
+}
+
+.fade-in[data-index="0"] {
+    animation-delay: 0ms;
+}
+
+.fade-in[data-index="1"] {
+    animation-delay: 100ms;
+}
+
+.fade-in[data-index="2"] {
+    animation-delay: 200ms;
+}
+
+.fade-in[data-index="3"] {
+    animation-delay: 300ms;
+}
+
+.fade-in[data-index="4"] {
+    animation-delay: 400ms;
+}
+
+.fade-in[data-index="5"] {
+    animation-delay: 500ms;
+}
+
+.fade-in[data-index="6"] {
+    animation-delay: 600ms;
+}
+
+.fade-in[data-index="7"] {
+    animation-delay: 700ms;
+}
+*/
+
 /* Product Card */
 .product-card {
     display: block;

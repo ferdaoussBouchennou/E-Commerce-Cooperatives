@@ -1,0 +1,285 @@
+@using E_Commerce_Cooperatives.Models
+@{
+    ViewBag.Title = "Catégories";
+    var categories = ViewBag.Categories as List<Categorie>;
+    var productCountByCategory = ViewBag.ProductCountByCategory as Dictionary<int, int>;
+    var popularProductsByCategory = ViewBag.PopularProductsByCategory as Dictionary<int, List<Produit>>;
+}
+
+@Html.Partial("_Header")
+
+<!-- Hero Section with Dark Teal Background -->
+<section class="categories-hero-dark text-white py-5">
+    <div class="container text-center">
+        <!-- Badge -->
+        <div class="mb-4">
+            <span class="badge category-badge-beige px-4 py-2 rounded-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars me-1" viewBox="0 0 16 16">
+                    <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                </svg>
+                @ViewBag.TotalCategories catégories disponibles
+            </span>
+        </div>
+
+        <!-- Title -->
+        <h1 class="display-3 fw-bold mb-3" style="color: var(--azul-profundo);">Explorez nos catégories</h1>
+        <p class="lead mb-5 mx-auto" style="max-width: 700px; color: var(--text-muted);">
+            Découvrez notre sélection de produits artisanaux marocains, organisés par catégorie pour faciliter votre navigation.
+        </p>
+
+        <!-- Statistics -->
+        <div class="row g-4 justify-content-center mb-5">
+            <div class="col-4 col-md-2">
+                <div class="stat-number">@ViewBag.TotalCategories</div>
+                <div class="stat-label">Catégories</div>
+            </div>
+            <div class="col-4 col-md-2">
+                <div class="stat-number">@ViewBag.TotalProducts</div>
+                <div class="stat-label">Produits</div>
+            </div>
+            <div class="col-4 col-md-2">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Artisanal</div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container mx-auto" style="max-width: 600px;">
+            <div class="input-group input-group-lg">
+                <span class="input-group-text category-search-bg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-search text-muted" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                    </svg>
+                </span>
+                <input type="text" id="categorySearch" class="form-control category-search-bg shadow-none" placeholder="Rechercher une catégorie..." style="font-size: 1rem; border-left: none;">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Grid Header -->
+<div class="bg-light border-bottom py-3">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="text-muted">
+                <span id="categoryCount">@ViewBag.TotalCategories</span> catégories trouvées
+            </div>
+            <div class="d-flex gap-2">
+                <button class="view-toggle-btn active" data-view="grid" title="Grille">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-grid-3x3-gap" viewBox="0 0 16 16">
+                        <path d="M4 2v2H2V2zm1 12v-2a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1m0-5V7a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1m0-5V2a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1m5 10v-2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1m0-5V7a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1m0-5V2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1M9 2v2H7V2zm5 0v2h-2V2zM4 7v2H2V7zm5 0v2H7V7zm5 0h-2v2h2zM4 12v2H2v-2zm5 0v2H7v-2zm5 0v2h-2v-2zM12 1a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm-1 6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1zm1 4a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1z"/>
+                    </svg>
+                </button>
+                <button class="view-toggle-btn" data-view="list" title="Liste">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ul" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categories Grid -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <!-- Grid View -->
+        <div class="row g-4 categories-grid-view" id="categoriesGrid">
+            @for (int i = 0; i < categories.Count; i++)
+            {
+                var category = categories[i];
+                int productCount = productCountByCategory.ContainsKey(category.CategorieId) ? productCountByCategory[category.CategorieId] : 0;
+                
+                <div class="col-sm-6 col-lg-3 category-item" data-index="@i" data-name="@category.Nom.ToLower()">
+                    <a href="@Url.Action("Index", "Catalogue", new { categorie = category.CategorieId })" class="text-decoration-none">
+                        <div class="category-card-modern rounded-3 overflow-hidden position-relative" style="aspect-ratio: 4/3;">
+                            <img src="@(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
+                                 alt="@category.Nom" 
+                                 class="category-image w-100 h-100 object-fit-cover"
+                                 onerror="this.src='/Content/images/default-category.jpg';">
+                            <div class="category-overlay-modern position-absolute top-0 start-0 w-100 h-100"></div>
+                            <div class="category-content-modern position-absolute bottom-0 start-0 w-100 p-4 text-white">
+                                <h3 class="h3 fw-bold mb-2" style="font-size: 1.75rem;">@category.Nom</h3>
+                                <p class="small mb-2 opacity-90">@category.Description</p>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <p class="small mb-0">@productCount produits</p>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+
+        <!-- List View -->
+        <div class="categories-list-view d-none" id="categoriesList">
+            @for (int i = 0; i < categories.Count; i++)
+            {
+                var category = categories[i];
+                int productCount = productCountByCategory.ContainsKey(category.CategorieId) ? productCountByCategory[category.CategorieId] : 0;
+                
+                <div class="category-item-list mb-3" data-index="@i" data-name="@category.Nom.ToLower()">
+                    <a href="@Url.Action("Index", "Catalogue", new { categorie = category.CategorieId })" class="text-decoration-none">
+                        <div class="category-list-card bg-white rounded-3 p-4 shadow-sm d-flex align-items-center gap-4">
+                            <div class="category-list-image-container" style="width: 100px; height: 100px; flex-shrink: 0;">
+                                <img src="@(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
+                                     alt="@category.Nom" 
+                                     class="rounded-3 w-100 h-100 object-fit-cover"
+                                     onerror="this.src='/Content/images/default-category.jpg';">
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <h3 class="h5 fw-bold mb-0" style="color: var(--azul-profundo);">@category.Nom</h3>
+                                    @if (category.EstActive)
+                                    {
+                                        <span class="badge category-active-badge rounded-3 px-2 py-1">Active</span>
+                                    }
+                                </div>
+                                <p class="text-muted mb-2 small">@category.Description</p>
+                                <p class="text-primary mb-0 small">@productCount produits disponibles</p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-chevron-right text-muted" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Popular Products Section -->
+@if (popularProductsByCategory != null && popularProductsByCategory.Any())
+{
+    <section class="py-5" style="background-color: var(--arena-suave);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold mb-2" style="color: var(--azul-profundo); font-family: serif;">Produits populaires par catégorie</h2>
+                <p class="text-muted">Découvrez les produits les plus appréciés dans chaque catégorie</p>
+            </div>
+
+            <div class="row g-4">
+                @foreach (var category in categories.Where(c => popularProductsByCategory.ContainsKey(c.CategorieId) && popularProductsByCategory[c.CategorieId].Any()))
+                {
+                    <div class="col-md-6">
+                        <div class="popular-category-box bg-white rounded-3 p-4 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="h5 fw-bold mb-0" style="color: var(--azul-profundo); font-family: serif;">@category.Nom</h3>
+                                <a href="@Url.Action("Index", "Catalogue", new { categorie = category.CategorieId })" class="text-primary text-decoration-none d-flex align-items-center gap-1">
+                                    <span class="small fw-medium">Voir tout</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+                                    </svg>
+                                </a>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3">
+                                @foreach (var product in popularProductsByCategory[category.CategorieId])
+                                {
+                                    <a href="@Url.Action("Details", "Produit", new { id = product.ProduitId })" class="popular-product-item d-flex align-items-center gap-3 p-3 rounded-2 text-decoration-none">
+                                        <div class="popular-product-image-container" style="width: 60px; height: 60px; flex-shrink: 0; background-color: var(--arena-suave); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                            <img src="@(product.ImageUrl ?? "/Content/images/default-product.jpg")" 
+                                                 alt="@product.Nom" 
+                                                 class="rounded-2"
+                                                 style="width: 100%; height: 100%; object-fit: cover;"
+                                                 onerror="this.src='/Content/images/default-product.jpg';">
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h4 class="h6 mb-1 text-dark">@product.Nom</h4>
+                                            <p class="small text-muted mb-0">@product.Prix.ToString("N2") DH</p>
+                                        </div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-chevron-right text-muted" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                                        </svg>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- CTA Section -->
+<section class="py-5 text-center" style="background-color: var(--arena-suave);">
+    <div class="container">
+        <h2 class="h3 fw-bold mb-3" style="color: var(--azul-profundo); font-family: serif;">Vous ne trouvez pas ce que vous cherchez ?</h2>
+        <p class="text-muted mb-4 mx-auto" style="max-width: 600px;">
+            Explorez notre catalogue complet ou contactez-nous pour une demande personnalisée.
+        </p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="@Url.Action("Index", "Catalogue")" class="btn btn-primary px-4 py-2 rounded-3 d-flex align-items-center gap-2">
+                <span>Voir le catalogue</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+                </svg>
+            </a>
+            <a href="@Url.Action("Index", "Cooperatives")" class="btn btn-outline-primary px-4 py-2 rounded-3" style="border-color: var(--azul-profundo); color: var(--azul-profundo);">Nos coopératives</a>
+        </div>
+    </div>
+</section>
+
+@Html.Partial("_Footer")
+
+@section scripts {
+    <script>
+        $(document).ready(function() {
+            // Category Search
+            $("#categorySearch").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                var count = 0;
+                
+                // Filter both grid and list views
+                $(".category-item, .category-item-list").filter(function() {
+                    var match = $(this).data("name").indexOf(value) > -1;
+                    $(this).toggle(match);
+                    if (match) count++;
+                });
+                
+                $("#categoryCount").text(count);
+            });
+
+            // View Toggle
+            $(".view-toggle-btn").on("click", function() {
+                var viewType = $(this).data("view");
+                $(".view-toggle-btn").removeClass("active");
+                $(this).addClass("active");
+                
+                if (viewType === "list") {
+                    $("#categoriesGrid").addClass("d-none");
+                    $("#categoriesList").removeClass("d-none");
+                } else {
+                    $("#categoriesGrid").removeClass("d-none");
+                    $("#categoriesList").addClass("d-none");
+                }
+            });
+
+            // Fade-in animation on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in').forEach(function(element) {
+                observer.observe(element);
+            });
+        });
+    </script>
+}
