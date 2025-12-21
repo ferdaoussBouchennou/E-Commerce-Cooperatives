@@ -88,6 +88,17 @@ body {
     border-color: rgba(255, 255, 255, 0.5);
 }
 
+.btn-link-dark {
+    color: var(--azul-profundo) !important;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-link-dark:hover {
+    color: var(--primary-dark) !important;
+    transform: translateX(4px);
+}
+
 /* Category Card */
 .category-card {
     transition: transform 0.3s ease;

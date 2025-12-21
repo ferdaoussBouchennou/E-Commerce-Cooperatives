@@ -8,6 +8,21 @@
     <link rel="icon" type="image/png" href="@Url.Content("~/Content/images/logo-coop.png")" />
     <link rel="shortcut icon" type="image/png" href="@Url.Content("~/Content/images/logo-coop.png")" />
     @Styles.Render("~/Content/css")
+    <style>
+        /* Dark Links "Voir tout" */
+        .btn-link-dark {
+            color: #305C7D !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+        .btn-link-dark:hover {
+            color: #1e3d54 !important;
+            transform: translateX(4px);
+        }
+    </style>
     @Scripts.Render("~/bundles/modernizr")
 </head>
 <body>
