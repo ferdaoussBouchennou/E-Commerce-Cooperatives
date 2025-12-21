@@ -420,8 +420,9 @@
         }
 
         function selectVariant(button, variantId, price, stock) {
+            const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
             selectedVariantId = variantId;
-            selectedVariantPrice = price;
+            selectedVariantPrice = numericPrice;
             selectedVariantStock = stock;
             
             // Update UI
@@ -435,7 +436,7 @@
             button.style.backgroundColor = '#F5F3EF';
             
             // Update price
-            document.getElementById('product-price').textContent = price.toFixed(2);
+            document.getElementById('product-price').textContent = numericPrice.toFixed(2);
             
             // Update stock
             document.getElementById('stock-info').textContent = stock + ' en stock';
