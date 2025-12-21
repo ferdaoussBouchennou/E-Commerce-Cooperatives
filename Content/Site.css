@@ -99,6 +99,40 @@ body {
     transform: translateX(4px);
 }
 
+/* Green Olive Button Hover */
+.btn-outline-success:hover {
+    background-color: #7D8453 !important;
+    border-color: #7D8453 !important;
+    color: white !important;
+}
+
+/* Filter Form Controls - Dark Teal Color */
+.form-check-input:checked {
+    background-color: #305C7D;
+    border-color: #305C7D;
+}
+
+.form-check-input:focus {
+    border-color: #305C7D;
+    box-shadow: 0 0 0 0.25rem rgba(48, 92, 125, 0.25);
+}
+
+.form-range::-webkit-slider-thumb {
+    background-color: #305C7D;
+}
+
+.form-range::-moz-range-thumb {
+    background-color: #305C7D;
+}
+
+.form-range::-webkit-slider-runnable-track {
+    background-color: rgba(48, 92, 125, 0.2);
+}
+
+.form-range::-moz-range-track {
+    background-color: rgba(48, 92, 125, 0.2);
+}
+
 /* Category Card */
 .category-card {
     transition: transform 0.3s ease;
