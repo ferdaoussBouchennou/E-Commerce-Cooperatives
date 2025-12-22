@@ -1,0 +1,419 @@
+@model E_Commerce_Cooperatives.Models.ViewModels.UserStatisticsViewModel
+@using E_Commerce_Cooperatives.Models.ViewModels
+@{
+    ViewBag.Title = "Tableau de bord - Utilisateurs";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+    
+    var stats = Model ?? new UserStatisticsViewModel();
+    var evolutionData = ViewBag.EvolutionData as List<UserEvolutionViewModel> ?? new List<UserEvolutionViewModel>();
+    var activeUsers = ViewBag.ActiveUsers as List<ActiveUserViewModel> ?? new List<ActiveUserViewModel>();
+}
+
+<div class="admin-page">
+    <div class="admin-page-header">
+        <h1 class="admin-page-title">Tableau de bord - Utilisateurs</h1>
+        <p class="admin-page-subtitle">Vue d'ensemble de la gestion des utilisateurs</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background-color: #305C7D;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16">
+                        <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216Z"/>
+                        <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="totalUsers">@stats.TotalUsers</h3>
+                    <p class="stat-label">Total Utilisateurs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background-color: #7D8453;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 2.384 4.323a.75.75 0 0 1 1.06-1.061l4.033 4.033L11.03 3.97a.75.75 0 0 1 1.08 1.04z"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="activeUsers">@stats.ActiveUsers</h3>
+                    <p class="stat-label">Utilisateurs Actifs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background-color: #C06C50;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16">
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="newUsers">@stats.NewUsers</h3>
+                    <p class="stat-label">Nouveaux (30 jours)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background-color: #E8DCC2;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M11.354 4.646a.5.5 0 0 0-.708 0l-6 6a.5.5 0 0 0 .708.708l6-6a.5.5 0 0 0 0-.708z"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="activityRate">@stats.ActivityRate%</h3>
+                    <p class="stat-label">Taux d'Activité</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="period-filter">
+                <label>Période :</label>
+                <button class="period-btn active" data-period="day">Aujourd'hui</button>
+                <button class="period-btn" data-period="week">7 derniers jours</button>
+                <button class="period-btn" data-period="month">30 derniers jours</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-8 mb-3">
+            <div class="chart-card">
+                <h3 class="chart-title">Évolution des Inscriptions</h3>
+                <canvas id="evolutionChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="chart-card">
+                <h3 class="chart-title">Répartition des Utilisateurs</h3>
+                <canvas id="distributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Most Active Users -->
+    <div class="row">
+        <div class="col-12">
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 class="table-title">Utilisateurs les plus actifs</h3>
+                    <a href="@Url.Action("Utilisateurs", "Admin")" class="btn-view-all">Voir tout</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Email</th>
+                                <th>Dernière connexion</th>
+                                <th>Commandes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (activeUsers.Any())
+                            {
+                                foreach (var user in activeUsers)
+                                {
+                                    <tr>
+                                        <td>@user.Prenom @user.Nom</td>
+                                        <td>@user.Email</td>
+                                        <td>@(user.DerniereConnexion?.ToString("dd/MM/yyyy HH:mm") ?? "Jamais")</td>
+                                        <td>@user.OrderCount</td>
+                                        <td>
+                                            <a href="@Url.Action("UserDetails", "Admin", new { id = user.ClientId })" class="btn-action btn-view">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                                                </svg>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center">Aucun utilisateur actif</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // Evolution Chart Data
+        var evolutionData = @Html.Raw(Json.Encode(evolutionData));
+        var stats = @Html.Raw(Json.Encode(stats));
+
+        // Evolution Chart
+        var evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+        var evolutionChart = new Chart(evolutionCtx, {
+            type: 'line',
+            data: {
+                labels: evolutionData.map(d => d.Date),
+                datasets: [{
+                    label: 'Nouveaux utilisateurs',
+                    data: evolutionData.map(d => d.Count),
+                    borderColor: '#305C7D',
+                    backgroundColor: 'rgba(48, 92, 125, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+
+        // Distribution Chart
+        var distributionCtx = document.getElementById('distributionChart').getContext('2d');
+        var distributionChart = new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Actifs', 'Inactifs'],
+                datasets: [{
+                    data: [stats.ActiveUsers || 0, stats.InactiveUsers || 0],
+                    backgroundColor: ['#7D8453', '#C06C50']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Period Filter
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                var period = this.getAttribute('data-period');
+                loadStats(period);
+            });
+        });
+
+        function loadStats(period) {
+            fetch('@Url.Action("GetUserStats", "Admin")?period=' + period)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalUsers').textContent = data.TotalUsers;
+                    document.getElementById('activeUsers').textContent = data.ActiveUsers;
+                    document.getElementById('newUsers').textContent = data.NewUsers;
+                    document.getElementById('activityRate').textContent = data.ActivityRate + '%';
+                    
+                    // Update distribution chart
+                    distributionChart.data.datasets[0].data = [data.ActiveUsers, data.InactiveUsers];
+                    distributionChart.update();
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+}
+
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: bold;
+        margin: 0;
+        color: #305C7D;
+    }
+
+    .stat-label {
+        margin: 5px 0 0 0;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .period-filter {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .period-filter label {
+        margin: 0;
+        font-weight: 600;
+        color: #305C7D;
+    }
+
+    .period-btn {
+        padding: 8px 16px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .period-btn:hover {
+        background: #f5f5f5;
+    }
+
+    .period-btn.active {
+        background: #305C7D;
+        color: white;
+        border-color: #305C7D;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        height: 400px;
+    }
+
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #305C7D;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .table-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+        color: #305C7D;
+    }
+
+    .btn-view-all {
+        padding: 8px 16px;
+        background: #305C7D;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .btn-view-all:hover {
+        background: #244a66;
+        color: white;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admin-table thead {
+        background: #f5f5f5;
+    }
+
+    .admin-table th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #305C7D;
+        border-bottom: 2px solid #ddd;
+    }
+
+    .admin-table td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .admin-table tbody tr:hover {
+        background: #f9f9f9;
+    }
+
+    .btn-action {
+        padding: 6px 12px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .btn-view {
+        background: #305C7D;
+        color: white;
+    }
+
+    .btn-view:hover {
+        background: #244a66;
+        color: white;
+    }
+</style>
+

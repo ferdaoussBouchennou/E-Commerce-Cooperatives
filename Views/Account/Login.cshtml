@@ -1,0 +1,128 @@
+@model E_Commerce_Cooperatives.Models.ViewModels.LoginViewModel
+@{
+    ViewBag.Title = "Connexion";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@Html.Partial("_Header")
+
+<main style="min-height: 70vh; background-color: #F5F3EF; padding: 60px 0;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4">
+                <!-- Logo and Title -->
+                <div class="text-center mb-4">
+                    <img src="@Url.Content("~/Content/images/logo-coop.png")" alt="CoopShop" style="width: 80px; height: 40px; margin-bottom: 1rem;">
+                    <h1 class="h2 fw-bold mb-2" style="color: #305C7D;">Connexion</h1>
+                    <p class="text-muted" style="color: #6c757d;">Accédez à votre compte CoopShop</p>
+                </div>
+
+                <!-- Login Card -->
+                <div class="card shadow-sm border-0" style="border-radius: 12px; background-color: white;">
+                    <div class="card-body p-4">
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger mb-0" })
+                            </div>
+                        }
+
+                        @if (ViewBag.SuccessMessage != null)
+                        {
+                            <div class="alert alert-success" role="alert">
+                                @ViewBag.SuccessMessage
+                            </div>
+                        }
+
+                        @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+                        {
+                            @Html.AntiForgeryToken()
+
+                            <!-- Email Field -->
+                            <div class="mb-3">
+                                @Html.LabelFor(m => m.Email, new { @class = "form-label fw-semibold", style = "color: #305C7D;" })
+                                <div class="input-group" style="border-radius: 8px; overflow: hidden;">
+                                    <span class="input-group-text bg-light border-0" style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#305C7D" class="bi bi-envelope" viewBox="0 0 16 16">
+                                            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+                                        </svg>
+                                    </span>
+                                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control border-0 bg-light", placeholder = "votre@email.com", type = "email", style = "border-top-right-radius: 8px; border-bottom-right-radius: 8px;" })
+                                </div>
+                                @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                            </div>
+
+                            <!-- Password Field -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    @Html.LabelFor(m => m.MotDePasse, new { @class = "form-label fw-semibold mb-0", style = "color: #305C7D;" })
+                                    <a href="@Url.Action("ForgotPassword", "Account")" class="text-decoration-none small" style="color: #C06C50;">Mot de passe oublié ?</a>
+                                </div>
+                                <div class="input-group" style="border-radius: 8px; overflow: hidden;">
+                                    <span class="input-group-text bg-light border-0" style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#305C7D" class="bi bi-lock" viewBox="0 0 16 16">
+                                            <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+                                        </svg>
+                                    </span>
+                                    @Html.PasswordFor(m => m.MotDePasse, new { @class = "form-control border-0 bg-light", placeholder = "••••••••", id = "passwordInput" })
+                                    <button class="btn btn-link border-0 bg-light" type="button" id="togglePassword" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px; color: #305C7D;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16" id="eyeIcon">
+                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                @Html.ValidationMessageFor(m => m.MotDePasse, "", new { @class = "text-danger small" })
+                            </div>
+
+                            <!-- Remember Me -->
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    @Html.CheckBoxFor(m => m.SeSouvenirDeMoi, new { @class = "form-check-input" })
+                                    @Html.LabelFor(m => m.SeSouvenirDeMoi, new { @class = "form-check-label small", style = "color: #6c757d;" })
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn w-100 py-2 fw-semibold mb-3" style="background-color: #C06C50; color: white; border: none; border-radius: 8px;">
+                                Se connecter
+                            </button>
+
+                            <!-- Divider -->
+                            <div class="text-center mb-3">
+                                <hr class="my-3">
+                                <p class="small text-muted mb-0">Pas encore de compte ?</p>
+                            </div>
+
+                            <!-- Register Link -->
+                            <a href="@Url.Action("Register", "Account")" class="btn w-100 py-2 fw-semibold" style="border: 1px solid #305C7D; color: #305C7D; background-color: white; border-radius: 8px;">
+                                Créer un compte
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@Html.Partial("_Footer")
+
+@section scripts {
+    <script>
+        // Toggle password visibility
+        document.getElementById('togglePassword')?.addEventListener('click', function() {
+            const passwordInput = document.getElementById('passwordInput');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = '<path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5a7.028 7.028 0 0 1-2.79-.588l-.77-.772A5.944 5.944 0 0 0 8 12.5c2.12 0 3.879-1.168 5.168-2.457A13.134 13.134 0 0 0 13.36 11.238z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.94 2.94a3.5 3.5 0 0 1-2.83-2.83l-.823-.823a2.5 2.5 0 0 0-2.828 2.828l.823.823a3.5 3.5 0 0 0 4.474 4.474l.823-.823a2.5 2.5 0 0 1-2.829-2.829l-.822-.822zm-3.182 3.182c.4.4.902.627 1.414.627s1.014-.227 1.414-.627l-.823-.823a1.5 1.5 0 0 0-2.12 0l-.823.823z"/><path d="M13.646 2.354a.5.5 0 0 0-.708 0l-3 3a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708zm-7.292 0a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708zM8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM1 8a7 7 0 1 1 14 0A7 7 0 0 1 1 8z"/>';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = '<path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>';
+            }
+        });
+    </script>
+}
+

@@ -481,7 +481,7 @@
             
             if (!isAuthenticated) {
                 alert('Veuillez vous connecter pour ajouter au panier');
-                window.location.href = '@Url.Action("Index", "Home")#connexion';
+                window.location.href = '@Url.Action("Login", "Account")?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
                 return;
             }
             
