@@ -906,13 +906,17 @@ namespace E_Commerce_Cooperatives.Controllers
                 if (Request.IsAjaxRequest())
                 {
                     var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                    return Json(new { success = false, errors = errors });
+                    return Json(new { success = false, message = "Données invalides", errors = errors });
                 }
                 return View(categorie);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterCategorie: {ex.Message}");
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(new { success = false, message = "Erreur lors de l'ajout: " + ex.Message });
+                }
                 TempData["ErrorMessage"] = "Erreur lors de l'ajout";
                 return View(categorie);
             }
@@ -958,11 +962,17 @@ namespace E_Commerce_Cooperatives.Controllers
         {
             try
             {
+                // DateCreation n'est pas dans le formulaire, on l'ignore pour la validation
+                ModelState.Remove("DateCreation");
+
                 if (ModelState.IsValid)
                 {
                     var existing = db.GetCategorie(categorie.CategorieId);
                     if (existing == null)
                     {
+                        if (Request.IsAjaxRequest())
+                            return Json(new { success = false, message = "Catégorie non trouvée" });
+
                         TempData["ErrorMessage"] = "Catégorie non trouvée";
                         return RedirectToAction("Categories");
                     }
@@ -984,15 +994,32 @@ namespace E_Commerce_Cooperatives.Controllers
                         categorie.ImageUrl = existing.ImageUrl; // Garder l'ancienne image
                     }
 
+                    // On s'assure de garder la date de création originale
+                    categorie.DateCreation = existing.DateCreation;
+
                     db.UpdateCategorie(categorie);
+
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = true, message = "Catégorie mise à jour avec succès" });
+
                     TempData["SuccessMessage"] = "Catégorie mise à jour avec succès";
                     return RedirectToAction("Categories");
                 }
+
+                if (Request.IsAjaxRequest())
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return Json(new { success = false, message = "Validation échouée", errors = errors });
+                }
+
                 return View(categorie);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Erreur dans ModifierCategorie: {ex.Message}");
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, message = "Erreur lors de la modification: " + ex.Message });
+
                 TempData["ErrorMessage"] = "Erreur lors de la modification";
                 return View(categorie);
             }

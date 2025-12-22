@@ -18,165 +18,129 @@
         z-index: 1055 !important;
     }
     
-    /* Styles du modal - Design beige/crème */
-    #categorieModal .modal-content {
-        border-radius: 20px;
+    /* Styles du modal */
+    .modal-content {
+        border-radius: 15px;
         border: none;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-        background: #F5F3EF;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
     }
     
-    #categorieModal .modal-header {
-        background: transparent;
-        color: #305C7D;
-        border-radius: 20px 20px 0 0;
-        padding: 25px 30px 15px;
+    .modal-header {
+        background: linear-gradient(135deg, #305C7D 0%, #3D7BA8 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 20px 25px;
         border-bottom: none;
     }
     
-    #categorieModal .modal-title {
+    .modal-title {
         font-family: 'Georgia', serif;
-        font-size: 24px;
+        font-size: 22px;
         font-weight: 700;
-        color: #305C7D;
     }
     
-    #categorieModal .close {
-        background: none;
-        border: none;
-        font-size: 32px;
-        color: #305C7D;
-        opacity: 0.6;
-        cursor: pointer;
-        padding: 0;
-        margin: 0;
-        line-height: 1;
-        font-weight: 300;
+    .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.8;
     }
     
-    #categorieModal .close:hover {
+    .btn-close:hover {
         opacity: 1;
-        color: #305C7D;
     }
     
-    #categorieModal .modal-body {
-        padding: 20px 30px 30px;
-        background: #F5F3EF;
+    .modal-body {
+        padding: 30px 25px;
     }
     
-    #categorieModal .form-label {
+    .form-label {
         font-weight: 600;
         color: #305C7D;
         margin-bottom: 8px;
         font-size: 14px;
-        display: block;
     }
     
-    #categorieModal .form-input {
+    .form-input {
         width: 100%;
-        padding: 14px 16px;
-        border: 2px solid #D09E86;
-        border-radius: 10px;
-        font-size: 15px;
+        padding: 12px 15px;
+        border: 1px solid #D09E86;
+        border-radius: 8px;
+        font-size: 14px;
         transition: all 0.3s ease;
-        background: white;
-        color: #2C3E50;
     }
     
-    #categorieModal .form-input:focus {
+    .form-input:focus {
         outline: none;
-        border-color: #C06C50;
-        box-shadow: 0 0 0 3px rgba(192, 108, 80, 0.1);
+        border-color: #305C7D;
+        box-shadow: 0 0 0 3px rgba(48, 92, 125, 0.1);
     }
     
-    #categorieModal .form-input::placeholder {
-        color: #95A5A6;
-        font-style: italic;
-    }
-    
-    #categorieModal .form-check {
+    .form-check {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 16px;
-        background: white;
-        border-radius: 10px;
-        border: 2px solid #D09E86;
+        gap: 10px;
+        padding: 15px;
+        background: #F5F3EF;
+        border-radius: 8px;
     }
     
-    #categorieModal .form-check-input {
-        width: 24px;
-        height: 24px;
+    .form-check-input {
+        width: 20px;
+        height: 20px;
         border: 2px solid #305C7D;
         cursor: pointer;
-        border-radius: 6px;
-        margin: 0;
     }
     
-    #categorieModal .form-check-input:checked {
-        background-color: #305C7D;
-        border-color: #305C7D;
+    .form-check-input:checked {
+        background-color: #7D8453;
+        border-color: #7D8453;
     }
     
-    #categorieModal .form-check-label {
+    .form-check-label {
         font-weight: 500;
-        color: #305C7D;
+        color: #2C3E50;
         cursor: pointer;
         margin: 0;
-        font-size: 15px;
     }
     
-    #categorieModal .form-footer {
+    .form-footer {
         display: flex;
         gap: 15px;
         justify-content: flex-end;
-        padding-top: 25px;
-        border-top: none;
-        margin-top: 10px;
+        padding-top: 20px;
+        border-top: 1px solid #E8E8E8;
     }
     
-    #categorieModal .btn-cancel {
-        padding: 13px 28px;
-        background: white;
-        color: #305C7D;
-        border: 2px solid #305C7D;
-        border-radius: 10px;
+    .btn-cancel {
+        padding: 12px 25px;
+        background: #95A5A6;
+        color: white;
+        border: none;
+        border-radius: 8px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        font-size: 15px;
     }
     
-    #categorieModal .btn-cancel:hover {
-        background: #305C7D;
-        color: white;
+    .btn-cancel:hover {
+        background: #7F8C8D;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(48, 92, 125, 0.2);
     }
     
-    #categorieModal .btn-save {
-        padding: 13px 32px;
-        background: #305C7D;
+    .btn-save {
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #7D8453 0%, #9BA36C 100%);
         color: white;
-        border: 2px solid #305C7D;
-        border-radius: 10px;
+        border: none;
+        border-radius: 8px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        font-size: 15px;
     }
     
-    #categorieModal .btn-save:hover {
-        background: #244A63;
-        border-color: #244A63;
+    .btn-save:hover {
+        background: linear-gradient(135deg, #6B7145 0%, #8A9158 100%);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(48, 92, 125, 0.3);
-    }
-    
-    #categorieModal .btn-save:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
+        box-shadow: 0 5px 15px rgba(125, 132, 83, 0.3);
     }
     
     .btn-primary-action {
@@ -197,6 +161,51 @@
         background: linear-gradient(135deg, #244A63 0%, #2F6289 100%);
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(48, 92, 125, 0.3);
+    }
+    /* Image Preview Styling */
+    .image-preview-zone {
+        width: 100%;
+        height: 150px;
+        border: 2px dashed #D09E86;
+        border-radius: 12px;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: #FFF;
+        position: relative;
+    }
+
+    #currentImagePreview {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .preview-placeholder {
+        color: #95A5A6;
+        text-align: center;
+        font-size: 13px;
+    }
+
+    .preview-placeholder i {
+        font-size: 24px;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    /* Fix z-index modal interactivity */
+    .modal-backdrop {
+        z-index: 1040 !important;
+    }
+
+    #categorieModal {
+        z-index: 1050 !important;
+    }
+
+    #categorieModal .modal-dialog {
+        z-index: 1055 !important;
     }
 </style>
 
@@ -305,7 +314,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="catModalTitle">Nouvelle Catégorie</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="background: none; border: none; font-size: 28px; color: white; opacity: 0.8; cursor: pointer; padding: 0; margin: 0; line-height: 1;">
+                <button type="button" class="close" onclick="closeModal()" aria-label="Close" style="background: none; border: none; font-size: 28px; color: white; opacity: 0.8; cursor: pointer; padding: 0; margin: 0; line-height: 1;">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -326,9 +335,18 @@
 
                     <div class="form-group mb-3">
                         <label class="form-label">Image/Icône (Optionnel)</label>
-                        <input type="file" id="imageFile" name="imageFile" class="form-input" accept="image/*" style="padding: 10px;" />
+                        <input type="file" id="imageFile" name="imageFile" class="form-input" accept="image/*" style="padding: 10px;" onchange="previewImage(this)" />
                         <input type="hidden" id="ImageUrl" name="ImageUrl" />
-                        <small style="color: #5D6D7E; font-size: 12px; display: block; margin-top: 5px;">
+                        
+                        <div class="image-preview-zone" id="imagePreviewZone">
+                            <img id="currentImagePreview" src="" style="display: none;" />
+                            <div class="preview-placeholder" id="previewPlaceholder">
+                                <i class="fas fa-image"></i>
+                                <span>Aucune image sélectionnée</span>
+                            </div>
+                        </div>
+
+                        <small style="color: #5D6D7E; font-size: 12px; display: block; margin-top: 8px;">
                             <i class="fas fa-info-circle"></i> Formats acceptés: JPG, PNG, GIF (Max 5MB)
                         </small>
                     </div>
@@ -342,7 +360,7 @@
                     </div>
 
                     <div class="form-footer">
-                        <button type="button" class="btn-cancel" data-dismiss="modal">
+                        <button type="button" class="btn-cancel" onclick="closeModal()">
                             <i class="fas fa-times"></i> Annuler
                         </button>
                         <button type="submit" class="btn-save">
@@ -422,18 +440,35 @@
             $('#categorieModal').on('hidden.bs.modal', function () {
                 $('#categorieForm')[0].reset();
                 $('#CategorieId').val("0");
+                resetImagePreview();
             });
         });
 
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#currentImagePreview').attr('src', e.target.result).show();
+                    $('#previewPlaceholder').hide();
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function resetImagePreview() {
+            $('#currentImagePreview').attr('src', '').hide();
+            $('#previewPlaceholder').show();
+ 
+ }
+
         function openAddModal() {
-            // Reset le formulaire
             $('#categorieForm')[0].reset();
             $('#CategorieId').val("0");
             $('#catModalTitle').text("Nouvelle Catégorie");
             $('#EstActive').prop('checked', true);
-            
-            // Ouvre le modal Bootstrap 4
-            $('#categorieModal').modal('show');
+            resetImagePreview();
+            // Move modal to body to avoid backdrop issues
+            $('#categorieModal').appendTo('body').modal('show');
         }
 
         function openEditModal(id) {
@@ -451,21 +486,28 @@
                         $('#EstActive').prop('checked', c.EstActive);
                         $('#catModalTitle').text("Modifier la Catégorie");
                         
-                        // Ouvre le modal Bootstrap 4
-                        $('#categorieModal').modal('show');
+                        if (c.ImageUrl) {
+                            var imgUrl = c.ImageUrl.startsWith('~') ? '@Url.Content("~")'.replace(/\/$/, '') + c.ImageUrl.substring(1) : c.ImageUrl;
+                            $('#currentImagePreview').attr('src', imgUrl).show();
+                            $('#previewPlaceholder').hide();
+                        } else {
+                            resetImagePreview();
+                        }
+                        
+                        // Move modal to body
+                        $('#categorieModal').appendTo('body').modal('show');
                     } else {
                         alert('Erreur: ' + response.message);
                     }
                 },
                 error: function(xhr, status, error) {
                     alert('Erreur lors du chargement de la catégorie.');
-                    console.error('Error:', error);
                 }
             });
         }
 
         function deleteCategory(id, nom) {
-            if (confirm('⚠️ Voulez-vous vraiment supprimer la catégorie "' + nom + '" ?\n\nCette action est irréversible.')) {
+            if (confirm('⚠️ Voulez-vous vraiment supprimer la catégorie "' + nom + '" ?')) {
                 $.ajax({
                     url: '@Url.Action("SupprimerCategorie", "Admin")',
                     type: 'POST',
@@ -477,13 +519,16 @@
                             alert('Erreur: ' + response.message);
                         }
                     },
-                    error: function(xhr, status, error) {
+                    error: function() {
                         alert('Erreur lors de la suppression.');
-                        console.error('Error:', error);
                     }
                 });
             }
         }
+
+        // Fonction pour fermer le modal
+        function closeModal() {
+            $('#categorieModal').modal('hide');
+        }
     </script>
 }
-
