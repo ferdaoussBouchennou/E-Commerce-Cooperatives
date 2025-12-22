@@ -1,20 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using E_Commerce_Cooperatives.Models;
 using E_Commerce_Cooperatives.Models.ViewModels;
-using System.IO;
-// Note: iTextSharp requires NuGet package installation: Install-Package iTextSharp
-// Run this command in Package Manager Console: Install-Package iTextSharp
-using iTextSharp.text;
-using iTextSharp.text.pdf;
-using System.Text;
 using System.Data.SqlClient;
 using System.Configuration;
 
-namespace E_Commerce_Cooperatives.Controllers.Admin
+namespace E_Commerce_Cooperatives.Controllers
 {
     public class AdminController : Controller
     {
@@ -38,6 +31,7 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
         {
             return RedirectToAction("Dashboard");
         }
+        
 
         // GET: Admin/Commandes
         public ActionResult Commandes(string searchTerm = null, string statutFilter = "all", 
@@ -118,856 +112,511 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
         // POST: Admin/Commandes/UpdateStatus
         [HttpPost]
         public ActionResult UpdateStatus(int commandeId, string nouveauStatut)
+        private readonly ECommerceDbContext db = new ECommerceDbContext();
+
+        // ============================================
+        // GESTION DES PRODUITS
+        // ============================================
+
+        /// <summary>
+        /// Affiche la liste des produits avec filtres et statistiques
+        /// </summary>
+        public ActionResult Produits(string searchTerm = "", string categorieFilter = "all", string statutFilter = "all")
         {
             try
             {
-                // Empêcher l'annulation via cette méthode - utiliser Cancel() à la place
-                if (nouveauStatut == "Annulée")
+                // Récupérer tous les produits
+                var produits = db.Produits.ToList();
+                
+                // Charger les relations manuellement
+                var categories = db.Categories.ToList();
+                var cooperatives = db.Cooperatives.ToList();
+                
+                foreach (var p in produits)
                 {
-                    return Json(new { success = false, message = "Pour annuler une commande, veuillez utiliser le bouton 'Annuler la commande' et fournir une raison d'annulation." });
+                    if (p.CategorieId.HasValue)
+                        p.Categorie = categories.FirstOrDefault(c => c.CategorieId == p.CategorieId.Value);
+                    if (p.CooperativeId.HasValue)
+                        p.Cooperative = cooperatives.FirstOrDefault(c => c.CooperativeId == p.CooperativeId.Value);
                 }
 
-                // Validation des paramètres
-                if (commandeId <= 0)
+                // Appliquer les filtres
+                if (!string.IsNullOrEmpty(searchTerm))
                 {
-                    return Json(new { success = false, message = "ID de commande invalide" });
+                    produits = produits.Where(p =>
+                        p.Nom.ToLower().Contains(searchTerm.ToLower()) ||
+                        (p.Cooperative != null && p.Cooperative.Nom.ToLower().Contains(searchTerm.ToLower()))
+                    ).ToList();
                 }
 
-                if (string.IsNullOrWhiteSpace(nouveauStatut))
+                if (categorieFilter != "all" && int.TryParse(categorieFilter, out int catId))
                 {
-                    return Json(new { success = false, message = "Le statut est obligatoire" });
+                    produits = produits.Where(p => p.CategorieId == catId).ToList();
                 }
 
-                // Vérifier que le statut est valide (sauf Annulée)
-                var statutsValides = new[] { "Validée", "Préparation", "Expédiée", "Livrée" };
-                if (!statutsValides.Contains(nouveauStatut))
+                if (statutFilter != "all")
                 {
-                    return Json(new { success = false, message = "Statut invalide" });
-                }
-
-                using (var db = new ECommerceDbContext())
-                {
-                    // Vérifier que la commande existe
-                    var commande = db.GetCommandeDetails(commandeId);
-                    if (commande == null)
+                    switch (statutFilter)
                     {
-                        return Json(new { success = false, message = "Commande introuvable" });
+                        case "disponible":
+                            produits = produits.Where(p => p.EstDisponible).ToList();
+                            break;
+                        case "vedette":
+                            produits = produits.Where(p => p.EstEnVedette).ToList();
+                            break;
+                        case "stock-faible":
+                            produits = produits.Where(p => p.StockTotal <= p.SeuilAlerte).ToList();
+                            break;
                     }
-
-                    // Empêcher de modifier le statut d'une commande annulée
-                    if (commande.Statut == "Annulée")
-                    {
-                        return Json(new { success = false, message = "Impossible de modifier le statut d'une commande annulée" });
-                    }
-
-                    var success = db.UpdateCommandeStatut(commandeId, nouveauStatut);
-                    if (success)
-                    {
-                        return Json(new { success = true, message = "Statut mis à jour avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la mise à jour" });
                 }
+
+                // Calculer les statistiques
+                var stats = new Dictionary<string, int>
+                {
+                    { "Total", produits.Count },
+                    { "Disponibles", produits.Count(p => p.EstDisponible) },
+                    { "EnVedette", produits.Count(p => p.EstEnVedette) },
+                    { "StockFaible", produits.Count(p => p.StockTotal <= p.SeuilAlerte) }
+                };
+
+                // Passer les données à la vue
+                ViewBag.Stats = stats;
+                ViewBag.SearchTerm = searchTerm;
+                ViewBag.CategorieFilter = categorieFilter;
+                ViewBag.StatutFilter = statutFilter;
+
+                return View("Admin_Produit", produits);
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+                // Logger l'erreur
+                System.Diagnostics.Debug.WriteLine($"Erreur dans Produits: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement des produits";
+                return View("Admin_Produit", new List<Produit>());
             }
         }
 
-        // POST: Admin/Commandes/Cancel
-        [HttpPost]
-        public ActionResult Cancel(int commandeId, string raisonAnnulation)
+        /// <summary>
+        /// Affiche le formulaire d'ajout de produit
+        /// </summary>
+        public ActionResult AjouterProduit()
         {
             try
             {
-                // Validation des paramètres
-                if (commandeId <= 0)
-                {
-                    return Json(new { success = false, message = "ID de commande invalide" });
-                }
+                ViewBag.Categories = db.Categories.ToList();
+                ViewBag.Cooperatives = db.Cooperatives.ToList();
+                return View(new Produit());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterProduit GET: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement du formulaire";
+                return RedirectToAction("Produits");
+            }
+        }
 
-                if (string.IsNullOrWhiteSpace(raisonAnnulation))
+        /// <summary>
+        /// Traite l'ajout d'un nouveau produit
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AjouterProduit(Produit produit, System.Web.HttpPostedFileBase imageFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
                 {
-                    return Json(new { success = false, message = "La raison d'annulation est obligatoire" });
-                }
-
-                if (raisonAnnulation.Trim().Length < 10)
-                {
-                    return Json(new { success = false, message = "La raison d'annulation doit contenir au moins 10 caractères" });
-                }
-
-                using (var db = new ECommerceDbContext())
-                {
-                    // Vérifier que la commande existe
-                    var commande = db.GetCommandeDetails(commandeId);
-                    if (commande == null)
+                    // Gestion de l'image
+                    if (imageFile != null && imageFile.ContentLength > 0)
                     {
-                        return Json(new { success = false, message = "Commande introuvable" });
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/produits/"), fileName);
+                        
+                        // Créer le répertoire s'il n'existe pas
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        produit.ImageUrl = "~/Content/images/produits/" + fileName;
                     }
 
-                    // Vérifier que la commande n'est pas déjà annulée
-                    if (commande.Statut == "Annulée")
+                    produit.DateCreation = DateTime.Now;
+                    db.ProduitsSet.Add(produit);
+                    db.SaveChanges();
+
+                    TempData["SuccessMessage"] = "Produit ajouté avec succès";
+                    return RedirectToAction("Produits");
+                }
+
+                ViewBag.Categories = db.Categories.ToList();
+                ViewBag.Cooperatives = db.Cooperatives.ToList();
+                return View(produit);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterProduit POST: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors de l'ajout du produit";
+                ViewBag.Categories = db.Categories.ToList();
+                ViewBag.Cooperatives = db.Cooperatives.ToList();
+                return View(produit);
+            }
+        }
+
+        /// <summary>
+        /// Affiche les détails d'un produit
+        /// </summary>
+        public ActionResult DetailsProduit(int id)
+        {
+            try
+            {
+                var produit = db.Produits.FirstOrDefault(p => p.ProduitId == id);
+                
+                if (produit != null)
+                {
+                    // Charger les relations manuellement
+                    if (produit.CategorieId.HasValue)
+                        produit.Categorie = db.Categories.FirstOrDefault(c => c.CategorieId == produit.CategorieId.Value);
+                    if (produit.CooperativeId.HasValue)
+                        produit.Cooperative = db.Cooperatives.FirstOrDefault(c => c.CooperativeId == produit.CooperativeId.Value);
+                }
+
+                if (produit == null)
+                {
+                    TempData["ErrorMessage"] = "Produit non trouvé";
+                    return RedirectToAction("Produits");
+                }
+
+                return View(produit);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans DetailsProduit: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement des détails";
+                return RedirectToAction("Produits");
+            }
+        }
+
+        /// <summary>
+        /// Affiche le formulaire de modification de produit
+        /// </summary>
+        public ActionResult ModifierProduit(int id)
+        {
+            try
+            {
+                var produit = db.ProduitsSet.Find(id);
+
+                if (produit == null)
+                {
+                    TempData["ErrorMessage"] = "Produit non trouvé";
+                    return RedirectToAction("Produits");
+                }
+
+                ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();
+                ViewBag.Cooperatives = db.Cooperatives.Where(c => c.EstActive).ToList();
+
+                return View(produit);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans ModifierProduit GET: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement du produit";
+                return RedirectToAction("Produits");
+            }
+        }
+
+        /// <summary>
+        /// Traite la modification d'un produit
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ModifierProduit(Produit produit, System.Web.HttpPostedFileBase imageFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var produitExistant = db.ProduitsSet.Find(produit.ProduitId);
+
+                    if (produitExistant == null)
                     {
-                        return Json(new { success = false, message = "Cette commande est déjà annulée" });
+                        TempData["ErrorMessage"] = "Produit non trouvé";
+                        return RedirectToAction("Produits");
                     }
 
-                    var success = db.AnnulerCommande(commandeId, raisonAnnulation.Trim());
-                    if (success)
+                    // Gestion de l'image
+                    if (imageFile != null && imageFile.ContentLength > 0)
                     {
-                        return Json(new { success = true, message = "Commande annulée avec succès" });
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/produits/"), fileName);
+                        
+                        // Créer le répertoire s'il n'existe pas
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        
+                        // Optionnel : Supprimer l'ancienne image si elle existe et n'est pas une image par défaut
+                        
+                        produitExistant.ImageUrl = "~/Content/images/produits/" + fileName;
+                    }
+                    else if (!string.IsNullOrEmpty(produit.ImageUrl))
+                    {
+                        // Si l'utilisateur a modifié l'URL manuellement ou si elle est passée en masqué
+                        produitExistant.ImageUrl = produit.ImageUrl;
+                    }
+
+                    // Mettre à jour les propriétés
+                    produitExistant.Nom = produit.Nom;
+                    produitExistant.Description = produit.Description;
+                    produitExistant.Prix = produit.Prix;
+                    produitExistant.CategorieId = produit.CategorieId;
+                    produitExistant.CooperativeId = produit.CooperativeId;
+                    produitExistant.StockTotal = produit.StockTotal;
+                    produitExistant.SeuilAlerte = produit.SeuilAlerte;
+                    produitExistant.EstDisponible = produit.EstDisponible;
+                    produitExistant.EstEnVedette = produit.EstEnVedette;
+                    produitExistant.EstNouveau = produit.EstNouveau;
+                    produitExistant.DateModification = DateTime.Now;
+                    
+                    db.UpdateProduit(produitExistant);
+                    db.SaveChanges();
+
+                    TempData["SuccessMessage"] = "Produit modifié avec succès";
+                    return RedirectToAction("Produits");
+                }
+
+                ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();
+                ViewBag.Cooperatives = db.Cooperatives.Where(c => c.EstActive).ToList();
+
+                return View(produit);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans ModifierProduit POST: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors de la modification du produit";
+
+                ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();
+                ViewBag.Cooperatives = db.Cooperatives.Where(c => c.EstActive).ToList();
+
+                return View(produit);
+            }
+        }
+
+        /// <summary>
+        /// Supprime un produit (AJAX)
+        /// </summary>
+        [HttpPost]
+        public JsonResult SupprimerProduit(int id)
+        {
+            try
+            {
+                var produit = db.ProduitsSet.Find(id);
+
+                if (produit == null)
+                {
+                    return Json(new { success = false, message = "Produit non trouvé" });
+                }
+
+                // Vérifier si le produit est dans des commandes
+                var commandesAvecProduit = db.CommandeItems.Any(ci => ci.ProduitId == id);
+
+                if (commandesAvecProduit)
+                {
+                    return Json(new { success = false, message = "Impossible de supprimer : le produit est présent dans des commandes" });
+                }
+
+                db.ProduitsSet.Remove(produit);
+                db.SaveChanges();
+
+                return Json(new { success = true, message = "Produit supprimé avec succès" });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans SupprimerProduit: {ex.Message}");
+                return Json(new { success = false, message = "Erreur lors de la suppression" });
+            }
+        }
+
+        /// <summary>
+        /// Met à jour le statut d'un produit (AJAX)
+        /// </summary>
+        [HttpPost]
+        public JsonResult UpdateStatutProduit(int id, bool disponible)
+        {
+            try
+            {
+                var produit = db.ProduitsSet.Find(id);
+
+                if (produit == null)
+                {
+                    return Json(new { success = false, message = "Produit non trouvé" });
+                }
+
+                produit.EstDisponible = disponible;
+                produit.DateModification = DateTime.Now;
+                db.UpdateProduit(produit);
+                db.SaveChanges();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans UpdateStatutProduit: {ex.Message}");
+                return Json(new { success = false, message = "Erreur lors de la mise à jour" });
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        // ============================================
+        // GESTION DES CATEGORIES
+        // ============================================
+
+        public ActionResult Categories(string searchTerm = "")
+        {
+            try
+            {
+                var categories = db.GetCategoriesWithStats();
+                
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    searchTerm = searchTerm.ToLower();
+                    categories = categories.Where(c => 
+                        c.Nom.ToLower().Contains(searchTerm) || 
+                        (!string.IsNullOrEmpty(c.Description) && c.Description.ToLower().Contains(searchTerm))
+                    ).ToList();
+                }
+
+                ViewBag.SearchTerm = searchTerm;
+                return View(categories);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans Categories: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement des catégories";
+                return RedirectToAction("Index");
+            }
+        }
+
+        public ActionResult AjouterCategorie()
+        {
+            return View(new Categorie { EstActive = true }); // Active par défaut
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AjouterCategorie(Categorie categorie, System.Web.HttpPostedFileBase imageFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    if (imageFile != null && imageFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/categories/"), fileName);
+                        
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        categorie.ImageUrl = "~/Content/images/categories/" + fileName;
+                    }
+
+                    categorie.DateCreation = DateTime.Now;
+                    db.AddCategorie(categorie);
+                    TempData["SuccessMessage"] = "Catégorie ajoutée avec succès";
+                    return RedirectToAction("Categories");
+                }
+                return View(categorie);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterCategorie: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors de l'ajout";
+                return View(categorie);
+            }
+        }
+
+        public ActionResult ModifierCategorie(int id)
+        {
+            var categorie = db.GetCategorie(id);
+            if (categorie == null)
+            {
+                TempData["ErrorMessage"] = "Catégorie non trouvée";
+                return RedirectToAction("Categories");
+            }
+            return View(categorie);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ModifierCategorie(Categorie categorie, System.Web.HttpPostedFileBase imageFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var existing = db.GetCategorie(categorie.CategorieId);
+                    if (existing == null)
+                    {
+                        TempData["ErrorMessage"] = "Catégorie non trouvée";
+                        return RedirectToAction("Categories");
+                    }
+
+                    if (imageFile != null && imageFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/categories/"), fileName);
+                        
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        categorie.ImageUrl = "~/Content/images/categories/" + fileName;
                     }
                     else
                     {
-                        return Json(new { success = false, message = "Erreur lors de la mise à jour du statut. Vérifiez que le statut 'Annulée' est autorisé dans la base de données." });
+                        categorie.ImageUrl = existing.ImageUrl; // Garder l'ancienne image
                     }
+
+                    db.UpdateCategorie(categorie);
+                    TempData["SuccessMessage"] = "Catégorie mise à jour avec succès";
+                    return RedirectToAction("Categories");
                 }
+                return View(categorie);
             }
             catch (Exception ex)
             {
-                // Logger l'erreur (à implémenter avec un système de logging)
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+                System.Diagnostics.Debug.WriteLine($"Erreur dans ModifierCategorie: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors de la modification";
+                return View(categorie);
             }
         }
 
-        // GET: Admin/Commandes/PrintInvoice/5
-        public ActionResult PrintInvoice(int id)
-        {
-            using (var db = new ECommerceDbContext())
-            {
-                var commande = db.GetCommandeDetails(id);
-                if (commande == null)
-                {
-                    return HttpNotFound();
-                }
-
-                return GenerateInvoicePDF(commande);
-            }
-        }
-
-        // GET: Admin/Commandes/PrintDeliverySlip/5
-        public ActionResult PrintDeliverySlip(int id)
-        {
-            using (var db = new ECommerceDbContext())
-            {
-                var commande = db.GetCommandeDetails(id);
-                if (commande == null)
-                {
-                    return HttpNotFound();
-                }
-
-                return GenerateDeliverySlipPDF(commande);
-            }
-        }
-
-        private ActionResult GenerateInvoicePDF(Commande commande)
-        {
-            using (MemoryStream stream = new MemoryStream())
-            {
-                Document document = new Document(PageSize.A4, 40, 40, 60, 40);
-                PdfWriter writer = PdfWriter.GetInstance(document, stream);
-                document.Open();
-
-                // Définir les couleurs - Palette du projet CoopShop
-                BaseColor primaryColor = new BaseColor(48, 92, 125); // Azul Profundo (#305C7D) - Bleu profond
-                BaseColor secondaryColor = new BaseColor(125, 132, 83); // Verde Oliva (#7D8453) - Vert olive
-                BaseColor accentColor = new BaseColor(192, 108, 80); // Terracotta Cálido (#C06C50) - Terracotta chaud
-                BaseColor headerBgColor = new BaseColor(48, 92, 125); // Azul Profundo pour en-tête
-                BaseColor headerTextColor = BaseColor.WHITE;
-                BaseColor backgroundWarm = new BaseColor(232, 220, 194); // Arena Suave (#E8DCC2) - Sable doux
-                BaseColor backgroundLight = new BaseColor(245, 243, 239); // Blanco Roto (#F5F3EF) - Blanc cassé
-                BaseColor darkGray = new BaseColor(97, 97, 97);
-                BaseColor borderColor = new BaseColor(224, 224, 224);
-                BaseColor textMuted = new BaseColor(90, 108, 125); // Couleur texte secondaire
-
-                // En-tête avec couleur
-                PdfPTable headerTable = new PdfPTable(1);
-                headerTable.WidthPercentage = 100;
-                PdfPCell headerCell = new PdfPCell(new Phrase("FACTURE", FontFactory.GetFont(FontFactory.TIMES_BOLD, 24, headerTextColor)));
-                headerCell.BackgroundColor = headerBgColor;
-                headerCell.Padding = 15;
-                headerCell.HorizontalAlignment = Element.ALIGN_CENTER;
-                headerCell.Border = Rectangle.NO_BORDER;
-                headerTable.AddCell(headerCell);
-                document.Add(headerTable);
-                document.Add(new Paragraph("\n"));
-
-                // Informations de la commande dans un tableau stylisé
-                PdfPTable infoTable = new PdfPTable(2);
-                infoTable.WidthPercentage = 100;
-                infoTable.SetWidths(new float[] { 1, 1 });
-
-                Font normalFont = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10);
-                Font boldFont = FontFactory.GetFont(FontFactory.TIMES_BOLD, 10);
-                Font labelFont = FontFactory.GetFont(FontFactory.TIMES_BOLD, 9, darkGray);
-
-                // Colonne gauche - Informations commande
-                PdfPCell infoCell1 = new PdfPCell();
-                infoCell1.Border = Rectangle.NO_BORDER;
-                infoCell1.Padding = 10;
-                Paragraph info1 = new Paragraph();
-                info1.Add(new Chunk("Numéro de commande\n", labelFont));
-                info1.Add(new Chunk(commande.NumeroCommande + "\n\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 11, primaryColor)));
-                info1.Add(new Chunk("Date\n", labelFont));
-                info1.Add(new Chunk(commande.DateCommande.ToString("dd/MM/yyyy") + "\n\n", normalFont));
-                info1.Add(new Chunk("Statut\n", labelFont));
-                info1.Add(new Chunk(commande.Statut ?? "Non défini", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10, secondaryColor)));
-                infoCell1.AddElement(info1);
-                infoTable.AddCell(infoCell1);
-
-                // Colonne droite - Informations client
-                PdfPCell infoCell2 = new PdfPCell();
-                infoCell2.Border = Rectangle.NO_BORDER;
-                infoCell2.Padding = 10;
-                Paragraph info2 = new Paragraph();
-                info2.Add(new Chunk("CLIENT\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 12, primaryColor)));
-                if (commande.Client != null)
-                {
-                    info2.Add(new Chunk(commande.Client.NomComplet + "\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                    info2.Add(new Chunk(commande.Client.Email ?? "N/A" + "\n", normalFont));
-                }
-                else
-                {
-                    info2.Add(new Chunk("Client non disponible\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                }
-                if (commande.Adresse != null)
-                {
-                    info2.Add(new Chunk("\n" + commande.Adresse.AdresseComplete + "\n", normalFont));
-                    info2.Add(new Chunk(commande.Adresse.Ville + ", " + commande.Adresse.CodePostal, normalFont));
-                }
-                infoCell2.AddElement(info2);
-                infoTable.AddCell(infoCell2);
-
-                document.Add(infoTable);
-                document.Add(new Paragraph("\n"));
-
-                // Table des produits avec style amélioré
-                PdfPTable table = new PdfPTable(4);
-                table.WidthPercentage = 100;
-                table.SetWidths(new float[] { 3, 1, 1.5f, 1.5f });
-                table.SpacingBefore = 10f;
-
-                // En-têtes de tableau avec couleur
-                Font headerFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10, headerTextColor);
-                string[] headers = { "Produit", "Qté", "Prix unit.", "Total" };
-                foreach (string header in headers)
-                {
-                    PdfPCell tableHeaderCell = new PdfPCell(new Phrase(header, headerFont));
-                    tableHeaderCell.BackgroundColor = headerBgColor;
-                    tableHeaderCell.Padding = 8;
-                    tableHeaderCell.HorizontalAlignment = header == "Produit" ? Element.ALIGN_LEFT : 
-                                                      header == "Qté" ? Element.ALIGN_CENTER : Element.ALIGN_RIGHT;
-                    tableHeaderCell.BorderColor = borderColor;
-                    table.AddCell(tableHeaderCell);
-                }
-
-                // Lignes de produits avec alternance de couleurs
-                bool alternate = false;
-                if (commande.Items != null && commande.Items.Any())
-                {
-                    foreach (var item in commande.Items)
-                    {
-                        if (item?.Produit == null) continue;
-                        
-                        BaseColor rowColor = alternate ? backgroundLight : BaseColor.WHITE;
-                        alternate = !alternate;
-
-                        PdfPCell cell1 = new PdfPCell(new Phrase(item.Produit.Nom ?? "Produit inconnu", normalFont));
-                    cell1.BackgroundColor = rowColor;
-                    cell1.Padding = 8;
-                    cell1.BorderColor = borderColor;
-                    table.AddCell(cell1);
-
-                    PdfPCell cell2 = new PdfPCell(new Phrase(item.Quantite.ToString(), normalFont));
-                    cell2.BackgroundColor = rowColor;
-                    cell2.Padding = 8;
-                    cell2.HorizontalAlignment = Element.ALIGN_CENTER;
-                    cell2.BorderColor = borderColor;
-                    table.AddCell(cell2);
-
-                    PdfPCell cell3 = new PdfPCell(new Phrase(item.PrixUnitaire.ToString("0.00") + " MAD", normalFont));
-                    cell3.BackgroundColor = rowColor;
-                    cell3.Padding = 8;
-                    cell3.HorizontalAlignment = Element.ALIGN_RIGHT;
-                    cell3.BorderColor = borderColor;
-                    table.AddCell(cell3);
-
-                        PdfPCell cell4 = new PdfPCell(new Phrase(item.TotalLigne.ToString("0.00") + " MAD", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                        cell4.BackgroundColor = rowColor;
-                        cell4.Padding = 8;
-                        cell4.HorizontalAlignment = Element.ALIGN_RIGHT;
-                        cell4.BorderColor = borderColor;
-                        table.AddCell(cell4);
-                    }
-                }
-                else
-                {
-                    // Aucun produit
-                    PdfPCell emptyCell = new PdfPCell(new Phrase("Aucun produit", normalFont));
-                    emptyCell.Colspan = 4;
-                    emptyCell.HorizontalAlignment = Element.ALIGN_CENTER;
-                    emptyCell.Padding = 15;
-                    table.AddCell(emptyCell);
-                }
-
-                document.Add(table);
-                document.Add(new Paragraph("\n"));
-
-                // Totaux dans un tableau stylisé
-                PdfPTable totalsTable = new PdfPTable(2);
-                totalsTable.WidthPercentage = 50;
-                totalsTable.HorizontalAlignment = Element.ALIGN_RIGHT;
-                totalsTable.SetWidths(new float[] { 2, 1.5f });
-
-                // Ligne sous-total HT
-                AddTotalRow(totalsTable, "Sous-total HT:", commande.TotalHT.ToString("0.00") + " MAD", normalFont, boldFont, borderColor);
-                
-                // Ligne TVA
-                AddTotalRow(totalsTable, "TVA:", commande.MontantTVA.ToString("0.00") + " MAD", normalFont, normalFont, borderColor);
-                
-                // Ligne frais de livraison
-                AddTotalRow(totalsTable, "Frais de livraison:", commande.FraisLivraison.ToString("0.00") + " MAD", normalFont, normalFont, borderColor);
-                
-                // Ligne séparatrice
-                PdfPCell separator = new PdfPCell(new Phrase(""));
-                separator.Border = Rectangle.TOP_BORDER;
-                separator.BorderColor = textMuted;
-                separator.Colspan = 2;
-                separator.Padding = 5;
-                separator.FixedHeight = 1f;
-                totalsTable.AddCell(separator);
-                
-                // Ligne TOTAL TTC avec couleur gris bleuté
-                PdfPCell totalLabelCell = new PdfPCell(new Phrase("TOTAL TTC", FontFactory.GetFont(FontFactory.TIMES_BOLD, 12, BaseColor.WHITE)));
-                totalLabelCell.BackgroundColor = textMuted; // Gris bleuté (#5A6C7D)
-                totalLabelCell.Padding = 10;
-                totalLabelCell.BorderColor = borderColor;
-                totalsTable.AddCell(totalLabelCell);
-
-                PdfPCell totalValueCell = new PdfPCell(new Phrase(commande.TotalTTC.ToString("0.00") + " MAD", FontFactory.GetFont(FontFactory.TIMES_BOLD, 14, BaseColor.WHITE)));
-                totalValueCell.BackgroundColor = textMuted; // Gris bleuté (#5A6C7D)
-                totalValueCell.Padding = 10;
-                totalValueCell.HorizontalAlignment = Element.ALIGN_RIGHT;
-                totalValueCell.BorderColor = borderColor;
-                totalsTable.AddCell(totalValueCell);
-
-                document.Add(totalsTable);
-
-                // Pied de page
-                document.Add(new Paragraph("\n\n"));
-                Paragraph footer = new Paragraph("Merci pour votre confiance !", FontFactory.GetFont(FontFactory.TIMES_ITALIC, 9, textMuted));
-                footer.Alignment = Element.ALIGN_CENTER;
-                document.Add(footer);
-
-                document.Close();
-
-                byte[] byteArray = stream.ToArray();
-                return File(byteArray, "application/pdf", "Facture_" + commande.NumeroCommande + ".pdf");
-            }
-        }
-
-        private void AddTotalRow(PdfPTable table, string label, string value, Font normalFont, Font valueFont, BaseColor borderColor)
-        {
-            PdfPCell labelCell = new PdfPCell(new Phrase(label, normalFont));
-            labelCell.Border = Rectangle.NO_BORDER;
-            labelCell.Padding = 5;
-            table.AddCell(labelCell);
-
-            PdfPCell valueCell = new PdfPCell(new Phrase(value, valueFont));
-            valueCell.Border = Rectangle.NO_BORDER;
-            valueCell.Padding = 5;
-            valueCell.HorizontalAlignment = Element.ALIGN_RIGHT;
-            table.AddCell(valueCell);
-        }
-
-        private ActionResult GenerateDeliverySlipPDF(Commande commande)
-        {
-            using (MemoryStream stream = new MemoryStream())
-            {
-                Document document = new Document(PageSize.A4, 40, 40, 60, 40);
-                PdfWriter writer = PdfWriter.GetInstance(document, stream);
-                document.Open();
-
-                // Définir les couleurs - Palette du projet CoopShop
-                BaseColor primaryColor = new BaseColor(48, 92, 125); // Azul Profundo (#305C7D) - Bleu profond
-                BaseColor secondaryColor = new BaseColor(125, 132, 83); // Verde Oliva (#7D8453) - Vert olive
-                BaseColor accentColor = new BaseColor(192, 108, 80); // Terracotta Cálido (#C06C50) - Terracotta chaud
-                BaseColor headerBgColor = new BaseColor(48, 92, 125); // Azul Profundo pour en-tête bordereau
-                BaseColor headerTextColor = BaseColor.WHITE;
-                BaseColor backgroundWarm = new BaseColor(232, 220, 194); // Arena Suave (#E8DCC2) - Sable doux
-                BaseColor backgroundLight = new BaseColor(245, 243, 239); // Blanco Roto (#F5F3EF) - Blanc cassé
-                BaseColor darkGray = new BaseColor(97, 97, 97);
-                BaseColor borderColor = new BaseColor(224, 224, 224);
-                BaseColor infoBgColor = new BaseColor(245, 243, 239); // Blanco Roto pour fonds d'info
-                BaseColor textMuted = new BaseColor(90, 108, 125); // Couleur texte secondaire (#5A6C7D)
-
-                // En-tête avec couleur
-                PdfPTable headerTable = new PdfPTable(1);
-                headerTable.WidthPercentage = 100;
-                PdfPCell headerCell = new PdfPCell(new Phrase("BORDEREAU DE LIVRAISON", FontFactory.GetFont(FontFactory.TIMES_BOLD, 24, headerTextColor)));
-                headerCell.BackgroundColor = headerBgColor;
-                headerCell.Padding = 15;
-                headerCell.HorizontalAlignment = Element.ALIGN_CENTER;
-                headerCell.Border = Rectangle.NO_BORDER;
-                headerTable.AddCell(headerCell);
-                document.Add(headerTable);
-                document.Add(new Paragraph("\n"));
-
-                Font normalFont = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10);
-                Font boldFont = FontFactory.GetFont(FontFactory.TIMES_BOLD, 10);
-                Font labelFont = FontFactory.GetFont(FontFactory.TIMES_BOLD, 9, textMuted);
-
-                // Informations de la commande dans un tableau stylisé
-                PdfPTable infoTable = new PdfPTable(2);
-                infoTable.WidthPercentage = 100;
-                infoTable.SetWidths(new float[] { 1, 1 });
-
-                PdfPCell infoCell1 = new PdfPCell();
-                infoCell1.BackgroundColor = BaseColor.WHITE; // Blanc par défaut
-                infoCell1.BorderColor = borderColor;
-                infoCell1.Padding = 12;
-                Paragraph info1 = new Paragraph();
-                info1.Add(new Chunk("INFORMATIONS COMMANDE\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 11, primaryColor)));
-                info1.Add(new Chunk("\nNuméro: ", labelFont));
-                info1.Add(new Chunk(commande.NumeroCommande + "\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                info1.Add(new Chunk("Date: ", labelFont));
-                info1.Add(new Chunk(commande.DateCommande.ToString("dd/MM/yyyy"), normalFont));
-                infoCell1.AddElement(info1);
-                infoTable.AddCell(infoCell1);
-
-                // Mode de livraison
-                PdfPCell infoCell2 = new PdfPCell();
-                infoCell2.BackgroundColor = BaseColor.WHITE; // Blanc par défaut
-                infoCell2.BorderColor = borderColor;
-                infoCell2.Padding = 12;
-                Paragraph info2 = new Paragraph();
-                if (commande.ModeLivraison != null)
-                {
-                    info2.Add(new Chunk("MODE DE LIVRAISON\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 11, primaryColor)));
-                    info2.Add(new Chunk("\n" + commande.ModeLivraison.Nom + "\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                    if (!string.IsNullOrEmpty(commande.ModeLivraison.Description))
-                    {
-                        info2.Add(new Chunk(commande.ModeLivraison.Description, normalFont));
-                    }
-                }
-                else
-                {
-                    info2.Add(new Chunk("MODE DE LIVRAISON\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 11, primaryColor)));
-                    info2.Add(new Chunk("\nStandard", normalFont));
-                }
-                infoCell2.AddElement(info2);
-                infoTable.AddCell(infoCell2);
-
-                document.Add(infoTable);
-                document.Add(new Paragraph("\n"));
-
-                // Adresse de livraison dans un encadré
-                if (commande.Adresse != null)
-                {
-                    PdfPTable addressTable = new PdfPTable(1);
-                    addressTable.WidthPercentage = 100;
-                    PdfPCell addressCell = new PdfPCell();
-                    addressCell.BackgroundColor = backgroundLight; // Blanco Roto
-                    addressCell.BorderColor = primaryColor;
-                    addressCell.BorderWidth = 2f;
-                    addressCell.Padding = 12;
-                    Paragraph address = new Paragraph();
-                    address.Add(new Chunk("ADRESSE DE LIVRAISON\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 12, primaryColor)));
-                    address.Add(new Chunk("\n" + commande.Adresse.AdresseComplete + "\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                    address.Add(new Chunk(commande.Adresse.Ville + ", " + commande.Adresse.CodePostal + "\n", normalFont));
-                    address.Add(new Chunk(commande.Adresse.Pays, normalFont));
-                    addressCell.AddElement(address);
-                    addressTable.AddCell(addressCell);
-                    document.Add(addressTable);
-                    document.Add(new Paragraph("\n"));
-                }
-
-                // Liste des produits avec style amélioré
-                PdfPTable table = new PdfPTable(3);
-                table.WidthPercentage = 100;
-                table.SetWidths(new float[] { 3, 1, 1.5f });
-                table.SpacingBefore = 10f;
-
-                // En-têtes de tableau avec couleur
-                Font headerFont = FontFactory.GetFont(FontFactory.TIMES_BOLD, 10, headerTextColor);
-                string[] headers = { "Produit", "Qté", "Vérifié" };
-                foreach (string header in headers)
-                {
-                    PdfPCell tableHeaderCell = new PdfPCell(new Phrase(header, headerFont));
-                    tableHeaderCell.BackgroundColor = headerBgColor;
-                    tableHeaderCell.Padding = 8;
-                    tableHeaderCell.HorizontalAlignment = header == "Produit" ? Element.ALIGN_LEFT : Element.ALIGN_CENTER;
-                    tableHeaderCell.BorderColor = borderColor;
-                    table.AddCell(tableHeaderCell);
-                }
-
-                // Lignes de produits avec alternance de couleurs
-                bool alternate = false;
-                if (commande.Items != null && commande.Items.Any())
-                {
-                    foreach (var item in commande.Items)
-                    {
-                        if (item?.Produit == null) continue;
-                        
-                        BaseColor rowColor = alternate ? backgroundLight : BaseColor.WHITE;
-                        alternate = !alternate;
-
-                        PdfPCell cell1 = new PdfPCell(new Phrase(item.Produit.Nom ?? "Produit inconnu", normalFont));
-                    cell1.BackgroundColor = rowColor;
-                    cell1.Padding = 8;
-                    cell1.BorderColor = borderColor;
-                    table.AddCell(cell1);
-
-                    PdfPCell cell2 = new PdfPCell(new Phrase(item.Quantite.ToString(), FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                    cell2.BackgroundColor = rowColor;
-                    cell2.Padding = 8;
-                    cell2.HorizontalAlignment = Element.ALIGN_CENTER;
-                    cell2.BorderColor = borderColor;
-                    table.AddCell(cell2);
-
-                    // Cellule pour cocher avec bordure
-                        PdfPCell cell3 = new PdfPCell(new Phrase("", normalFont));
-                        cell3.BackgroundColor = rowColor;
-                        cell3.Padding = 15;
-                        cell3.HorizontalAlignment = Element.ALIGN_CENTER;
-                        cell3.VerticalAlignment = Element.ALIGN_MIDDLE;
-                        cell3.BorderColor = darkGray;
-                        cell3.BorderWidth = 1.5f;
-                        table.AddCell(cell3);
-                    }
-                }
-                else
-                {
-                    // Aucun produit
-                    PdfPCell emptyCell = new PdfPCell(new Phrase("Aucun produit", normalFont));
-                    emptyCell.Colspan = 3;
-                    emptyCell.HorizontalAlignment = Element.ALIGN_CENTER;
-                    emptyCell.Padding = 15;
-                    table.AddCell(emptyCell);
-                }
-
-                document.Add(table);
-                document.Add(new Paragraph("\n\n"));
-
-                // Zone pour signature stylisée
-                PdfPTable signatureTable = new PdfPTable(1);
-                signatureTable.WidthPercentage = 60;
-                signatureTable.HorizontalAlignment = Element.ALIGN_RIGHT;
-                
-                PdfPCell signatureCell = new PdfPCell();
-                signatureCell.BackgroundColor = backgroundLight; // Blanco Roto (#F5F3EF)
-                signatureCell.BorderColor = borderColor;
-                signatureCell.BorderWidth = 1f;
-                signatureCell.Padding = 15;
-                Paragraph signature = new Paragraph();
-                signature.Add(new Chunk("Signature du destinataire\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 11, primaryColor)));
-                signature.Add(new Chunk("\n\n", normalFont));
-                signature.Add(new Chunk("___________________________\n", FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10, textMuted)));
-                signature.Add(new Chunk("\nNom et prénom", FontFactory.GetFont(FontFactory.TIMES_ROMAN, 8, textMuted)));
-                signatureCell.AddElement(signature);
-                signatureTable.AddCell(signatureCell);
-                
-                document.Add(signatureTable);
-
-                // Note en bas
-                document.Add(new Paragraph("\n"));
-                Paragraph note = new Paragraph("Veuillez vérifier l'état des produits avant de signer.", FontFactory.GetFont(FontFactory.TIMES_ITALIC, 9, textMuted));
-                note.Alignment = Element.ALIGN_CENTER;
-                document.Add(note);
-
-                document.Close();
-
-                byte[] byteArray = stream.ToArray();
-                return File(byteArray, "application/pdf", "Bordereau_" + commande.NumeroCommande + ".pdf");
-            }
-        }
-
-        // GET: Admin/Livraison
-        public ActionResult Livraison(int page = 1)
-        {
-            using (var db = new ECommerceDbContext())
-            {
-                var modes = db.GetModesLivraison();
-                var stats = db.GetLivraisonStats();
-                
-                // Pagination des zones de livraison (5 par page)
-                int pageSize = 5;
-                var zonesPaged = db.GetZonesLivraisonPaged(page, pageSize);
-                
-                ViewBag.Stats = stats;
-                ViewBag.Zones = zonesPaged.Items;
-                ViewBag.ZonesPaged = zonesPaged;
-                ViewBag.CurrentPage = page;
-                
-                return View(modes);
-            }
-        }
-
-        // POST: Admin/Livraison/Create
         [HttpPost]
-        public ActionResult CreateModeLivraison(FormCollection form)
+        public JsonResult ToggleCategorieStatus(int id)
         {
             try
             {
-                // Récupérer EstActif - peut être "true", "false", ou absent (checkbox non cochée)
-                var estActifValue = form["EstActif"];
-                bool estActif = !string.IsNullOrEmpty(estActifValue) && estActifValue.ToLower() == "true";
-                
-                var mode = new ModeLivraison
-                {
-                    Nom = form["Nom"],
-                    Description = string.IsNullOrEmpty(form["Description"]) ? null : form["Description"],
-                    Tarif = decimal.Parse(form["Tarif"] ?? "0"),
-                    DelaiEstime = form["DelaiEstime"],
-                    EstActif = estActif
-                };
-
-                if (string.IsNullOrWhiteSpace(mode.Nom) || mode.Tarif < 0 || string.IsNullOrWhiteSpace(mode.DelaiEstime))
-                {
-                    return Json(new { success = false, message = "Données invalides. Veuillez remplir tous les champs obligatoires." });
-                }
-
-                using (var db = new ECommerceDbContext())
-                {
-                    if (db.CreateModeLivraison(mode))
-                    {
-                        return Json(new { success = true, message = "Mode de livraison créé avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la création" });
-                }
+                db.ToggleCategorieStatus(id);
+                return Json(new { success = true });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
-            }
-        }
-
-        // POST: Admin/Livraison/Update
-        [HttpPost]
-        public ActionResult UpdateModeLivraison(FormCollection form)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(form["ModeLivraisonId"]) || !int.TryParse(form["ModeLivraisonId"], out int modeId))
-                {
-                    return Json(new { success = false, message = "ID invalide" });
-                }
-
-                // Récupérer EstActif - peut être "true", "false", ou absent (checkbox non cochée)
-                var estActifValue = form["EstActif"];
-                bool estActif = !string.IsNullOrEmpty(estActifValue) && estActifValue.ToLower() == "true";
-                
-                var mode = new ModeLivraison
-                {
-                    ModeLivraisonId = modeId,
-                    Nom = form["Nom"],
-                    Description = string.IsNullOrEmpty(form["Description"]) ? null : form["Description"],
-                    Tarif = decimal.Parse(form["Tarif"] ?? "0"),
-                    DelaiEstime = form["DelaiEstime"],
-                    EstActif = estActif
-                };
-
-                if (string.IsNullOrWhiteSpace(mode.Nom) || mode.Tarif < 0 || string.IsNullOrWhiteSpace(mode.DelaiEstime))
-                {
-                    return Json(new { success = false, message = "Données invalides. Veuillez remplir tous les champs obligatoires." });
-                }
-
-                using (var db = new ECommerceDbContext())
-                {
-                    if (db.UpdateModeLivraison(mode))
-                    {
-                        return Json(new { success = true, message = "Mode de livraison mis à jour avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la mise à jour" });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
-            }
-        }
-
-        // POST: Admin/Livraison/Delete
-        [HttpPost]
-        public ActionResult DeleteModeLivraison(int id)
-        {
-            try
-            {
-                if (id <= 0)
-                {
-                    return Json(new { success = false, message = "ID invalide" });
-                }
-
-                using (var db = new ECommerceDbContext())
-                {
-                    if (db.DeleteModeLivraison(id))
-                    {
-                        return Json(new { success = true, message = "Mode de livraison supprimé avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la suppression" });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
-            }
-        }
-
-        // GET: Admin/Livraison/GetMode
-        [HttpGet]
-        public ActionResult GetModeLivraison(int id)
-        {
-            using (var db = new ECommerceDbContext())
-            {
-                var mode = db.GetModeLivraison(id);
-                if (mode == null)
-                {
-                    return Json(new { success = false, message = "Mode de livraison introuvable" }, JsonRequestBehavior.AllowGet);
-                }
-                return Json(new { 
-                    success = true, 
-                    mode = new {
-                        ModeLivraisonId = mode.ModeLivraisonId,
-                        Nom = mode.Nom,
-                        Description = mode.Description,
-                        Tarif = mode.Tarif,
-                        DelaiEstime = mode.DelaiEstime,
-                        EstActif = mode.EstActif
-                    }
-                }, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-        // ============================================
-        // ZONES DE LIVRAISON
-        // ============================================
-
-        // POST: Admin/Livraison/CreateZone
-        [HttpPost]
-        public ActionResult CreateZoneLivraison(FormCollection form)
-        {
-            try
-            {
-                var estActifValue = form["EstActif"];
-                bool estActif = !string.IsNullOrEmpty(estActifValue) && estActifValue.ToLower() == "true";
-                
-                var zone = new ZoneLivraison
-                {
-                    ZoneVille = form["ZoneVille"],
-                    Supplement = decimal.Parse(form["Supplement"] ?? "0"),
-                    DelaiEstime = form["DelaiEstime"],
-                    EstActif = estActif
-                };
-
-                if (string.IsNullOrWhiteSpace(zone.ZoneVille) || string.IsNullOrWhiteSpace(zone.DelaiEstime))
-                {
-                    return Json(new { success = false, message = "Données invalides. Veuillez remplir tous les champs obligatoires." });
-                }
-
-                using (var db = new ECommerceDbContext())
-                {
-                    if (db.CreateZoneLivraison(zone))
-                    {
-                        return Json(new { success = true, message = "Zone de livraison créée avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la création" });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
-            }
-        }
-
-        // POST: Admin/Livraison/UpdateZone
-        [HttpPost]
-        public ActionResult UpdateZoneLivraison(FormCollection form)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(form["ZoneLivraisonId"]) || !int.TryParse(form["ZoneLivraisonId"], out int zoneId))
-                {
-                    return Json(new { success = false, message = "ID invalide" });
-                }
-
-                var estActifValue = form["EstActif"];
-                bool estActif = !string.IsNullOrEmpty(estActifValue) && estActifValue.ToLower() == "true";
-                
-                var zone = new ZoneLivraison
-                {
-                    ZoneLivraisonId = zoneId,
-                    ZoneVille = form["ZoneVille"],
-                    Supplement = decimal.Parse(form["Supplement"] ?? "0"),
-                    DelaiEstime = form["DelaiEstime"],
-                    EstActif = estActif
-                };
-
-                if (string.IsNullOrWhiteSpace(zone.ZoneVille) || string.IsNullOrWhiteSpace(zone.DelaiEstime))
-                {
-                    return Json(new { success = false, message = "Données invalides. Veuillez remplir tous les champs obligatoires." });
-                }
-
-                using (var db = new ECommerceDbContext())
-                {
-                    if (db.UpdateZoneLivraison(zone))
-                    {
-                        return Json(new { success = true, message = "Zone de livraison mise à jour avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la mise à jour" });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
-            }
-        }
-
-        // POST: Admin/Livraison/DeleteZone
-        [HttpPost]
-        public ActionResult DeleteZoneLivraison(int id)
-        {
-            try
-            {
-                if (id <= 0)
-                {
-                    return Json(new { success = false, message = "ID invalide" });
-                }
-
-                using (var db = new ECommerceDbContext())
-                {
-                    if (db.DeleteZoneLivraison(id))
-                    {
-                        return Json(new { success = true, message = "Zone de livraison supprimée avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la suppression" });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
-            }
-        }
-
-        // GET: Admin/Livraison/GetZone
-        [HttpGet]
-        public ActionResult GetZoneLivraison(int id)
-        {
-            using (var db = new ECommerceDbContext())
-            {
-                var zone = db.GetZoneLivraison(id);
-                if (zone == null)
-                {
-                    return Json(new { success = false, message = "Zone de livraison introuvable" }, JsonRequestBehavior.AllowGet);
-                }
-                return Json(new { 
-                    success = true, 
-                    zone = new {
-                        ZoneLivraisonId = zone.ZoneLivraisonId,
-                        ZoneVille = zone.ZoneVille,
-                        Supplement = zone.Supplement,
-                        DelaiEstime = zone.DelaiEstime,
-                        EstActif = zone.EstActif
-                    }
-                }, JsonRequestBehavior.AllowGet);
+                System.Diagnostics.Debug.WriteLine($"Erreur dans ToggleCategorieStatus: {ex.Message}");
+                return Json(new { success = false, message = "Erreur serveur" });
             }
         }
 
