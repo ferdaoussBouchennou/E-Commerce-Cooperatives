@@ -1,0 +1,267 @@
+@model E_Commerce_Cooperatives.Models.ViewModels.UserDetailsViewModel
+@{
+    ViewBag.Title = "Détails Utilisateur";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+}
+
+<div class="admin-page">
+    <div class="admin-page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="admin-page-title">Détails de l'utilisateur</h1>
+                <p class="admin-page-subtitle">Informations complètes du profil</p>
+            </div>
+            <a href="@Url.Action("Utilisateurs", "Admin")" class="btn-back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Info Card -->
+        <div class="col-md-8 mb-4">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h3>Informations personnelles</h3>
+                    <span class="status-badge @(Model.EstActif ? "status-active" : "status-inactive")">
+                        @(Model.EstActif ? "Actif" : "Inactif")
+                    </span>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-row">
+                        <label>Nom complet :</label>
+                        <span>@Model.Prenom @Model.Nom</span>
+                    </div>
+                    <div class="info-row">
+                        <label>Email :</label>
+                        <span>@Model.Email</span>
+                    </div>
+                    <div class="info-row">
+                        <label>Téléphone :</label>
+                        <span>@(string.IsNullOrEmpty(Model.Telephone) ? "-" : Model.Telephone)</span>
+                    </div>
+                    @if (Model.DateNaissance.HasValue)
+                    {
+                        <div class="info-row">
+                            <label>Date de naissance :</label>
+                            <span>@Model.DateNaissance.Value.ToString("dd/MM/yyyy")</span>
+                        </div>
+                    }
+                    <div class="info-row">
+                        <label>Date d'inscription :</label>
+                        <span>@Model.DateCreation.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div class="info-row">
+                        <label>Dernière connexion :</label>
+                        <span>@(Model.DerniereConnexion?.ToString("dd/MM/yyyy HH:mm") ?? "Jamais")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Card -->
+        <div class="col-md-4 mb-4">
+            <div class="stat-card-small">
+                <h4>Statistiques</h4>
+                <div class="stat-item">
+                    <span class="stat-label">Commandes</span>
+                    <span class="stat-value">@Model.OrderCount</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total dépensé</span>
+                    <span class="stat-value">@(((decimal)Model.TotalSpent).ToString("F2")) MAD</span>
+                </div>
+            </div>
+
+            <!-- Actions Card -->
+            <div class="action-card">
+                <h4>Actions</h4>
+                <button type="button" class="btn-action-full @(Model.EstActif ? "btn-deactivate" : "btn-activate")" 
+                        data-user-id="@Model.ClientId" 
+                        data-current-status="@Model.EstActif">
+                    @(Model.EstActif ? "Désactiver le compte" : "Activer le compte")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        document.querySelector('.btn-action-full').addEventListener('click', function() {
+            var userId = this.getAttribute('data-user-id');
+            var currentStatus = this.getAttribute('data-current-status') === 'True';
+            var newStatus = !currentStatus;
+            
+            if (confirm('Êtes-vous sûr de vouloir ' + (newStatus ? 'activer' : 'désactiver') + ' ce compte ?')) {
+                var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                var formData = new FormData();
+                formData.append('userId', userId);
+                formData.append('isActive', newStatus);
+                formData.append('__RequestVerificationToken', token);
+                
+                fetch('@Url.Action("ToggleUserStatus", "Admin")', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Erreur: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur est survenue');
+                });
+            }
+        });
+    </script>
+}
+
+<style>
+    .btn-back {
+        padding: 10px 20px;
+        background: #305C7D;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-back:hover {
+        background: #244a66;
+        color: white;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .info-card-header {
+        background: #f5f5f5;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .info-card-header h3 {
+        margin: 0;
+        color: #305C7D;
+        font-size: 20px;
+    }
+
+    .info-card-body {
+        padding: 20px;
+    }
+
+    .info-row {
+        display: flex;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-row label {
+        font-weight: 600;
+        color: #666;
+        width: 200px;
+        flex-shrink: 0;
+    }
+
+    .info-row span {
+        color: #333;
+    }
+
+    .stat-card-small {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .stat-card-small h4 {
+        margin: 0 0 15px 0;
+        color: #305C7D;
+        font-size: 18px;
+    }
+
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+
+    .stat-label {
+        color: #666;
+    }
+
+    .stat-value {
+        font-weight: 600;
+        color: #305C7D;
+    }
+
+    .action-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .action-card h4 {
+        margin: 0 0 15px 0;
+        color: #305C7D;
+        font-size: 18px;
+    }
+
+    .btn-action-full {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-activate {
+        background: #7D8453;
+    }
+
+    .btn-activate:hover {
+        background: #6a7147;
+    }
+
+    .btn-deactivate {
+        background: #C06C50;
+    }
+
+    .btn-deactivate:hover {
+        background: #a85a42;
+    }
+</style>
+
