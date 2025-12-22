@@ -458,8 +458,11 @@
             if (!window.isUserAuthenticated()) {
                 const currentUrl = window.location.pathname + window.location.search;
                 const separator = currentUrl.includes('?') ? '&' : '?';
-                const returnUrl = encodeURIComponent(currentUrl + separator + 'addItem=' + productId);
-                window.location.href = '/Account/Login?returnUrl=' + returnUrl;
+                let returnUrl = currentUrl + separator + 'addItem=' + productId;
+                if (selectedVariantId) returnUrl += '&addVariant=' + selectedVariantId;
+                if (currentQuantity > 1) returnUrl += '&addQty=' + currentQuantity;
+                
+                window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(returnUrl);
                 return;
             }
             

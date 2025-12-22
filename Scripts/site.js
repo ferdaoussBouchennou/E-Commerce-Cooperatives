@@ -122,7 +122,9 @@
                 console.log('Add to cart clicked:', { produitId, hasVariants });
                 
                 if (hasVariants) {
-                    showNotification("<strong>Option requise</strong> : Cet article est disponible en plusieurs variantes. Veuillez consulter la fiche produit pour choisir votre taille ou couleur avant l'ajout au panier.", 'info');
+                    setTimeout(() => {
+                        window.location.href = `/Produit/Details/${produitId}`;
+                    }, 500);
                     return;
                 }
                 
@@ -154,10 +156,17 @@
     function handleAutoAddToCart() {
         const urlParams = new URLSearchParams(window.location.search);
         const addItemId = urlParams.get('addItem');
+        const addVariantId = urlParams.get('addVariant');
+        const addQty = urlParams.get('addQty') || 1;
         
         if (addItemId && isUserAuthenticated()) {
-            // Add product to cart
-            addProductToCart(addItemId);
+            // Add product to cart with variant and quantity
+            // Ensure ids are numbers where expected to match direct additions
+            const pId = String(addItemId);
+            const vId = addVariantId ? parseInt(addVariantId) : null;
+            const qty = parseInt(addQty) || 1;
+            
+            addProductToCart(pId, qty, vId);
             
             // Show notification
             showNotification('Produit ajouté au panier automatiquement!', 'success');
@@ -166,7 +175,12 @@
             updateCartBadge();
             
             // Clean up URL without refreshing the page
-            const newUrl = window.location.pathname + window.location.search.replace(/[&?]addItem=[^&]*/, '').replace(/^&/, '?');
+            let newUrl = window.location.pathname + window.location.search
+                .replace(/[&?]addItem=[^&]*/, '')
+                .replace(/[&?]addVariant=[^&]*/, '')
+                .replace(/[&?]addQty=[^&]*/, '')
+                .replace(/^&/, '?')
+                .replace(/\?$/, '');
             window.history.replaceState({}, document.title, newUrl);
         }
     }
