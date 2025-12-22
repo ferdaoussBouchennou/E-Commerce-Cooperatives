@@ -10,6 +10,7 @@
         initSmoothScroll();
         initAnimations();
         handleHashRedirects();
+        handleAutoAddToCart();
     });
 
     // Handle hash redirects (like #connexion, #inscription)
@@ -109,48 +110,77 @@
 
     // Add to Cart functionality
     function initAddToCart() {
-        const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
-        
-        addToCartButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
+        document.addEventListener('click', function(e) {
+            const button = e.target.closest('.add-to-cart-btn');
+            if (button) {
                 e.preventDefault();
                 e.stopPropagation();
                 
+                const produitId = button.getAttribute('data-produit-id');
+                
                 // Check if user is authenticated
                 if (!isUserAuthenticated()) {
-                    // Redirect immediately to login page
-                    window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
-                    return; // Stop execution, don't add to cart
+                    const currentUrl = window.location.pathname + window.location.search;
+                    const separator = currentUrl.includes('?') ? '&' : '?';
+                    const returnUrl = encodeURIComponent(currentUrl + separator + 'addItem=' + produitId);
+                    window.location.href = '/Account/Login?returnUrl=' + returnUrl;
+                    return;
                 }
                 
-                const produitId = this.getAttribute('data-produit-id');
-                
-                // Add to cart logic here
                 addProductToCart(produitId);
-                
-                // Show notification
                 showNotification('Produit ajouté au panier!', 'success');
-                
-                // Update cart badge
                 updateCartBadge();
-            });
+            }
         });
     }
 
+    // ... (rest of the functions)
+
+    // Expose functions globally
+    window.isUserAuthenticated = isUserAuthenticated;
+    window.addProductToCart = addProductToCart;
+    window.showNotification = showNotification;
+    window.updateCartBadge = updateCartBadge;
+
+    // Handle automatically adding product to cart after login
+    function handleAutoAddToCart() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const addItemId = urlParams.get('addItem');
+        
+        if (addItemId && isUserAuthenticated()) {
+            // Add product to cart
+            addProductToCart(addItemId);
+            
+            // Show notification
+            showNotification('Produit ajouté au panier automatiquement!', 'success');
+            
+            // Update cart badge
+            updateCartBadge();
+            
+            // Clean up URL without refreshing the page
+            const newUrl = window.location.pathname + window.location.search.replace(/[&?]addItem=[^&]*/, '').replace(/^&/, '?');
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    }
+
     // Add product to cart
-    function addProductToCart(produitId) {
+    function addProductToCart(produitId, quantite = 1, varianteId = null) {
         // Get existing cart from localStorage
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         
-        // Check if product already exists
-        const existingItem = cart.find(item => item.produitId === produitId);
+        // Check if product with identical variant already exists
+        const existingItem = cart.find(item => 
+            item.produitId === produitId && 
+            (varianteId ? item.varianteId === varianteId : !item.varianteId)
+        );
         
         if (existingItem) {
-            existingItem.quantite += 1;
+            existingItem.quantite += parseInt(quantite);
         } else {
             cart.push({
                 produitId: produitId,
-                quantite: 1,
+                varianteId: varianteId,
+                quantite: parseInt(quantite),
                 dateAjout: new Date().toISOString()
             });
         }
@@ -174,6 +204,7 @@
             }
         }
     }
+    window.updateCartBadge = updateCartBadge;
 
     // Initialize cart badge on page load
     window.addEventListener('load', function() {
