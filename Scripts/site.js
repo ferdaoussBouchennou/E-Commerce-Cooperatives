@@ -5,10 +5,94 @@
 
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', function() {
+        initBootstrapDropdowns();
         initAddToCart();
         initSmoothScroll();
         initAnimations();
+        handleHashRedirects();
     });
+
+    // Handle hash redirects (like #connexion, #inscription)
+    function handleHashRedirects() {
+        // Check on page load
+        checkHashAndRedirect();
+        
+        // Listen for hash changes
+        window.addEventListener('hashchange', function() {
+            checkHashAndRedirect();
+        });
+    }
+
+    function checkHashAndRedirect() {
+        const hash = window.location.hash;
+        
+        if (hash === '#connexion' || hash === '#login') {
+            window.location.replace('/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search));
+            return;
+        }
+        
+        if (hash === '#inscription' || hash === '#register') {
+            window.location.replace('/Account/Register');
+            return;
+        }
+    }
+
+    // Initialize Bootstrap dropdowns
+    function initBootstrapDropdowns() {
+        // Initialize all dropdowns
+        const dropdowns = document.querySelectorAll('.dropdown-toggle');
+        dropdowns.forEach(dropdown => {
+            // Ensure dropdown works with both Bootstrap 4 and 5
+            dropdown.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const dropdownMenu = this.nextElementSibling;
+                if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                    // Toggle dropdown manually if Bootstrap isn't working
+                    const isOpen = dropdownMenu.style.display === 'block';
+                    if (isOpen) {
+                        dropdownMenu.style.display = 'none';
+                        this.setAttribute('aria-expanded', 'false');
+                    } else {
+                        // Close other dropdowns first
+                        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                            menu.style.display = 'none';
+                        });
+                        document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+                            toggle.setAttribute('aria-expanded', 'false');
+                        });
+                        
+                        dropdownMenu.style.display = 'block';
+                        this.setAttribute('aria-expanded', 'true');
+                    }
+                }
+            });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+                document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+                    toggle.setAttribute('aria-expanded', 'false');
+                });
+            }
+        });
+
+        // Make dropdown items clickable
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href && href !== '#' && !href.startsWith('javascript:')) {
+                    // Allow navigation
+                    return true;
+                }
+            });
+        });
+    }
 
     // Check if user is authenticated
     function isUserAuthenticated() {
@@ -34,30 +118,8 @@
                 
                 // Check if user is authenticated
                 if (!isUserAuthenticated()) {
-                    // Show notification
-                    showNotification('Veuillez vous connecter pour ajouter des produits au panier', 'info');
-                    
-                    // Try to find the connexion section on the page
-                    const connexionSection = document.getElementById('connexion');
-                    if (connexionSection) {
-                        // Scroll to connexion section
-                        const offset = 80; // Header height
-                        const targetPosition = connexionSection.offsetTop - offset;
-                        window.scrollTo({
-                            top: targetPosition,
-                            behavior: 'smooth'
-                        });
-                    } else {
-                        // If no section found, try to find any link with href="#connexion" and click it
-                        const connexionLink = document.querySelector('a[href="#connexion"]');
-                        if (connexionLink) {
-                            connexionLink.click();
-                        } else {
-                            // Fallback: scroll to top and set hash
-                            window.location.hash = '#connexion';
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                    }
+                    // Redirect immediately to login page
+                    window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
                     return; // Stop execution, don't add to cart
                 }
                 
@@ -123,6 +185,22 @@
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 const href = this.getAttribute('href');
+                
+                // Special handling for connexion and inscription anchors - redirect to actual pages
+                if (href === '#connexion' || href === '#login') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.location.replace('/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search));
+                    return false;
+                }
+                
+                if (href === '#inscription' || href === '#register') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.location.replace('/Account/Register');
+                    return false;
+                }
+                
                 if (href !== '#' && href.length > 1 && !href.includes('?')) {
                     const target = document.querySelector(href);
                     if (target) {
@@ -134,6 +212,9 @@
                             top: targetPosition,
                             behavior: 'smooth'
                         });
+                    } else {
+                        // If target doesn't exist, prevent default to avoid adding hash to URL
+                        e.preventDefault();
                     }
                 }
             });

@@ -4,21 +4,39 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using E_Commerce_Cooperatives.Models;
+using E_Commerce_Cooperatives.Models.ViewModels;
 using System.IO;
 // Note: iTextSharp requires NuGet package installation: Install-Package iTextSharp
 // Run this command in Package Manager Console: Install-Package iTextSharp
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using System.Text;
+using System.Data.SqlClient;
+using System.Configuration;
 
 namespace E_Commerce_Cooperatives.Controllers.Admin
 {
     public class AdminController : Controller
     {
+        private string connectionString;
+
+        public AdminController()
+        {
+            var connection = ConfigurationManager.ConnectionStrings["ECommerceConnection"];
+            if (connection != null)
+            {
+                connectionString = connection.ConnectionString;
+            }
+            else
+            {
+                connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=ecommerce;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+            }
+        }
+
         // GET: Admin
         public ActionResult Index()
         {
-            return RedirectToAction("Commandes");
+            return RedirectToAction("Dashboard");
         }
 
         // GET: Admin/Commandes
@@ -951,6 +969,451 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                     }
                 }, JsonRequestBehavior.AllowGet);
             }
+        }
+
+        // GET: Admin/Dashboard
+        public ActionResult Dashboard()
+        {
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                // Statistiques générales
+                var stats = GetUserStatistics(connection);
+
+                // Graphiques d'évolution
+                var evolutionData = GetUserEvolutionData(connection);
+                ViewBag.EvolutionData = evolutionData;
+
+                // Utilisateurs les plus actifs
+                var activeUsers = GetMostActiveUsers(connection);
+                ViewBag.ActiveUsers = activeUsers;
+
+                return View(stats);
+            }
+        }
+
+        // GET: Admin/Utilisateurs
+        public ActionResult Utilisateurs(string searchTerm = "", string statusFilter = "all", int page = 1, int pageSize = 20)
+        {
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                // Stats cards
+                var statsQuery = @"
+                    SELECT 
+                        COUNT(*) as TotalUsers,
+                        SUM(CASE WHEN c.EstActif = 1 THEN 1 ELSE 0 END) as ActiveUsers,
+                        SUM(CASE WHEN u.DateCreation >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1) THEN 1 ELSE 0 END) as ThisMonthUsers,
+                        (SELECT COUNT(*) FROM Commandes) as TotalOrders
+                    FROM Utilisateurs u
+                    LEFT JOIN Clients c ON u.UtilisateurId = c.UtilisateurId
+                    WHERE u.TypeUtilisateur = 'Client';";
+
+                using (var statsCmd = new SqlCommand(statsQuery, connection))
+                using (var reader = statsCmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        ViewBag.CardTotalUsers = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                        ViewBag.CardActiveUsers = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                        ViewBag.CardThisMonth = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+                        ViewBag.CardTotalOrders = reader.IsDBNull(3) ? 0 : reader.GetInt32(3);
+                    }
+                }
+
+                var users = GetUsersList(connection, searchTerm, statusFilter, page, pageSize, out int totalCount);
+
+                ViewBag.SearchTerm = searchTerm;
+                ViewBag.StatusFilter = statusFilter;
+                ViewBag.CurrentPage = page;
+                ViewBag.PageSize = pageSize;
+                ViewBag.TotalCount = totalCount;
+                ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+                return View(users);
+            }
+        }
+
+        // GET: Admin/Utilisateurs/Details/5
+        public ActionResult UserDetails(int id)
+        {
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                var user = GetUserDetails(connection, id);
+                if (user == null)
+                {
+                    return HttpNotFound();
+                }
+
+                return View(user);
+            }
+        }
+
+        // POST: Admin/Utilisateurs/ToggleStatus
+        [HttpPost]
+        public ActionResult ToggleUserStatus(int userId, bool isActive)
+        {
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return Json(new { success = false, message = "Non autorisé" });
+            }
+
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    var updateQuery = @"UPDATE Clients 
+                                       SET EstActif = @EstActif 
+                                       WHERE ClientId = @ClientId";
+                    
+                    using (var command = new SqlCommand(updateQuery, connection))
+                    {
+                        command.Parameters.AddWithValue("@EstActif", isActive);
+                        command.Parameters.AddWithValue("@ClientId", userId);
+                        command.ExecuteNonQuery();
+                    }
+
+                    return Json(new { success = true, message = isActive ? "Compte activé avec succès" : "Compte désactivé avec succès" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Erreur: " + ex.Message });
+            }
+        }
+
+        // GET: Admin/Utilisateurs/GetStats
+        [HttpGet]
+        public ActionResult GetUserStats(string period = "month")
+        {
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+            }
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var stats = GetUserStatistics(connection, period);
+                return Json(new
+                {
+                    TotalUsers = stats.TotalUsers,
+                    ActiveUsers = stats.ActiveUsers,
+                    InactiveUsers = stats.InactiveUsers,
+                    NewUsers = stats.NewUsers,
+                    ActiveThisPeriod = stats.ActiveThisPeriod,
+                    ActivityRate = stats.ActivityRate
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        // Helper Methods
+        private UserStatisticsViewModel GetUserStatistics(SqlConnection connection, string period = "month")
+        {
+            DateTime startDate;
+            switch (period.ToLower())
+            {
+                case "day":
+                    startDate = DateTime.Now.Date;
+                    break;
+                case "week":
+                    startDate = DateTime.Now.AddDays(-7);
+                    break;
+                case "month":
+                    startDate = DateTime.Now.AddMonths(-1);
+                    break;
+                default:
+                    startDate = DateTime.Now.AddMonths(-1);
+                    break;
+            }
+
+            var query = @"SELECT 
+                            COUNT(*) as TotalUsers,
+                            SUM(CASE WHEN c.EstActif = 1 THEN 1 ELSE 0 END) as ActiveUsers,
+                            SUM(CASE WHEN c.EstActif = 0 THEN 1 ELSE 0 END) as InactiveUsers,
+                            SUM(CASE WHEN u.DateCreation >= @StartDate THEN 1 ELSE 0 END) as NewUsers,
+                            SUM(CASE WHEN c.DerniereConnexion >= @StartDate THEN 1 ELSE 0 END) as ActiveThisPeriod
+                         FROM Utilisateurs u
+                         LEFT JOIN Clients c ON u.UtilisateurId = c.UtilisateurId
+                         WHERE u.TypeUtilisateur = 'Client'";
+
+            using (var command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@StartDate", startDate);
+                
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        int totalUsers = reader.GetInt32(0);
+                        int activeUsers = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                        int inactiveUsers = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+                        int newUsers = reader.IsDBNull(3) ? 0 : reader.GetInt32(3);
+                        int activeThisPeriod = reader.IsDBNull(4) ? 0 : reader.GetInt32(4);
+
+                        double activityRate = totalUsers > 0 ? (double)activeThisPeriod / totalUsers * 100 : 0;
+
+                        return new UserStatisticsViewModel
+                        {
+                            TotalUsers = totalUsers,
+                            ActiveUsers = activeUsers,
+                            InactiveUsers = inactiveUsers,
+                            NewUsers = newUsers,
+                            ActiveThisPeriod = activeThisPeriod,
+                            ActivityRate = Math.Round(activityRate, 2)
+                        };
+                    }
+                }
+            }
+
+            return new UserStatisticsViewModel
+            {
+                TotalUsers = 0,
+                ActiveUsers = 0,
+                InactiveUsers = 0,
+                NewUsers = 0,
+                ActiveThisPeriod = 0,
+                ActivityRate = 0.0
+            };
+        }
+
+        private List<UserEvolutionViewModel> GetUserEvolutionData(SqlConnection connection)
+        {
+            var evolutionData = new List<UserEvolutionViewModel>();
+            var startDate = DateTime.Now.AddMonths(-6);
+
+            var query = @"SELECT 
+                            CAST(u.DateCreation AS DATE) as Date,
+                            COUNT(*) as Count
+                         FROM Utilisateurs u
+                         WHERE u.TypeUtilisateur = 'Client' 
+                           AND u.DateCreation >= @StartDate
+                         GROUP BY CAST(u.DateCreation AS DATE)
+                         ORDER BY Date";
+
+            using (var command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@StartDate", startDate);
+                
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        evolutionData.Add(new UserEvolutionViewModel
+                        {
+                            Date = reader.GetDateTime(0).ToString("yyyy-MM-dd"),
+                            Count = reader.GetInt32(1)
+                        });
+                    }
+                }
+            }
+
+            return evolutionData;
+        }
+
+        private List<ActiveUserViewModel> GetMostActiveUsers(SqlConnection connection, int limit = 10)
+        {
+            var activeUsers = new List<ActiveUserViewModel>();
+
+            var query = @"SELECT TOP (@Limit)
+                            c.ClientId,
+                            c.Prenom,
+                            c.Nom,
+                            u.Email,
+                            c.DerniereConnexion,
+                            (SELECT COUNT(*) FROM Commandes WHERE ClientId = c.ClientId) as OrderCount
+                         FROM Clients c
+                         INNER JOIN Utilisateurs u ON c.UtilisateurId = u.UtilisateurId
+                         WHERE c.DerniereConnexion IS NOT NULL
+                         ORDER BY c.DerniereConnexion DESC";
+
+            using (var command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@Limit", limit);
+                
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        activeUsers.Add(new ActiveUserViewModel
+                        {
+                            ClientId = reader.GetInt32(0),
+                            Prenom = reader.IsDBNull(1) ? "" : reader.GetString(1),
+                            Nom = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                            Email = reader.GetString(3),
+                            DerniereConnexion = reader.IsDBNull(4) ? (DateTime?)null : reader.GetDateTime(4),
+                            OrderCount = reader.GetInt32(5)
+                        });
+                    }
+                }
+            }
+
+            return activeUsers;
+        }
+
+        private List<UserListViewModel> GetUsersList(SqlConnection connection, string searchTerm, string statusFilter, int page, int pageSize, out int totalCount)
+        {
+            var users = new List<UserListViewModel>();
+            var offset = (page - 1) * pageSize;
+
+            // Build WHERE clause
+            var whereClause = "WHERE u.TypeUtilisateur = 'Client'";
+            var parameters = new List<SqlParameter>();
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                whereClause += " AND (u.Email LIKE @SearchTerm OR c.Nom LIKE @SearchTerm OR c.Prenom LIKE @SearchTerm)";
+                parameters.Add(new SqlParameter("@SearchTerm", "%" + searchTerm + "%"));
+            }
+
+            if (statusFilter == "active")
+            {
+                whereClause += " AND c.EstActif = 1";
+            }
+            else if (statusFilter == "inactive")
+            {
+                whereClause += " AND c.EstActif = 0";
+            }
+
+            // Get total count
+            var countQuery = $@"SELECT COUNT(*) 
+                               FROM Utilisateurs u
+                               LEFT JOIN Clients c ON u.UtilisateurId = c.UtilisateurId
+                               {whereClause}";
+
+            using (var countCommand = new SqlCommand(countQuery, connection))
+            {
+                foreach (var param in parameters)
+                {
+                    countCommand.Parameters.Add(param);
+                }
+                totalCount = (int)countCommand.ExecuteScalar();
+            }
+
+            // Get paginated results
+            var query = $@"SELECT 
+                            c.ClientId,
+                            u.UtilisateurId,
+                            c.Prenom,
+                            c.Nom,
+                            u.Email,
+                            c.Telephone,
+                            (SELECT TOP 1 Ville FROM Adresses a WHERE a.ClientId = c.ClientId ORDER BY a.EstParDefaut DESC, a.AdresseId DESC) as Ville,
+                            (SELECT ISNULL(SUM(TotalTTC),0) FROM Commandes WHERE ClientId = c.ClientId) as TotalDepense,
+                            c.EstActif,
+                            u.DateCreation,
+                            c.DerniereConnexion,
+                            (SELECT COUNT(*) FROM Commandes WHERE ClientId = c.ClientId) as OrderCount
+                         FROM Utilisateurs u
+                         LEFT JOIN Clients c ON u.UtilisateurId = c.UtilisateurId
+                         {whereClause}
+                         ORDER BY u.DateCreation DESC
+                         OFFSET @Offset ROWS
+                         FETCH NEXT @PageSize ROWS ONLY";
+
+            using (var command = new SqlCommand(query, connection))
+            {
+                foreach (var param in parameters)
+                {
+                    command.Parameters.Add(param);
+                }
+                command.Parameters.Add(new SqlParameter("@Offset", offset));
+                command.Parameters.Add(new SqlParameter("@PageSize", pageSize));
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        users.Add(new UserListViewModel
+                        {
+                            ClientId = reader.GetInt32(0),
+                            UtilisateurId = reader.GetInt32(1),
+                            Prenom = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                            Nom = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                            Email = reader.GetString(4),
+                            Telephone = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                            Ville = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                            TotalDepense = reader.IsDBNull(7) ? 0 : reader.GetDecimal(7),
+                            EstActif = reader.IsDBNull(8) ? false : reader.GetBoolean(8),
+                            DateCreation = reader.GetDateTime(9),
+                            DerniereConnexion = reader.IsDBNull(10) ? (DateTime?)null : reader.GetDateTime(10),
+                            OrderCount = reader.GetInt32(11)
+                        });
+                    }
+                }
+            }
+
+            return users;
+        }
+
+        private UserDetailsViewModel GetUserDetails(SqlConnection connection, int clientId)
+        {
+            var query = @"SELECT 
+                            c.ClientId,
+                            u.UtilisateurId,
+                            c.Prenom,
+                            c.Nom,
+                            u.Email,
+                            c.Telephone,
+                            c.DateNaissance,
+                            c.EstActif,
+                            u.DateCreation,
+                            c.DerniereConnexion,
+                            (SELECT COUNT(*) FROM Commandes WHERE ClientId = c.ClientId) as OrderCount,
+                            (SELECT SUM(TotalTTC) FROM Commandes WHERE ClientId = c.ClientId) as TotalSpent
+                         FROM Clients c
+                         INNER JOIN Utilisateurs u ON c.UtilisateurId = u.UtilisateurId
+                         WHERE c.ClientId = @ClientId";
+
+            using (var command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ClientId", clientId);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new UserDetailsViewModel
+                        {
+                            ClientId = reader.GetInt32(0),
+                            UtilisateurId = reader.GetInt32(1),
+                            Prenom = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                            Nom = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                            Email = reader.GetString(4),
+                            Telephone = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                            DateNaissance = reader.IsDBNull(6) ? (DateTime?)null : reader.GetDateTime(6),
+                            EstActif = reader.IsDBNull(7) ? false : reader.GetBoolean(7),
+                            DateCreation = reader.GetDateTime(8),
+                            DerniereConnexion = reader.IsDBNull(9) ? (DateTime?)null : reader.GetDateTime(9),
+                            OrderCount = reader.GetInt32(10),
+                            TotalSpent = reader.IsDBNull(11) ? 0 : reader.GetDecimal(11)
+                        };
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

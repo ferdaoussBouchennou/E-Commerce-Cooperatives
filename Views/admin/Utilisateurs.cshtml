@@ -1,0 +1,487 @@
+@model List<E_Commerce_Cooperatives.Models.ViewModels.UserListViewModel>
+@using E_Commerce_Cooperatives.Models.ViewModels
+@{
+    ViewBag.Title = "Gestion des Utilisateurs";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+    
+    var users = Model ?? new List<UserListViewModel>();
+    var searchTerm = ViewBag.SearchTerm as string ?? "";
+    var statusFilter = ViewBag.StatusFilter as string ?? "all";
+    var currentPage = ViewBag.CurrentPage as int? ?? 1;
+    var pageSize = ViewBag.PageSize as int? ?? 20;
+    var totalCount = ViewBag.TotalCount as int? ?? 0;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+}
+
+<div class="admin-page">
+    <div class="admin-page-header">
+        <h1 class="admin-page-title">Gestion des Utilisateurs</h1>
+        <p class="admin-page-subtitle">Gérez les comptes clients</p>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="admin-filters">
+        <form method="get" action="@Url.Action("Utilisateurs", "Admin")" class="filter-form">
+            <div class="filters-row">
+                <div class="search-large">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#305C7D" viewBox="0 0 16 16" class="search-icon">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                    </svg>
+                    <input type="text" name="searchTerm" class="search-input-large" placeholder="Rechercher par nom ou email..." value="@searchTerm" />
+                </div>
+                <div class="status-filter-wrapper">
+                    <select name="statusFilter" class="status-filter">
+                        <option value="all" @(statusFilter == "all" ? "selected" : "")>Tous</option>
+                        <option value="active" @(statusFilter == "active" ? "selected" : "")>Actifs</option>
+                        <option value="inactive" @(statusFilter == "inactive" ? "selected" : "")>Inactifs</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-filter">Appliquer</button>
+                @if (!string.IsNullOrEmpty(searchTerm) || statusFilter != "all")
+                {
+                    <a href="@Url.Action("Utilisateurs", "Admin")" class="btn-clear">Réinitialiser</a>
+                }
+            </div>
+        </form>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">@((int)(ViewBag.CardTotalUsers ?? 0))</div>
+            <div class="stat-label">Total utilisateurs</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@((int)(ViewBag.CardActiveUsers ?? 0))</div>
+            <div class="stat-label">Actifs</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@((int)(ViewBag.CardThisMonth ?? 0))</div>
+            <div class="stat-label">Ce mois</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@((int)(ViewBag.CardTotalOrders ?? 0))</div>
+            <div class="stat-label">Total commandes</div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="admin-table users-table">
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Contact</th>
+                        <th>Ville</th>
+                        <th>Commandes</th>
+                        <th>Total dépensé</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (users.Any())
+                    {
+                        foreach (var user in users)
+                        {
+                            var initials = $"{(string.IsNullOrEmpty(user.Prenom) ? "" : user.Prenom.Substring(0,1))}{(string.IsNullOrEmpty(user.Nom) ? "" : user.Nom.Substring(0,1))}";
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar-circle">@initials.ToUpper()</div>
+                                        <div>
+                                            <div class="user-name">@user.Prenom @user.Nom</div>
+                                            <div class="user-meta">Inscrit le @user.DateCreation.ToString("yyyy-MM-dd")</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="contact-cell">
+                                        <div class="contact-row">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="#305C7D" viewBox="0 0 16 16">
+                                                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 10.118V5.383zM14.247 11 9.2 8.118 8 8.882 6.8 8.118 1.753 11H14.247zM1 10.118l4.708-2.91L1 5.383v4.735z"/>
+                                            </svg>
+                                            <span>@user.Email</span>
+                                        </div>
+                                        <div class="contact-row">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="#305C7D" viewBox="0 0 16 16">
+                                                <path d="M3.654 1.328a.678.678 0 0 1 1.015-.063l2.29 2.29a.678.678 0 0 1-.063 1.015L6.21 5.22a.678.678 0 0 0-.154.738c.386.93 1.05 1.793 1.97 2.713.92.92 1.783 1.584 2.713 1.97a.678.678 0 0 0 .738-.154l.65-.65a.678.678 0 0 1 1.015-.063l2.29 2.29a.678.678 0 0 1-.063 1.015l-1.3 1.3c-.285.285-.69.39-1.066.274-1.517-.47-3.366-1.58-5.348-3.562C5.324 9.02 4.214 7.171 3.744 5.654c-.115-.376-.01-.781.274-1.066l1.3-1.3z"/>
+                                            </svg>
+                                            <span>@(string.IsNullOrEmpty(user.Telephone) ? "-" : user.Telephone)</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="location-cell">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="#305C7D" viewBox="0 0 16 16">
+                                            <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                                        </svg>
+                                        <span>@(string.IsNullOrEmpty(user.Ville) ? "N/A" : user.Ville)</span>
+                                    </div>
+                                </td>
+                                <td>@user.OrderCount</td>
+                                <td>@user.TotalDepense.ToString("N0") MAD</td>
+                                <td>
+                                    <span class="status-pill @(user.EstActif ? "pill-active" : "pill-inactive")">
+                                        @(user.EstActif ? "Actif" : "Inactif")
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button type="button" class="btn-ellipsis">•••</button>
+                                        <div class="dropdown-menu">
+                                            <a href="@Url.Action("UserDetails", "Admin", new { id = user.ClientId })" class="dropdown-item">
+                                                <span class="dot-icon">👁️</span> Voir le profil
+                                            </a>
+                                            <button type="button" class="dropdown-item btn-toggle" 
+                                                    data-user-id="@user.ClientId" 
+                                                    data-current-status="@user.EstActif">
+                                                <span class="dot-icon">@(user.EstActif ? "🚫" : "✅")</span> @(user.EstActif ? "Désactiver" : "Activer")
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center">Aucun utilisateur trouvé</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <div class="pagination-wrapper">
+            <nav class="pagination">
+                @if (currentPage > 1)
+                {
+                    <a href="@Url.Action("Utilisateurs", "Admin", new { searchTerm = searchTerm, statusFilter = statusFilter, page = currentPage - 1 })" class="page-link">Précédent</a>
+                }
+                
+                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                {
+                    <a href="@Url.Action("Utilisateurs", "Admin", new { searchTerm = searchTerm, statusFilter = statusFilter, page = i })" 
+                       class="page-link @(i == currentPage ? "active" : "")">@i</a>
+                }
+                
+                @if (currentPage < totalPages)
+                {
+                    <a href="@Url.Action("Utilisateurs", "Admin", new { searchTerm = searchTerm, statusFilter = statusFilter, page = currentPage + 1 })" class="page-link">Suivant</a>
+                }
+            </nav>
+        </div>
+    }
+</div>
+
+@section scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function bindToggleButtons() {
+            document.querySelectorAll('.btn-toggle').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var userId = this.getAttribute('data-user-id');
+                    var currentStatus = this.getAttribute('data-current-status') === 'True' || this.getAttribute('data-current-status') === 'true';
+                    var newStatus = !currentStatus;
+
+                    if (confirm('Êtes-vous sûr de vouloir ' + (newStatus ? 'activer' : 'désactiver') + ' ce compte ?')) {
+                        var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                        var formData = new FormData();
+                        formData.append('userId', userId);
+                        formData.append('isActive', newStatus);
+                        formData.append('__RequestVerificationToken', token);
+
+                        fetch('@Url.Action("ToggleUserStatus", "Admin")', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();
+                            } else {
+                                alert('Erreur: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Une erreur est survenue');
+                        });
+                    }
+                });
+            });
+        }
+
+        function bindDropdowns() {
+            document.querySelectorAll('.dropdown').forEach(drop => {
+                const toggleBtn = drop.querySelector('.btn-ellipsis');
+                const menu = drop.querySelector('.dropdown-menu');
+                toggleBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    document.querySelectorAll('.dropdown-menu').forEach(m => { if (m !== menu) m.classList.remove('show'); });
+                    menu.classList.toggle('show');
+                });
+            });
+
+            document.addEventListener('click', function () {
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+            });
+        }
+
+        bindToggleButtons();
+        bindDropdowns();
+    </script>
+}
+
+<style>
+    .admin-filters {
+        margin-bottom: 20px;
+    }
+
+    .filters-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .search-large {
+        position: relative;
+        flex: 1;
+    }
+
+    .search-input-large {
+        width: 100%;
+        padding: 12px 16px 12px 40px;
+        border-radius: 10px;
+        border: 1px solid #e4e4e4;
+        background: #f9f6f0;
+        font-size: 15px;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .status-filter {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid #e4e4e4;
+        background: #fff;
+        min-width: 120px;
+    }
+
+    .btn-filter, .btn-clear {
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-filter {
+        background: #305C7D;
+        color: #fff;
+    }
+
+    .btn-clear {
+        background: #f0f0f0;
+        color: #305C7D;
+        text-decoration: none;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .stat-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: #2a4d6c;
+        line-height: 1.1;
+    }
+
+    .stat-label {
+        color: #6c7a85;
+        margin-top: 4px;
+        font-size: 14px;
+    }
+
+    .users-table th {
+        color: #7a8a99;
+        font-weight: 600;
+    }
+
+    .user-cell {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .avatar-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #e8dcc2;
+        color: #305C7D;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+    }
+
+    .user-name {
+        font-weight: 700;
+        color: #2f4f63;
+    }
+
+    .user-meta {
+        font-size: 12px;
+        color: #8a98a6;
+    }
+
+    .contact-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .contact-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #2f4f63;
+    }
+
+    .location-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #2f4f63;
+    }
+
+    .status-pill {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .pill-active {
+        background: #e4eddd;
+        color: #6a754b;
+    }
+
+    .pill-inactive {
+        background: #f7e1db;
+        color: #c06c50;
+    }
+
+    .btn-ellipsis {
+        background: #f6f6f6;
+        border: 1px solid #e2e2e2;
+        border-radius: 10px;
+        padding: 8px 10px;
+        cursor: pointer;
+    }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        right: 0;
+        top: 38px;
+        min-width: 180px;
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        display: none;
+        z-index: 10;
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }
+
+    .dropdown-item {
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #2f4f63;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .dropdown-item:hover {
+        background: #f7f8fa;
+    }
+
+    .dot-icon {
+        width: 18px;
+        display: inline-block;
+    }
+
+    .pagination-wrapper {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .pagination {
+        display: flex;
+        gap: 5px;
+    }
+
+    .page-link {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        background: white;
+        color: #305C7D;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+
+    .page-link:hover {
+        background: #f5f5f5;
+    }
+
+    .page-link.active {
+        background: #305C7D;
+        color: white;
+        border-color: #305C7D;
+    }
+</style>
+
