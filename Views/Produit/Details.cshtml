@@ -22,6 +22,7 @@
     
     var variantes = produit.Variantes?.ToList() ?? new List<Variante>();
     var avis = produit.Avis?.ToList() ?? new List<AvisProduit>();
+    var baseVariant = variantes.FirstOrDefault(v => v.PrixSupplementaire == 0) ?? variantes.FirstOrDefault();
 }
 
 @Html.Partial("_Header")
@@ -135,7 +136,7 @@
                 <!-- Price -->
                 <div class="mb-4">
                     <span class="display-6 fw-bold" style="color: #305C7D;">
-                        <span id="product-price">@produit.Prix.ToString("F2")</span> MAD
+                        <span id="product-price">@(baseVariant != null ? (produit.PrixTTC + baseVariant.PrixSupplementaireTTC).ToString("F2") : produit.PrixTTC.ToString("F2"))</span> MAD
                     </span>
                     @if (variantes.Any() && variantes.Any(v => v.PrixSupplementaire > 0))
                     {
@@ -207,18 +208,18 @@
                         <div class="d-flex flex-wrap gap-2" id="variants-container">
                             @foreach (var variant in variantes)
                             {
-                                var variantPrice = produit.Prix + variant.PrixSupplementaire;
+                                var variantPriceTTC = produit.PrixTTC + variant.PrixSupplementaireTTC;
                                 <button type="button" 
-                                        class="btn variant-btn @(variant == variantes.First() ? "active" : "")"
+                                        class="btn variant-btn @(variant == baseVariant ? "active" : "")"
                                         data-variant-id="@variant.VarianteId"
-                                        data-variant-price="@variantPrice"
+                                        data-variant-price="@variantPriceTTC"
                                         data-variant-stock="@variant.Stock"
-                                        style="border: 2px solid #e0e0e0; background-color: white; color: #2d3748; transition: all 0.3s;"
-                                        onclick="selectVariant(this, @variant.VarianteId, '@variantPrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)', @variant.Stock)">
+                                        style="border: 2px solid @(variant == baseVariant ? "#C06C50" : "#e0e0e0"); background-color: @(variant == baseVariant ? "#F5F3EF" : "white"); color: #2d3748; transition: all 0.3s;"
+                                        onclick="selectVariant(this, @variant.VarianteId, '@variantPriceTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)', @variant.Stock)">
                                     @(variant.Taille ?? variant.Couleur ?? "Standard")
                                     @if (variant.PrixSupplementaire > 0)
                                     {
-                                        <span class="small ms-1">(+@variant.PrixSupplementaire.ToString("F2") MAD)</span>
+                                        <span class="small ms-1">(+@variant.PrixSupplementaireTTC.ToString("F2") MAD)</span>
                                     }
                                     @if (variant.Stock == 0)
                                     {
@@ -254,7 +255,7 @@
                             </button>
                         </div>
                         <span class="text-muted small" id="stock-info">
-                            @(variantes.Any() ? variantes.First().Stock : produit.StockTotal) en stock
+                            @(baseVariant != null ? baseVariant.Stock : (variantes.Any() ? variantes.First().Stock : produit.StockTotal)) en stock
                         </span>
                     </div>
                 </div>
@@ -272,7 +273,15 @@
                         </svg>
                         Ajouter au panier
                     </button>
-                    
+                    <button type="button" 
+                            class="btn btn-lg btn-outline-light d-flex align-items-center justify-content-center favori-toggle-btn" 
+                            data-produit-id="@produit.ProduitId"
+                            onclick="toggleFavori(event, @produit.ProduitId, this)"
+                            style="width: 56px; border: 1px solid #e0e0e0; color: #305C7D;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
+                            <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -373,10 +382,10 @@
 @section scripts {
     <script>
         let currentQuantity = 1;
-        let selectedVariantId = null;
-        let selectedVariantPrice = @produit.Prix.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-        let selectedVariantStock = @(variantes.Any() ? variantes.First().Stock : produit.StockTotal);
-        const basePrice = @produit.Prix.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+        let selectedVariantId = @(baseVariant != null ? baseVariant.VarianteId.ToString() : "null");
+        let selectedVariantPrice = @(baseVariant != null ? (produit.PrixTTC + baseVariant.PrixSupplementaireTTC).ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : produit.PrixTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+        let selectedVariantStock = @(baseVariant != null ? baseVariant.Stock : (variantes.Any() ? variantes.First().Stock : produit.StockTotal));
+        const basePrice = @produit.PrixTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
         const productId = @produit.ProduitId;
 
         function changeMainImage(imageSrc, element) {
@@ -458,8 +467,11 @@
             if (!window.isUserAuthenticated()) {
                 const currentUrl = window.location.pathname + window.location.search;
                 const separator = currentUrl.includes('?') ? '&' : '?';
-                const returnUrl = encodeURIComponent(currentUrl + separator + 'addItem=' + productId);
-                window.location.href = '/Account/Login?returnUrl=' + returnUrl;
+                let returnUrl = currentUrl + separator + 'addItem=' + productId;
+                if (selectedVariantId) returnUrl += '&addVariant=' + selectedVariantId;
+                if (currentQuantity > 1) returnUrl += '&addQty=' + currentQuantity;
+                
+                window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(returnUrl);
                 return;
             }
             
@@ -473,12 +485,6 @@
             updateQuantityButtons();
             if (document.querySelectorAll('.thumbnail-image').length > 0) {
                 document.querySelectorAll('.thumbnail-image')[0].style.borderColor = '#305C7D';
-            }
-            
-            // Set initial variant if exists
-            const firstVariantBtn = document.querySelector('.variant-btn.active');
-            if (firstVariantBtn) {
-                selectedVariantId = firstVariantBtn.dataset.variantId;
             }
         });
     </script>

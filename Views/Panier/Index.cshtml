@@ -64,23 +64,21 @@
             <div class="card border-0 shadow-soft p-4 rounded-4 sticky-top" style="top: 130px; background-color: white; z-index: 1000;">
                 <h2 class="h4 fw-bold mb-4">Récapitulatif</h2>
                 
-                <div class="d-flex justify-content-between mb-3">
-                    <span class="text-muted">Sous-total</span>
-                    <span id="subtotal-amount" class="fw-semibold">0.00 MAD</span>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Nombre d'articles</span>
+                    <span id="items-count" class="fw-medium">0</span>
                 </div>
-                <div class="d-flex justify-content-between mb-3">
-                    <span class="text-muted">TVA (20%)</span>
-                    <span id="tva-amount" class="fw-semibold">0.00 MAD</span>
-                </div>
-                <div class="d-flex justify-content-between mb-4">
+
+                <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Livraison</span>
                     <span class="text-muted small">Calculée à la commande</span>
                 </div>
+
                 
                 <hr class="my-4 opacity-10">
                 
-                <div class="d-flex justify-content-between mb-4 align-items-center">
-                    <span class="h5 fw-bold mb-0">Total TTC</span>
+                <div class="d-flex justify-content-between mb-5 align-items-center">
+                    <span class="h5 fw-bold mb-0">Total</span>
                     <span id="total-amount" class="h4 fw-bold mb-0" style="color: #305C7D;">0.00 MAD</span>
                 </div>
                 
@@ -91,7 +89,7 @@
                     </svg>
                 </a>
                 
-                <a href="@Url.Action("Index", "Catalogue")" class="btn btn-link w-100 text-muted text-decoration-none">
+                <a href="@Url.Action("Index", "Catalogue")" class="btn btn-link w-100 text-muted text-decoration-none small text-center">
                     Continuer mes achats
                 </a>
             </div>

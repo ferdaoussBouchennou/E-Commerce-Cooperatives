@@ -99,6 +99,80 @@ namespace E_Commerce_Cooperatives.Models
             }
         }
 
+        public IQueryable<Favori> Favoris
+        {
+            get
+            {
+                var result = new List<Favori>();
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    var query = "SELECT FavoriId, ClientId, ProduitId, DateAjout FROM Favoris";
+                    using (var command = new SqlCommand(query, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new Favori
+                            {
+                                FavoriId = reader.GetInt32(0),
+                                ClientId = reader.GetInt32(1),
+                                ProduitId = reader.GetInt32(2),
+                                DateAjout = reader.GetDateTime(3)
+                            });
+                        }
+                    }
+                }
+                return result.AsQueryable();
+            }
+        }
+
+        public void AddFavori(int clientId, int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "INSERT INTO Favoris (ClientId, ProduitId, DateAjout) VALUES (@ClientId, @ProduitId, @DateAjout)";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    command.Parameters.AddWithValue("@DateAjout", DateTime.Now);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void RemoveFavori(int clientId, int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Favoris WHERE ClientId = @ClientId AND ProduitId = @ProduitId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public bool IsFavori(int clientId, int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT COUNT(*) FROM Favoris WHERE ClientId = @ClientId AND ProduitId = @ProduitId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    return (int)command.ExecuteScalar() > 0;
+                }
+            }
+        }
+
         public IQueryable<CommandeItem> CommandeItems
         {
             get
@@ -415,10 +489,11 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
 
-            // Charger les images et avis pour chaque produit
+            // Charger les images, avis et variantes pour chaque produit
             foreach (var produit in produits)
             {
                 produit.Images = GetImagesProduit(produit.ProduitId);
+                produit.Variantes = GetVariantesProduit(produit.ProduitId);
                 var avis = GetAvisProduit(produit.ProduitId);
                 if (avis.Any())
                 {

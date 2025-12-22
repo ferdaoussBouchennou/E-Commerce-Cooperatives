@@ -11,6 +11,7 @@
         initAnimations();
         handleHashRedirects();
         handleAutoAddToCart();
+        initFavoris();
     });
 
     // Handle hash redirects (like #connexion, #inscription)
@@ -117,6 +118,16 @@
                 e.stopPropagation();
                 
                 const produitId = button.getAttribute('data-produit-id');
+                const hasVariants = button.getAttribute('data-has-variants') === '1';
+                
+                console.log('Add to cart clicked:', { produitId, hasVariants });
+                
+                if (hasVariants) {
+                    setTimeout(() => {
+                        window.location.href = `/Produit/Details/${produitId}`;
+                    }, 500);
+                    return;
+                }
                 
                 // Check if user is authenticated
                 if (!isUserAuthenticated()) {
@@ -141,15 +152,23 @@
     window.addProductToCart = addProductToCart;
     window.showNotification = showNotification;
     window.updateCartBadge = updateCartBadge;
+    window.toggleFavori = toggleFavori;
 
     // Handle automatically adding product to cart after login
     function handleAutoAddToCart() {
         const urlParams = new URLSearchParams(window.location.search);
         const addItemId = urlParams.get('addItem');
+        const addVariantId = urlParams.get('addVariant');
+        const addQty = urlParams.get('addQty') || 1;
         
         if (addItemId && isUserAuthenticated()) {
-            // Add product to cart
-            addProductToCart(addItemId);
+            // Add product to cart with variant and quantity
+            // Ensure ids are numbers where expected to match direct additions
+            const pId = String(addItemId);
+            const vId = addVariantId ? parseInt(addVariantId) : null;
+            const qty = parseInt(addQty) || 1;
+            
+            addProductToCart(pId, qty, vId);
             
             // Show notification
             showNotification('Produit ajouté au panier automatiquement!', 'success');
@@ -158,7 +177,12 @@
             updateCartBadge();
             
             // Clean up URL without refreshing the page
-            const newUrl = window.location.pathname + window.location.search.replace(/[&?]addItem=[^&]*/, '').replace(/^&/, '?');
+            let newUrl = window.location.pathname + window.location.search
+                .replace(/[&?]addItem=[^&]*/, '')
+                .replace(/[&?]addVariant=[^&]*/, '')
+                .replace(/[&?]addQty=[^&]*/, '')
+                .replace(/^&/, '?')
+                .replace(/\?$/, '');
             window.history.replaceState({}, document.title, newUrl);
         }
     }
@@ -279,20 +303,127 @@
     function showNotification(message, type) {
         // Create notification element
         const notification = document.createElement('div');
-        notification.className = `alert alert-${type === 'success' ? 'success' : 'info'} position-fixed`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
-        notification.textContent = message;
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'info'} position-fixed d-flex align-items-center`;
+        // Use #305C7D for info/dark blue
+        const themeBlue = '#305C7D';
+        notification.style.cssText = 'top: 20px; left: 50%; transform: translateX(-50%) translateY(-100%); z-index: 10000; min-width: 320px; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; border-radius: 12px; padding: 16px; backdrop-filter: blur(8px); background-color: rgba(255,255,255,0.98); color: #333; border-left: 5px solid ' + (type === 'success' ? '#28a745' : themeBlue) + '; opacity: 0;';
+        
+        const icon = type === 'success' ? 
+            '<svg class="me-3 flex-shrink-0" width="24" height="24" fill="#28a745" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>' :
+            `<svg class="me-3 flex-shrink-0" width="24" height="24" fill="${themeBlue}" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>`;
+
+        notification.innerHTML = `${icon}<div style="font-size: 0.95rem;">${message}</div>`;
         
         document.body.appendChild(notification);
         
-        // Remove after 3 seconds
+        // Animation
+        notification.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        
+        requestAnimationFrame(() => {
+            notification.style.transform = 'translateX(-50%) translateY(0)';
+            notification.style.opacity = '1';
+        });
+        
+        // Remove after 3 seconds (decreased from 7s for better UX)
         setTimeout(() => {
-            notification.style.transition = 'opacity 0.3s ease';
+            notification.style.transform = 'translateX(-50%) translateY(-100%)';
             notification.style.opacity = '0';
             setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 500);
         }, 3000);
+    }
+
+    // Favorites functionality
+    function initFavoris() {
+        if (!isUserAuthenticated()) return;
+        
+        // Check status for all products on page
+        const favoriBtns = document.querySelectorAll('.favori-toggle-btn');
+        favoriBtns.forEach(btn => {
+            const produitId = btn.getAttribute('data-produit-id');
+            if (produitId) {
+                fetch(`/Favoris/GetStatus?produitId=${produitId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        updateFavoriUI(btn, data.isFavori);
+                    })
+                    .catch(err => console.error('Error checking favori status:', err));
+            }
+        });
+    }
+
+    function toggleFavori(event, produitId, button) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        if (!isUserAuthenticated()) {
+            showNotification('Veuillez vous connecter pour ajouter des favoris.', 'info');
+            setTimeout(() => {
+                window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+            }, 1000);
+            return;
+        }
+
+        // Add loading state
+        button.disabled = true;
+        button.style.opacity = '0.7';
+
+        fetch('/Favoris/Toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ produitId: produitId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            button.disabled = false;
+            button.style.opacity = '1';
+
+            if (data.success) {
+                const isFavori = data.action === 'added';
+                updateFavoriUI(button, isFavori);
+                showNotification(data.message, 'success');
+                
+                // Trigger event for specialized pages (like Favoris Index)
+                document.dispatchEvent(new CustomEvent('favoriToggled', { 
+                    detail: { produitId: produitId, action: data.action } 
+                }));
+            } else if (data.redirect) {
+                window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+            } else {
+                showNotification(data.message, 'info');
+            }
+        })
+        .catch(err => {
+            button.disabled = false;
+            button.style.opacity = '1';
+            console.error('Error toggling favori:', err);
+            showNotification('Une erreur est survenue lors de la mise à jour des favoris.', 'info');
+        });
+    }
+
+    function updateFavoriUI(button, isFavori) {
+        const svg = button.querySelector('svg');
+        if (!svg) return;
+
+        if (isFavori) {
+            button.classList.add('active');
+            button.title = "Retirer des favoris";
+            svg.innerHTML = '<path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>';
+            svg.setAttribute('fill', '#C06C50');
+        } else {
+            button.classList.remove('active');
+            button.title = "Ajouter aux favoris";
+            svg.innerHTML = '<path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>';
+            svg.setAttribute('fill', 'currentColor');
+        }
     }
 
     // Mobile menu toggle enhancement
