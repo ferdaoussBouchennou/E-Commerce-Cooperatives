@@ -1,4 +1,6 @@
-﻿/* Custom Colors - Palette de la page React */
+﻿@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+/* Custom Colors - Palette de la page React */
 :root {
     /* Palette principale */
     --azul-profundo: #305C7D;
@@ -29,13 +31,28 @@
     /* Verde Oliva pour success */
     --text-dark: #2d3748;
     --text-muted: #5a6c7d;
+
+    /* Typographie */
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Source Sans 3', system-ui, -apple-system, sans-serif;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-sans);
     color: var(--text-dark);
     padding-top: 0;
     background-color: var(--blanco-roto);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-display {
+    font-family: var(--font-display);
+    font-weight: 700;
 }
 
 /* Remove default body-content padding */
@@ -590,6 +607,10 @@ html {
     color: var(--verde-oliva) !important;
 }
 
+.text-accent {
+    color: var(--terracota-calido) !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .hero-section {
@@ -667,4 +688,53 @@ textarea {
 
 .page-item.disabled .page-link {
     color: var(--text-muted);
+}
+
+/* Utility: Space-y */
+.space-y-4>*+* {
+    margin-top: 1.5rem;
+}
+
+/* Shadow Soft */
+.shadow-soft {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Cart Specific */
+.object-cover {
+    object-fit: cover;
+}
+
+.cart-item-card {
+    transition: transform 0.2s ease;
+}
+
+.cart-item-card:hover {
+    transform: translateX(4px);
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--blanco-roto);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
 }

@@ -3,216 +3,136 @@
     ViewBag.Title = "Gestion des Produits";
     Layout = "~/Views/Admin/_AdminLayout.cshtml";
 
-    var stats = ViewBag.Stats as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var categories = ViewBag.Categories as List<E_Commerce_Cooperatives.Models.Categorie> ?? new List<E_Commerce_Cooperatives.Models.Categorie>();
+    var cooperatives = ViewBag.Cooperatives as List<E_Commerce_Cooperatives.Models.Cooperative> ?? new List<E_Commerce_Cooperatives.Models.Cooperative>();
 }
 
 <div class="admin-page">
-    <!-- En-tête de page - SANS le bouton Ajouter -->
-    <div class="admin-page-header">
-        <div>
-            <h1 class="admin-page-title">Gestion des Produits</h1>
-            <p class="admin-page-subtitle">Gérez votre catalogue de produits</p>
+    <!-- Top Header - Simplified (Removed Search as requested) -->
+    <div class="admin-page-header-row" style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 30px;">
+        <div class="header-notifications" style="display: flex; gap: 20px; align-items: center;">
+            <i class="far fa-bell" style="font-size: 20px; color: #305C7D; position: relative;">
+                <span style="position: absolute; top: -8px; right: -8px; background: #C06C50; color: white; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">3</span>
+            </i>
+            <div style="width: 35px; height: 35px; background: #305C7D; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">A</div>
         </div>
     </div>
 
-    <!-- Filtres avec le bouton Ajouter À GAUCHE sur la même ligne -->
-    <div class="admin-filters">
-        <div class="filters-row">
-            <!-- Barre de recherche -->
-            <div class="search-box">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="search-icon">
-                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-                </svg>
-                <input type="text" id="searchInput" class="form-control search-input"
-                       placeholder="Rechercher un produit..." />
+    <!-- Page Title Section -->
+    <div class="page-title-section" style="margin-bottom: 25px;">
+        <h1 class="admin-page-title" style="margin-bottom: 5px;">Gestion des Produits</h1>
+        <p class="admin-page-subtitle">Gérez votre catalogue de produits</p>
+    </div>
+
+    <!-- Filters Row -->
+    <div class="admin-filters" style="margin-bottom: 25px;">
+        <div class="filters-row" style="display: flex; gap: 15px; align-items: center;">
+             <div class="search-box" style="flex: 1; max-width: 300px;">
+                <input type="text" id="inlineSearch" placeholder="Rechercher un produit..." class="form-input" style="border-color: #D0D0D0; font-size: 13px;" />
             </div>
 
-            <!-- Filtre par catégorie - AUTOMATIQUE -->
-            <div class="status-filter-wrapper">
-                <select id="categorieFilter" class="status-filter">
-                    <option value="all">Toutes les catégories</option>
-                    <option value="1">Cosmétiques</option>
-                    <option value="2">Alimentaire</option>
-                    <option value="3">Poterie & Céramique</option>
-                    <option value="4">Textiles & Vannerie</option>
-                </select>
-            </div>
+            <button class="btn-filter-icon" style="background: white; border: 1px solid #D0D0D0; padding: 10px; border-radius: 8px; color: #305C7D;">
+                <i class="fas fa-filter"></i>
+            </button>
 
-            <!-- Filtre par statut - AUTOMATIQUE -->
-            <div class="status-filter-wrapper">
-                <select id="statutFilter" class="status-filter">
-                    <option value="all">Tous les statuts</option>
-                    <option value="disponible">Disponible</option>
-                    <option value="vedette">En vedette</option>
-                    <option value="stock-faible">Stock faible</option>
-                </select>
-            </div>
-            <!-- Bouton Ajouter à GAUCHE -->
-            <a href="@Url.Action("AjouterProduit", "Admin")" class="btn-primary-action">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
-                </svg>
-                Ajouter un produit
-            </a>
+            <select id="catFilter" class="form-input" style="width: 200px; border-color: #D0D0D0; font-size: 13px;">
+                <option value="all">Toutes les catégories</option>
+                @foreach (var cat in categories)
+                {
+                    <option value="@cat.CategorieId">@cat.Nom</option>
+                }
+            </select>
+
+            <button class="btn-primary-action" onclick="openAddModal()" style="margin-left: auto; height: 42px;">
+                <i class="fas fa-plus"></i> Ajouter un produit
+            </button>
         </div>
     </div>
 
-    <!-- Reste du code identique... cartes stats et tableau -->
+    <!-- Stats Cards - Matching Image 1 -->
     <div class="stats-cards">
-        <div class="stat-card stat-total">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6z" />
-                </svg>
-            </div>
-            <div>
-                <div class="stat-value">@(stats.ContainsKey("Total") ? stats["Total"] : 0)</div>
-                <div class="stat-label">Total produits</div>
-            </div>
+        <div class="stat-card" style="background: #FDFBF7;">
+            <div class="stat-value">@(ViewBag.Stats != null ? ViewBag.Stats["Total"] : 0)</div>
+            <div class="stat-label">Total produits</div>
         </div>
-
-        <div class="stat-card stat-disponible">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
-                </svg>
-            </div>
-            <div>
-                <div class="stat-value">@(stats.ContainsKey("Disponibles") ? stats["Disponibles"] : 0)</div>
-                <div class="stat-label">Disponibles</div>
-            </div>
+        <div class="stat-card" style="background: #FDFBF7;">
+            <div class="stat-value">@(ViewBag.Stats != null ? ViewBag.Stats["Disponibles"] : 0)</div>
+            <div class="stat-label">Disponibles</div>
         </div>
-
-        <div class="stat-card stat-vedette">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
-                </svg>
-            </div>
-            <div>
-                <div class="stat-value">@(stats.ContainsKey("EnVedette") ? stats["EnVedette"] : 0)</div>
-                <div class="stat-label">En vedette</div>
-            </div>
+        <div class="stat-card" style="background: #FDFBF7;">
+            <div class="stat-value">@(ViewBag.Stats != null ? ViewBag.Stats["EnVedette"] : 0)</div>
+            <div class="stat-label">En vedette</div>
         </div>
-
-        <div class="stat-card stat-stock-faible">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057z" />
-                </svg>
-            </div>
-            <div>
-                <div class="stat-value">@(stats.ContainsKey("StockFaible") ? stats["StockFaible"] : 0)</div>
-                <div class="stat-label">Stock faible</div>
-            </div>
+        <div class="stat-card" style="background: #FFF5F5;">
+            <div class="stat-value" style="color: #EB5757;">@(ViewBag.Stats != null ? ViewBag.Stats["StockFaible"] : 0)</div>
+            <div class="stat-label">Stock faible</div>
         </div>
     </div>
 
-    <!-- Tableau des produits -->
-    <div class="admin-table-container">
-        <table class="table admin-table products-table">
+    <!-- Table Section -->
+    <div class="admin-table-container" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+        <table class="admin-table" style="width: 100%; border-collapse: separate; border-spacing: 0 10px;">
             <thead>
-                <tr>
-                    <th style="width: 50px;"></th>
-                    <th>Produit</th>
-                    <th>Catégorie</th>
-                    <th>Prix</th>
-                    <th>Stock</th>
-                    <th>Statut</th>
-                    <th class="text-end">Actions</th>
+                <tr style="border-bottom: 2px solid #F5F3EF;">
+                    <th style="padding: 15px; color: #6D6C6A; font-weight: 600;">Produit</th>
+                    <th style="padding: 15px; color: #6D6C6A; font-weight: 600;">Catégorie</th>
+                    <th style="padding: 15px; color: #6D6C6A; font-weight: 600;">Prix</th>
+                    <th style="padding: 15px; color: #6D6C6A; font-weight: 600;">Stock</th>
+                    <th style="padding: 15px; color: #6D6C6A; font-weight: 600;">Statut</th>
+                    <th style="padding: 15px; text-align: right;"></th>
                 </tr>
             </thead>
-            <tbody id="productsTableBody">
-                @foreach (var produit in Model)
+            <tbody id="productTableBody">
+                @foreach (var p in Model)
                 {
-                    var stockClass = produit.StockTotal <= produit.SeuilAlerte ? "stock-faible" : "stock-ok";
-                    var disponibleClass = produit.EstDisponible ? "dispo" : "indisponible";
-
-                    <tr class="product-row"
-                        data-categorie="@(produit.CategorieId.HasValue ? produit.CategorieId.Value.ToString() : "")"
-                        data-statut="@(produit.EstDisponible ? "disponible" : "indisponible")"
-                        data-vedette="@(produit.EstEnVedette ? "true" : "false")"
-                        data-stock-faible="@(produit.StockTotal <= produit.SeuilAlerte ? "true" : "false")"
-                        data-nom="@produit.Nom.ToLower()"
-                        data-cooperative="@(produit.Cooperative != null ? produit.Cooperative.Nom.ToLower() : "")">
-                        <td>
-                            <div class="product-image-thumb">
-                                @if (!string.IsNullOrEmpty(produit.ImageUrl))
+                    <tr class="product-row" data-name="@p.Nom.ToLower()" data-cat="@(p.CategorieId.HasValue ? p.CategorieId.Value.ToString() : "0")" style="background: white; transition: all 0.2s;">
+                        <td style="padding: 15px; display: flex; align-items: center; gap: 15px;">
+                            <div class="product-image-thumb" style="width: 40px; height: 40px; background: #F5F3EF; border-radius: 8px; flex-shrink: 0;">
+                                @if (!string.IsNullOrEmpty(p.ImageUrl))
                                 {
-                                    <img src="@Url.Content(produit.ImageUrl)" alt="@produit.Nom" />
-                                }
-                                else
-                                {
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
-                                        <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z" />
-                                    </svg>
+                                    <img src="@Url.Content(p.ImageUrl)" alt="@p.Nom" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />
                                 }
                             </div>
-                        </td>
-                        <td>
-                            <div class="product-info">
-                                <div class="product-name">@produit.Nom</div>
-                                @if (produit.Cooperative != null)
-                                {
-                                    <div class="product-cooperative">@produit.Cooperative.Nom</div>
-                                }
-                                <div class="product-badges">
-                                    @if (produit.EstEnVedette)
-                                    {
-                                        <span class="badge badge-vedette">Vedette</span>
-                                    }
-                                    @if (produit.EstNouveau)
-                                    {
-                                        <span class="badge badge-nouveau">Nouveau</span>
-                                    }
-                                </div>
+                            <div style="display: flex; flex-direction: column;">
+                                <span class="prod-name" style="font-weight: 600; color: #305C7D;">@p.Nom</span>
+                                <span style="font-size: 12px; color: #95A5A6;">@(p.Cooperative != null ? p.Cooperative.Nom : "Coopérative")</span>
                             </div>
                         </td>
-                        <td>
-                            @if (produit.Categorie != null)
+                        <td style="padding: 15px;">
+                            <span style="background: #EADBC0; color: #2C3E50; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                                @(p.Categorie != null ? p.Categorie.Nom : "Général")
+                            </span>
+                        </td>
+                        <td style="padding: 15px; font-weight: 600; color: #305C7D;">
+                            @p.Prix.ToString("0") MAD
+                        </td>
+                        <td style="padding: 15px;">
+                             <span style="background: #7D8453; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                                @p.StockTotal
+                            </span>
+                        </td>
+                        <td style="padding: 15px; display: flex; gap: 8px; align-items: center;">
+                            @if (p.EstDisponible)
                             {
-                                <span class="badge badge-categorie badge-cat-@produit.CategorieId">
-                                    @produit.Categorie.Nom
-                                </span>
+                                <span style="background: #7D8453; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">Dispo</span>
+                            }
+                            else
+                            {
+                                <span style="background: #95A5A6; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">Indispo</span>
+                            }
+
+                            @if (p.EstEnVedette)
+                            {
+                                <span style="background: #C06C50; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">Vedette</span>
                             }
                         </td>
-                        <td class="product-price">@produit.Prix.ToString("0.00") MAD</td>
-                        <td>
-                            <span class="badge badge-stock badge-@stockClass">
-                                @produit.StockTotal
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge badge-status badge-@disponibleClass">
-                                @if (produit.EstDisponible)
-                                {
-                                    <text>Dispo</text>
-                                }
-                                else
-                                {
-                                    <text>Indisponible</text>
-                                }
-                            </span>
-                        </td>
-                        <td class="text-end">
-                            <div class="action-buttons">
-                                <button class="btn-action btn-view" onclick="viewProduct(@produit.ProduitId)" title="Voir">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
-                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
-                                    </svg>
+                        <td style="padding: 15px; text-align: right;">
+                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                <button onclick="openEditModal(@p.ProduitId)" style="background: none; border: none; color: #305C7D; cursor: pointer; font-size: 16px;" title="Modifier">
+                                    <i class="far fa-edit"></i>
                                 </button>
-                                <a href="@Url.Action("ModifierProduit", "Admin", new { id = produit.ProduitId })" class="btn-action btn-edit" title="Modifier">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
-                                    </svg>
-                                </a>
-                                <button class="btn-action btn-delete" onclick="deleteProduct(@produit.ProduitId, '@produit.Nom')" title="Supprimer">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
-                                    </svg>
+                                <button onclick="deleteProduct(@p.ProduitId, '@p.Nom')" style="background: none; border: none; color: #EB5757; cursor: pointer; font-size: 16px;" title="Supprimer">
+                                    <i class="far fa-trash-alt"></i>
                                 </button>
                             </div>
                         </td>
@@ -220,187 +140,223 @@
                 }
             </tbody>
         </table>
-
-        <div id="productsPagination" class="products-pagination" style="display: none;">
-        </div>
     </div>
 </div>
 
 @section scripts {
     <script>
-        var productsPerPage = 6;
-        var currentPage = 1;
-        var totalPages = 1;
-        var allRows = [];
-
         $(document).ready(function() {
-            allRows = $('.product-row').toArray();
-
-            // Filtrage AUTOMATIQUE sur recherche
-            $('#searchInput').on('keyup', function() {
-                applyFilters();
+            // Real-time Search (KeyUp)
+            $('#inlineSearch').on('keyup', function() {
+                filterProducts();
             });
 
-            // Filtrage AUTOMATIQUE sur changement de catégorie
-            $('#categorieFilter').on('change', function() {
-                applyFilters();
+            // Category Filter
+            $('#catFilter').on('change', function() {
+                filterProducts();
             });
 
-            // Filtrage AUTOMATIQUE sur changement de statut
-            $('#statutFilter').on('change', function() {
-                applyFilters();
-            });
+            function filterProducts() {
+                var term = $('#inlineSearch').val().toLowerCase();
+                var cat = $('#catFilter').val();
 
-            initializePagination();
+                $('.product-row').each(function() {
+                    var name = $(this).data('name');
+                    var rowCat = $(this).data('cat');
+                    
+                    var matchesSearch = name.indexOf(term) > -1;
+                    var matchesCat = (cat === 'all' || rowCat === cat);
+
+                    if (matchesSearch && matchesCat) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }
+
+            // Form Submit (AJAX) - Delegated event for robustness
+            $(document).on('submit', '#produitForm', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                var id = $('#ProduitId').val();
+                var url = id == "0" ? '@Url.Action("AjouterProduit", "Admin")' : '@Url.Action("ModifierProduit", "Admin")';
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            $('#produitModal').modal('hide');
+                            location.reload();
+                        } else {
+                            alert('Erreur: ' + (response.errors ? response.errors.join("\n") : response.message));
+                        }
+                    },
+                    error: function() {
+                        alert('Une erreur est survenue lors de l\'enregistrement.');
+                    }
+                });
+            });
         });
 
-        function applyFilters() {
-            var searchTerm = $('#searchInput').val().toLowerCase();
-            var categorieFilter = $('#categorieFilter').val();
-            var statutFilter = $('#statutFilter').val();
+        function openAddModal() {
+            $('#produitForm')[0].reset();
+            $('#ProduitId').val("0");
+            $('#modalTitle').text("Ajouter un Produit");
+            // Fix for backdrop issue: move modal to body
+            $('#produitModal').appendTo("body").modal('show');
+        }
 
-            var filteredRows = allRows.filter(function(row) {
-                var $row = $(row);
-                var nom = $row.data('nom') || '';
-                var cooperative = $row.data('cooperative') || '';
-                var categorie = $row.data('categorie') ? $row.data('categorie').toString() : '';
-                var statut = $row.data('statut') || '';
-                var isVedette = $row.data('vedette');
-                var isStockFaible = $row.data('stock-faible');
+        function openEditModal(id) {
+            $.get('@Url.Action("GetProduit", "Admin")', { id: id }, function(response) {
+                if (response.success) {
+                    var p = response.produit;
+                    $('#ProduitId').val(p.ProduitId);
+                    $('#Nom').val(p.Nom);
+                    $('#CategorieId').val(p.CategorieId);
+                    $('#Description').val(p.Description);
+                    $('#Prix').val(p.Prix);
+                    $('#StockTotal').val(p.StockTotal);
+                    $('#SeuilAlerte').val(p.SeuilAlerte);
+                    $('#CooperativeId').val(p.CooperativeId);
+                    $('#ImageUrl').val(p.ImageUrl);
+                    $('#EstDisponible').prop('checked', p.EstDisponible);
+                    $('#EstEnVedette').prop('checked', p.EstEnVedette);
+                    $('#EstNouveau').prop('checked', p.EstNouveau);
 
-                // Filtre recherche
-                if (searchTerm && !nom.includes(searchTerm) && !cooperative.includes(searchTerm)) {
-                    return false;
+                    $('#modalTitle').text("Modifier le Produit");
+                    // Fix for backdrop issue: move modal to body
+                    $('#produitModal').appendTo("body").modal('show');
+                } else {
+                    alert(response.message);
                 }
-
-                // Filtre catégorie
-                if (categorieFilter !== 'all' && categorie !== categorieFilter) {
-                    return false;
-                }
-
-                // Filtre statut
-                if (statutFilter !== 'all') {
-                    if (statutFilter === 'disponible' && statut !== 'disponible') return false;
-                    if (statutFilter === 'vedette' && !isVedette) return false;
-                    if (statutFilter === 'stock-faible' && !isStockFaible) return false;
-                }
-
-                return true;
             });
-
-            // Cacher toutes les lignes
-            $(allRows).hide();
-
-            // Afficher les lignes filtrées
-            $(filteredRows).show();
-
-            // Réinitialiser la pagination avec les résultats filtrés
-            totalPages = Math.ceil(filteredRows.length / productsPerPage);
-
-            if (totalPages > 1) {
-                $('#productsPagination').show();
-                createPagination(filteredRows);
-                renderFilteredPage(1, filteredRows);
-            } else {
-                $('#productsPagination').hide();
-                $(filteredRows).show();
-            }
-        }
-
-        function initializePagination() {
-            var totalProducts = allRows.length;
-            totalPages = Math.ceil(totalProducts / productsPerPage);
-
-            if (totalPages > 1) {
-                $('#productsPagination').show();
-                createPagination(allRows);
-            }
-
-            renderPage(1);
-        }
-
-        function renderPage(page) {
-            var start = (page - 1) * productsPerPage;
-            var end = start + productsPerPage;
-
-            $(allRows).hide();
-            $(allRows).slice(start, end).show();
-
-            currentPage = page;
-            updatePaginationControls();
-        }
-
-        function renderFilteredPage(page, filteredRows) {
-            var start = (page - 1) * productsPerPage;
-            var end = start + productsPerPage;
-
-            $(filteredRows).hide();
-            $(filteredRows).slice(start, end).show();
-
-            currentPage = page;
-            updatePaginationControls();
-        }
-
-        function createPagination(rows) {
-            var pages = Math.ceil(rows.length / productsPerPage);
-            var html = '<div class="pagination-controls">' +
-                '<button class="btn-pagination btn-prev" onclick="changePage(-1)" disabled>' +
-                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">' +
-                '<path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>' +
-                '</svg></button>' +
-                '<div class="pagination-pages">';
-
-            for (var i = 1; i <= pages; i++) {
-                html += '<button class="btn-page' + (i === 1 ? ' active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
-            }
-
-            html += '</div>' +
-                '<button class="btn-pagination btn-next" onclick="changePage(1)">' +
-                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">' +
-                '<path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>' +
-                '</svg></button>' +
-                '</div>';
-
-            $('#productsPagination').html(html);
-        }
-
-        function changePage(direction) {
-            var newPage = currentPage + direction;
-            if (newPage >= 1 && newPage <= totalPages) {
-                renderPage(newPage);
-            }
-        }
-
-        function goToPage(page) {
-            if (page >= 1 && page <= totalPages) {
-                renderPage(page);
-            }
-        }
-
-        function updatePaginationControls() {
-            $('.btn-prev').prop('disabled', currentPage === 1);
-            $('.btn-next').prop('disabled', currentPage === totalPages);
-            $('.btn-page').removeClass('active');
-            $('.btn-page').eq(currentPage - 1).addClass('active');
-        }
-
-        function viewProduct(id) {
-            window.location.href = '@Url.Action("DetailsProduit", "Admin")?id=' + id;
         }
 
         function deleteProduct(id, nom) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer le produit "' + nom + '" ?')) {
-                $.post('@Url.Action("SupprimerProduit", "Admin")', { id: id }, function(result) {
-                    if (result.success) {
-                        alert('Produit supprimé avec succès');
+            if (confirm('Voulez-vous vraiment supprimer le produit "' + nom + '" ?')) {
+                $.post('@Url.Action("SupprimerProduit", "Admin")', { id: id }, function(response) {
+                    if (response.success) {
                         location.reload();
                     } else {
-                        alert('Erreur: ' + result.message);
+                        alert('Erreur: ' + response.message);
                     }
-                }).fail(function() {
-                    alert('Erreur lors de la suppression');
                 });
             }
         }
     </script>
 }
+
+<!-- Modal Moved Here (End of file to avoid z-index/nesting issues) -->
+<div id="produitModal" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Nouveau Produit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="produitForm" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="ProduitId" name="ProduitId" value="0" />
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Nom du produit</label>
+                                <input type="text" id="Nom" name="Nom" class="form-input" required />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Catégorie</label>
+                                <select id="CategorieId" name="CategorieId" class="form-input" required>
+                                    @foreach (var cat in categories) {
+                                        <option value="@cat.CategorieId">@cat.Nom</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea id="Description" name="Description" class="form-input" rows="3"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Prix (MAD)</label>
+                                <input type="number" id="Prix" name="Prix" class="form-input" required step="0.01" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Stock Initial</label>
+                                <input type="number" id="StockTotal" name="StockTotal" class="form-input" required />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Seuil d'alerte</label>
+                                <input type="number" id="SeuilAlerte" name="SeuilAlerte" class="form-input" value="5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Coopérative</label>
+                                <select id="CooperativeId" name="CooperativeId" class="form-input">
+                                    <option value="">Sélectionner une coopérative</option>
+                                    @foreach (var coop in cooperatives) {
+                                        <option value="@coop.CooperativeId">@coop.Nom</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Image</label>
+                                <input type="file" id="imageFile" name="imageFile" class="form-input" accept="image/*" />
+                                <input type="hidden" id="ImageUrl" name="ImageUrl" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-4">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="EstDisponible" name="EstDisponible" value="true" checked />
+                                <label class="form-check-label" for="EstDisponible">Disponible</label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="EstEnVedette" name="EstEnVedette" value="true" />
+                                <label class="form-check-label" for="EstEnVedette">Mettre en vedette</label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="EstNouveau" name="EstNouveau" value="true" checked />
+                                <label class="form-check-label" for="EstNouveau">Nouveau</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-footer mt-4">
+                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn-save">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

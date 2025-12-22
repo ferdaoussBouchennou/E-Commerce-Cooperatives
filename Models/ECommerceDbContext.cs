@@ -415,10 +415,11 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
 
-            // Charger les images et avis pour chaque produit
+            // Charger les images, avis et variantes pour chaque produit
             foreach (var produit in produits)
             {
                 produit.Images = GetImagesProduit(produit.ProduitId);
+                produit.Variantes = GetVariantesProduit(produit.ProduitId);
                 var avis = GetAvisProduit(produit.ProduitId);
                 if (avis.Any())
                 {
@@ -1781,6 +1782,20 @@ namespace E_Commerce_Cooperatives.Models
             {
                 connection.Open();
                 var query = "UPDATE Categories SET EstActive = CASE WHEN EstActive = 1 THEN 0 ELSE 1 END WHERE CategorieId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteCategorie(int id)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Categories WHERE CategorieId = @Id";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Id", id);
