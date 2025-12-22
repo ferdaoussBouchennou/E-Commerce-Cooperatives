@@ -11,6 +11,7 @@
         initAnimations();
         handleHashRedirects();
         handleAutoAddToCart();
+        initFavoris();
     });
 
     // Handle hash redirects (like #connexion, #inscription)
@@ -151,6 +152,7 @@
     window.addProductToCart = addProductToCart;
     window.showNotification = showNotification;
     window.updateCartBadge = updateCartBadge;
+    window.toggleFavori = toggleFavori;
 
     // Handle automatically adding product to cart after login
     function handleAutoAddToCart() {
@@ -334,6 +336,96 @@
                 }
             }, 400);
         }, 7000);
+    }
+
+    // Favorites functionality
+    function initFavoris() {
+        if (!isUserAuthenticated()) return;
+        
+        // Check status for all products on page
+        const favoriBtns = document.querySelectorAll('.favori-toggle-btn');
+        favoriBtns.forEach(btn => {
+            const produitId = btn.getAttribute('data-produit-id');
+            if (produitId) {
+                fetch(`/Favoris/GetStatus?produitId=${produitId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        updateFavoriUI(btn, data.isFavori);
+                    })
+                    .catch(err => console.error('Error checking favori status:', err));
+            }
+        });
+    }
+
+    function toggleFavori(event, produitId, button) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        if (!isUserAuthenticated()) {
+            showNotification('Veuillez vous connecter pour ajouter des favoris.', 'info');
+            setTimeout(() => {
+                window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+            }, 1000);
+            return;
+        }
+
+        // Add loading state
+        button.disabled = true;
+        button.style.opacity = '0.7';
+
+        fetch('/Favoris/Toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ produitId: produitId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            button.disabled = false;
+            button.style.opacity = '1';
+
+            if (data.success) {
+                const isFavori = data.action === 'added';
+                updateFavoriUI(button, isFavori);
+                showNotification(data.message, 'success');
+                
+                // Trigger event for specialized pages (like Favoris Index)
+                document.dispatchEvent(new CustomEvent('favoriToggled', { 
+                    detail: { produitId: produitId, action: data.action } 
+                }));
+            } else if (data.redirect) {
+                window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+            } else {
+                showNotification(data.message, 'info');
+            }
+        })
+        .catch(err => {
+            button.disabled = false;
+            button.style.opacity = '1';
+            console.error('Error toggling favori:', err);
+            showNotification('Une erreur est survenue lors de la mise à jour des favoris.', 'info');
+        });
+    }
+
+    function updateFavoriUI(button, isFavori) {
+        const svg = button.querySelector('svg');
+        if (!svg) return;
+
+        if (isFavori) {
+            button.classList.add('active');
+            button.title = "Retirer des favoris";
+            svg.innerHTML = '<path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>';
+            svg.setAttribute('fill', '#C06C50');
+        } else {
+            button.classList.remove('active');
+            button.title = "Ajouter aux favoris";
+            svg.innerHTML = '<path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>';
+            svg.setAttribute('fill', 'currentColor');
+        }
     }
 
     // Mobile menu toggle enhancement
