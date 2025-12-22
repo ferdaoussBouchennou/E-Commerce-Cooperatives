@@ -117,6 +117,14 @@
                 e.stopPropagation();
                 
                 const produitId = button.getAttribute('data-produit-id');
+                const hasVariants = button.getAttribute('data-has-variants') === '1';
+                
+                console.log('Add to cart clicked:', { produitId, hasVariants });
+                
+                if (hasVariants) {
+                    showNotification("<strong>Option requise</strong> : Cet article est disponible en plusieurs variantes. Veuillez consulter la fiche produit pour choisir votre taille ou couleur avant l'ajout au panier.", 'info');
+                    return;
+                }
                 
                 // Check if user is authenticated
                 if (!isUserAuthenticated()) {
@@ -279,20 +287,39 @@
     function showNotification(message, type) {
         // Create notification element
         const notification = document.createElement('div');
-        notification.className = `alert alert-${type === 'success' ? 'success' : 'info'} position-fixed`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
-        notification.textContent = message;
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'info'} position-fixed d-flex align-items-center`;
+        // Use #305C7D for info/dark blue
+        const themeBlue = '#305C7D';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 320px; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; border-radius: 12px; padding: 16px; backdrop-filter: blur(8px); background-color: rgba(255,255,255,0.98); color: #333; border-left: 5px solid ' + (type === 'success' ? '#28a745' : themeBlue) + ';';
+        
+        const icon = type === 'success' ? 
+            '<svg class="me-3 flex-shrink-0" width="24" height="24" fill="#28a745" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>' :
+            `<svg class="me-3 flex-shrink-0" width="24" height="24" fill="${themeBlue}" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>`;
+
+        notification.innerHTML = `${icon}<div style="font-size: 0.95rem;">${message}</div>`;
         
         document.body.appendChild(notification);
         
-        // Remove after 3 seconds
+        // Animation
+        notification.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        notification.style.transform = 'translateX(100%)';
+        notification.style.opacity = '0';
+        
+        requestAnimationFrame(() => {
+            notification.style.transform = 'translateX(0)';
+            notification.style.opacity = '1';
+        });
+        
+        // Remove after 7 seconds (increased from 4s)
         setTimeout(() => {
-            notification.style.transition = 'opacity 0.3s ease';
+            notification.style.transform = 'translateX(100%)';
             notification.style.opacity = '0';
             setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 400);
+        }, 7000);
     }
 
     // Mobile menu toggle enhancement

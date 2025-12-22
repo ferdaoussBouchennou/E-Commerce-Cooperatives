@@ -135,7 +135,7 @@
                 <!-- Price -->
                 <div class="mb-4">
                     <span class="display-6 fw-bold" style="color: #305C7D;">
-                        <span id="product-price">@produit.Prix.ToString("F2")</span> MAD
+                        <span id="product-price">@produit.PrixTTC.ToString("F2")</span> MAD
                     </span>
                     @if (variantes.Any() && variantes.Any(v => v.PrixSupplementaire > 0))
                     {
@@ -207,18 +207,18 @@
                         <div class="d-flex flex-wrap gap-2" id="variants-container">
                             @foreach (var variant in variantes)
                             {
-                                var variantPrice = produit.Prix + variant.PrixSupplementaire;
+                                var variantPriceTTC = produit.PrixTTC + variant.PrixSupplementaireTTC;
                                 <button type="button" 
                                         class="btn variant-btn @(variant == variantes.First() ? "active" : "")"
                                         data-variant-id="@variant.VarianteId"
-                                        data-variant-price="@variantPrice"
+                                        data-variant-price="@variantPriceTTC"
                                         data-variant-stock="@variant.Stock"
                                         style="border: 2px solid #e0e0e0; background-color: white; color: #2d3748; transition: all 0.3s;"
-                                        onclick="selectVariant(this, @variant.VarianteId, '@variantPrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)', @variant.Stock)">
+                                        onclick="selectVariant(this, @variant.VarianteId, '@variantPriceTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)', @variant.Stock)">
                                     @(variant.Taille ?? variant.Couleur ?? "Standard")
                                     @if (variant.PrixSupplementaire > 0)
                                     {
-                                        <span class="small ms-1">(+@variant.PrixSupplementaire.ToString("F2") MAD)</span>
+                                        <span class="small ms-1">(+@variant.PrixSupplementaireTTC.ToString("F2") MAD)</span>
                                     }
                                     @if (variant.Stock == 0)
                                     {
@@ -374,9 +374,9 @@
     <script>
         let currentQuantity = 1;
         let selectedVariantId = null;
-        let selectedVariantPrice = @produit.Prix.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+        let selectedVariantPrice = @produit.PrixTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
         let selectedVariantStock = @(variantes.Any() ? variantes.First().Stock : produit.StockTotal);
-        const basePrice = @produit.Prix.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+        const basePrice = @produit.PrixTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
         const productId = @produit.ProduitId;
 
         function changeMainImage(imageSrc, element) {

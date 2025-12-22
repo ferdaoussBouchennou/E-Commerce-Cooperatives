@@ -415,10 +415,11 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
 
-            // Charger les images et avis pour chaque produit
+            // Charger les images, avis et variantes pour chaque produit
             foreach (var produit in produits)
             {
                 produit.Images = GetImagesProduit(produit.ProduitId);
+                produit.Variantes = GetVariantesProduit(produit.ProduitId);
                 var avis = GetAvisProduit(produit.ProduitId);
                 if (avis.Any())
                 {

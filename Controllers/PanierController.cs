@@ -47,7 +47,7 @@ namespace E_Commerce_Cooperatives.Controllers
                             {
                                 produitId = produit.ProduitId,
                                 nom = produit.Nom,
-                                prixUnitaire = produit.Prix + (variante?.PrixSupplementaire ?? 0),
+                                prixUnitaire = Math.Round(produit.Prix * 1.20m, 2) + (variante != null ? Math.Round(variante.PrixSupplementaire * 1.20m, 2) : 0),
                                 imageUrl = mainImage,
                                 varianteId = item.VarianteId,
                                 varianteNom = variante != null ? (variante.Taille ?? variante.Couleur) : null,

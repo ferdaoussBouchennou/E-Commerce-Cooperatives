@@ -1,4 +1,6 @@
-﻿/* Custom Colors - Palette de la page React */
+﻿@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+/* Custom Colors - Palette de la page React */
 :root {
     /* Palette principale */
     --azul-profundo: #305C7D;
@@ -29,13 +31,28 @@
     /* Verde Oliva pour success */
     --text-dark: #2d3748;
     --text-muted: #5a6c7d;
+
+    /* Typographie */
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Source Sans 3', system-ui, -apple-system, sans-serif;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-sans);
     color: var(--text-dark);
     padding-top: 0;
     background-color: var(--blanco-roto);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-display {
+    font-family: var(--font-display);
+    font-weight: 700;
 }
 
 /* Remove default body-content padding */

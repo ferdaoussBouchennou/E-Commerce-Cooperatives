@@ -32,12 +32,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchCartDetails(cartData) {
+        // Map to match C# property names (ProduitId, VarianteId, Quantite)
+        const requestData = cartData.map(item => ({
+            ProduitId: parseInt(item.produitId),
+            VarianteId: item.varianteId ? parseInt(item.varianteId) : null,
+            Quantite: parseInt(item.quantite)
+        }));
+
         fetch('/Panier/GetCartDetails', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(cartData)
+            body: JSON.stringify(requestData)
         })
         .then(response => response.json())
         .then(data => {
@@ -111,13 +118,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateSummary(items) {
-        const subtotal = items.reduce((acc, item) => acc + (item.prixUnitaire * item.quantite), 0);
-        const tva = subtotal * 0.20;
-        const total = subtotal + tva;
+        const total = items.reduce((acc, item) => acc + (item.prixUnitaire * item.quantite), 0);
+        const itemCount = items.reduce((acc, item) => acc + item.quantite, 0);
+        
+        // Update UI
+        const itemsCountElem = document.getElementById('items-count');
+        const totalAmountElem = document.getElementById('total-amount');
 
-        document.getElementById('subtotal-amount').textContent = subtotal.toFixed(2) + ' MAD';
-        document.getElementById('tva-amount').textContent = tva.toFixed(2) + ' MAD';
-        document.getElementById('total-amount').textContent = total.toFixed(2) + ' MAD';
+        if (itemsCountElem) itemsCountElem.textContent = itemCount + (itemCount > 1 ? ' articles' : ' article');
+        if (totalAmountElem) totalAmountElem.textContent = total.toFixed(2) + ' MAD';
     }
 
     function attachEventListeners() {
