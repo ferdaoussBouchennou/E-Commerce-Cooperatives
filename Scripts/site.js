@@ -306,7 +306,7 @@
         notification.className = `alert alert-${type === 'success' ? 'success' : 'info'} position-fixed d-flex align-items-center`;
         // Use #305C7D for info/dark blue
         const themeBlue = '#305C7D';
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 320px; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; border-radius: 12px; padding: 16px; backdrop-filter: blur(8px); background-color: rgba(255,255,255,0.98); color: #333; border-left: 5px solid ' + (type === 'success' ? '#28a745' : themeBlue) + ';';
+        notification.style.cssText = 'top: 20px; left: 50%; transform: translateX(-50%) translateY(-100%); z-index: 10000; min-width: 320px; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; border-radius: 12px; padding: 16px; backdrop-filter: blur(8px); background-color: rgba(255,255,255,0.98); color: #333; border-left: 5px solid ' + (type === 'success' ? '#28a745' : themeBlue) + '; opacity: 0;';
         
         const icon = type === 'success' ? 
             '<svg class="me-3 flex-shrink-0" width="24" height="24" fill="#28a745" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>' :
@@ -317,25 +317,23 @@
         document.body.appendChild(notification);
         
         // Animation
-        notification.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        notification.style.transform = 'translateX(100%)';
-        notification.style.opacity = '0';
+        notification.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
         
         requestAnimationFrame(() => {
-            notification.style.transform = 'translateX(0)';
+            notification.style.transform = 'translateX(-50%) translateY(0)';
             notification.style.opacity = '1';
         });
         
-        // Remove after 7 seconds (increased from 4s)
+        // Remove after 3 seconds (decreased from 7s for better UX)
         setTimeout(() => {
-            notification.style.transform = 'translateX(100%)';
+            notification.style.transform = 'translateX(-50%) translateY(-100%)';
             notification.style.opacity = '0';
             setTimeout(() => {
                 if (document.body.contains(notification)) {
                     document.body.removeChild(notification);
                 }
-            }, 400);
-        }, 7000);
+            }, 500);
+        }, 3000);
     }
 
     // Favorites functionality
