@@ -27,7 +27,7 @@
 </head>
 <body>
     <!-- Hidden element to store authentication status -->
-    <div id="user-authenticated" data-authenticated="@(ViewBag.IsAuthenticated != null && ViewBag.IsAuthenticated == true ? "true" : "false")" style="display: none;"></div>
+    <div id="user-authenticated" data-authenticated="@((Session["UserId"] != null).ToString().ToLower())" style="display: none;"></div>
     @RenderBody()
 
     @Scripts.Render("~/bundles/jquery")

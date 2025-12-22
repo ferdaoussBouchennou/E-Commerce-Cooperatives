@@ -455,17 +455,17 @@
         }
 
         function addToCart() {
-            const isAuthenticated = document.getElementById('user-authenticated')?.dataset.authenticated === 'true';
-            
-            if (!isAuthenticated) {
-                alert('Veuillez vous connecter pour ajouter au panier');
-                window.location.href = '@Url.Action("Login", "Account")?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+            if (!window.isUserAuthenticated()) {
+                const currentUrl = window.location.pathname + window.location.search;
+                const separator = currentUrl.includes('?') ? '&' : '?';
+                const returnUrl = encodeURIComponent(currentUrl + separator + 'addItem=' + productId);
+                window.location.href = '/Account/Login?returnUrl=' + returnUrl;
                 return;
             }
             
-            // TODO: Implement add to cart functionality
-            // For now, just show a message
-            alert(currentQuantity + ' x @produit.Nom ajouté au panier');
+            window.addProductToCart(String(productId), currentQuantity, selectedVariantId);
+            window.showNotification(currentQuantity + ' x @produit.Nom ajouté au panier', 'success');
+            window.updateCartBadge();
         }
 
         // Initialize
@@ -473,6 +473,12 @@
             updateQuantityButtons();
             if (document.querySelectorAll('.thumbnail-image').length > 0) {
                 document.querySelectorAll('.thumbnail-image')[0].style.borderColor = '#305C7D';
+            }
+            
+            // Set initial variant if exists
+            const firstVariantBtn = document.querySelector('.variant-btn.active');
+            if (firstVariantBtn) {
+                selectedVariantId = firstVariantBtn.dataset.variantId;
             }
         });
     </script>
