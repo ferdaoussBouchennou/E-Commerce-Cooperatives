@@ -519,40 +519,58 @@ namespace E_Commerce_Cooperatives.Controllers
             }
         }
 
-        /// <summary>
-        /// Supprime un produit (AJAX)
-        /// </summary>
         [HttpPost]
         public JsonResult SupprimerProduit(int id)
         {
             try
             {
-                var produit = db.ProduitsSet.Find(id);
+                var p = db.ProduitsSet.Find(id);
+                if (p == null) return Json(new { success = false, message = "Produit non trouvé" });
 
-                if (produit == null)
-                {
-                    return Json(new { success = false, message = "Produit non trouvé" });
-                }
-
-                // Vérifier si le produit est dans des commandes
-                var commandesAvecProduit = db.CommandeItems.Any(ci => ci.ProduitId == id);
-
-                if (commandesAvecProduit)
-                {
-                    return Json(new { success = false, message = "Impossible de supprimer : le produit est présent dans des commandes" });
-                }
-
-                db.ProduitsSet.Remove(produit);
+                db.ProduitsSet.Remove(p);
                 db.SaveChanges();
-
-                return Json(new { success = true, message = "Produit supprimé avec succès" });
+                return Json(new { success = true });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Erreur dans SupprimerProduit: {ex.Message}");
-                return Json(new { success = false, message = "Erreur lors de la suppression" });
+                return Json(new { success = false, message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Supprime un produit (AJAX)
+        /// </summary>
+        //[HttpPost]
+        //public JsonResult SupprimerProduit(int id)
+        //{
+        //    try
+        //    {
+        //        var produit = db.ProduitsSet.Find(id);
+
+        //        if (produit == null)
+        //        {
+        //            return Json(new { success = false, message = "Produit non trouvé" });
+        //        }
+
+        //        // Vérifier si le produit est dans des commandes
+        //        var commandesAvecProduit = db.CommandeItems.Any(ci => ci.ProduitId == id);
+
+        //        if (commandesAvecProduit)
+        //        {
+        //            return Json(new { success = false, message = "Impossible de supprimer : le produit est présent dans des commandes" });
+        //        }
+
+        //        db.ProduitsSet.Remove(produit);
+        //        db.SaveChanges();
+
+        //        return Json(new { success = true, message = "Produit supprimé avec succès" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        System.Diagnostics.Debug.WriteLine($"Erreur dans SupprimerProduit: {ex.Message}");
+        //        return Json(new { success = false, message = "Erreur lors de la suppression" });
+        //    }
+        //}
 
         /// <summary>
         /// Met à jour le statut d'un produit (AJAX)
