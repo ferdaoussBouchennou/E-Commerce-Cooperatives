@@ -22,6 +22,7 @@
     
     var variantes = produit.Variantes?.ToList() ?? new List<Variante>();
     var avis = produit.Avis?.ToList() ?? new List<AvisProduit>();
+    var baseVariant = variantes.FirstOrDefault(v => v.PrixSupplementaire == 0) ?? variantes.FirstOrDefault();
 }
 
 @Html.Partial("_Header")
@@ -135,7 +136,7 @@
                 <!-- Price -->
                 <div class="mb-4">
                     <span class="display-6 fw-bold" style="color: #305C7D;">
-                        <span id="product-price">@produit.PrixTTC.ToString("F2")</span> MAD
+                        <span id="product-price">@(baseVariant != null ? (produit.PrixTTC + baseVariant.PrixSupplementaireTTC).ToString("F2") : produit.PrixTTC.ToString("F2"))</span> MAD
                     </span>
                     @if (variantes.Any() && variantes.Any(v => v.PrixSupplementaire > 0))
                     {
@@ -209,11 +210,11 @@
                             {
                                 var variantPriceTTC = produit.PrixTTC + variant.PrixSupplementaireTTC;
                                 <button type="button" 
-                                        class="btn variant-btn @(variant == variantes.First() ? "active" : "")"
+                                        class="btn variant-btn @(variant == baseVariant ? "active" : "")"
                                         data-variant-id="@variant.VarianteId"
                                         data-variant-price="@variantPriceTTC"
                                         data-variant-stock="@variant.Stock"
-                                        style="border: 2px solid #e0e0e0; background-color: white; color: #2d3748; transition: all 0.3s;"
+                                        style="border: 2px solid @(variant == baseVariant ? "#C06C50" : "#e0e0e0"); background-color: @(variant == baseVariant ? "#F5F3EF" : "white"); color: #2d3748; transition: all 0.3s;"
                                         onclick="selectVariant(this, @variant.VarianteId, '@variantPriceTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)', @variant.Stock)">
                                     @(variant.Taille ?? variant.Couleur ?? "Standard")
                                     @if (variant.PrixSupplementaire > 0)
@@ -254,7 +255,7 @@
                             </button>
                         </div>
                         <span class="text-muted small" id="stock-info">
-                            @(variantes.Any() ? variantes.First().Stock : produit.StockTotal) en stock
+                            @(baseVariant != null ? baseVariant.Stock : (variantes.Any() ? variantes.First().Stock : produit.StockTotal)) en stock
                         </span>
                     </div>
                 </div>
@@ -373,9 +374,9 @@
 @section scripts {
     <script>
         let currentQuantity = 1;
-        let selectedVariantId = null;
-        let selectedVariantPrice = @produit.PrixTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-        let selectedVariantStock = @(variantes.Any() ? variantes.First().Stock : produit.StockTotal);
+        let selectedVariantId = @(baseVariant != null ? baseVariant.VarianteId.ToString() : "null");
+        let selectedVariantPrice = @(baseVariant != null ? (produit.PrixTTC + baseVariant.PrixSupplementaireTTC).ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : produit.PrixTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+        let selectedVariantStock = @(baseVariant != null ? baseVariant.Stock : (variantes.Any() ? variantes.First().Stock : produit.StockTotal));
         const basePrice = @produit.PrixTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
         const productId = @produit.ProduitId;
 
@@ -476,12 +477,6 @@
             updateQuantityButtons();
             if (document.querySelectorAll('.thumbnail-image').length > 0) {
                 document.querySelectorAll('.thumbnail-image')[0].style.borderColor = '#305C7D';
-            }
-            
-            // Set initial variant if exists
-            const firstVariantBtn = document.querySelector('.variant-btn.active');
-            if (firstVariantBtn) {
-                selectedVariantId = firstVariantBtn.dataset.variantId;
             }
         });
     </script>
