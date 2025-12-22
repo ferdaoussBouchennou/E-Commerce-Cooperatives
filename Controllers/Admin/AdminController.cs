@@ -565,15 +565,20 @@ namespace E_Commerce_Cooperatives.Controllers
         {
             try
             {
+                ModelState.Remove("ModeLivraisonId");
+                ModelState.Remove("DateCreation");
+
                 if (ModelState.IsValid)
                 {
+                    mode.DateCreation = DateTime.Now;
                     using (var db = new ECommerceDbContext())
                     {
                         db.CreateModeLivraison(mode);
                         return Json(new { success = true, message = "Mode de livraison ajouté avec succès" });
                     }
                 }
-                return Json(new { success = false, message = "Données invalides" });
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = "Données invalides: " + errors });
             }
             catch (Exception ex)
             {
@@ -586,6 +591,8 @@ namespace E_Commerce_Cooperatives.Controllers
         {
             try
             {
+                ModelState.Remove("DateCreation");
+
                 if (ModelState.IsValid)
                 {
                     using (var db = new ECommerceDbContext())
@@ -594,7 +601,8 @@ namespace E_Commerce_Cooperatives.Controllers
                         return Json(new { success = true, message = "Mode de livraison mis à jour" });
                     }
                 }
-                return Json(new { success = false, message = "Données invalides" });
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = "Données invalides: " + errors });
             }
             catch (Exception ex)
             {
@@ -644,15 +652,20 @@ namespace E_Commerce_Cooperatives.Controllers
         {
             try
             {
+                ModelState.Remove("ZoneLivraisonId");
+                ModelState.Remove("DateCreation");
+
                 if (ModelState.IsValid)
                 {
+                    zone.DateCreation = DateTime.Now;
                     using (var db = new ECommerceDbContext())
                     {
                         db.CreateZoneLivraison(zone);
                         return Json(new { success = true, message = "Zone de livraison ajoutée" });
                     }
                 }
-                return Json(new { success = false, message = "Données invalides" });
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = "Données invalides: " + errors });
             }
             catch (Exception ex)
             {
@@ -665,6 +678,8 @@ namespace E_Commerce_Cooperatives.Controllers
         {
             try
             {
+                ModelState.Remove("DateCreation");
+
                 if (ModelState.IsValid)
                 {
                     using (var db = new ECommerceDbContext())
@@ -673,7 +688,8 @@ namespace E_Commerce_Cooperatives.Controllers
                         return Json(new { success = true, message = "Zone de livraison mise à jour" });
                     }
                 }
-                return Json(new { success = false, message = "Données invalides" });
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = "Données invalides: " + errors });
             }
             catch (Exception ex)
             {
