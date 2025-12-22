@@ -112,6 +112,61 @@ namespace E_Commerce_Cooperatives.Controllers
         // POST: Admin/Commandes/UpdateStatus
         [HttpPost]
         public ActionResult UpdateStatus(int commandeId, string nouveauStatut)
+        {
+            try
+            {
+                // Empêcher l'annulation via cette méthode - utiliser Cancel() à la place
+                if (nouveauStatut == "Annulée")
+                {
+                    return Json(new { success = false, message = "Pour annuler une commande, veuillez utiliser le bouton 'Annuler la commande' et fournir une raison d'annulation." });
+                }
+
+                // Validation des paramètres
+                if (commandeId <= 0)
+                {
+                    return Json(new { success = false, message = "ID de commande invalide" });
+                }
+
+                if (string.IsNullOrWhiteSpace(nouveauStatut))
+                {
+                    return Json(new { success = false, message = "Le statut est obligatoire" });
+                }
+
+                // Vérifier que le statut est valide (sauf Annulée)
+                var statutsValides = new[] { "Validée", "Préparation", "Expédiée", "Livrée" };
+                if (!statutsValides.Contains(nouveauStatut))
+                {
+                    return Json(new { success = false, message = "Statut invalide" });
+                }
+
+                using (var db = new ECommerceDbContext())
+                {
+                    // Vérifier que la commande existe
+                    var commande = db.GetCommandeDetails(commandeId);
+                    if (commande == null)
+                    {
+                        return Json(new { success = false, message = "Commande introuvable" });
+                    }
+
+                    // Empêcher de modifier le statut d'une commande annulée
+                    if (commande.Statut == "Annulée")
+                    {
+                        return Json(new { success = false, message = "Impossible de modifier le statut d'une commande annulée" });
+                    }
+
+                    var success = db.UpdateCommandeStatut(commandeId, nouveauStatut);
+                    if (success)
+                    {
+                        return Json(new { success = true, message = "Statut mis à jour avec succès" });
+                    }
+                    return Json(new { success = false, message = "Erreur lors de la mise à jour" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+            }
+        }
         private readonly ECommerceDbContext db = new ECommerceDbContext();
 
         // ============================================
@@ -465,6 +520,181 @@ namespace E_Commerce_Cooperatives.Controllers
             {
                 System.Diagnostics.Debug.WriteLine($"Erreur dans UpdateStatutProduit: {ex.Message}");
                 return Json(new { success = false, message = "Erreur lors de la mise à jour" });
+            }
+        }
+
+        public ActionResult Livraison(int page = 1)
+        {
+            using (var db = new ECommerceDbContext())
+            {
+                var modes = db.GetModesLivraison();
+                var zonesPaged = db.GetZonesLivraisonPaged(page, 5);
+                var stats = db.GetLivraisonStats();
+
+                ViewBag.Stats = stats;
+                ViewBag.ZonesPaged = zonesPaged;
+                ViewBag.Zones = zonesPaged.Items;
+                ViewBag.CurrentPage = page;
+
+                return View(modes);
+            }
+        }
+
+        // --- Delivery Modes ---
+
+        [HttpGet]
+        public ActionResult GetModeLivraison(int id)
+        {
+            try
+            {
+                using (var db = new ECommerceDbContext())
+                {
+                    var mode = db.GetModeLivraison(id);
+                    if (mode == null) return Json(new { success = false, message = "Mode introuvable" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = true, mode = mode }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public ActionResult CreateModeLivraison(ModeLivraison mode)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    using (var db = new ECommerceDbContext())
+                    {
+                        db.CreateModeLivraison(mode);
+                        return Json(new { success = true, message = "Mode de livraison ajouté avec succès" });
+                    }
+                }
+                return Json(new { success = false, message = "Données invalides" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public ActionResult UpdateModeLivraison(ModeLivraison mode)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    using (var db = new ECommerceDbContext())
+                    {
+                        db.UpdateModeLivraison(mode);
+                        return Json(new { success = true, message = "Mode de livraison mis à jour" });
+                    }
+                }
+                return Json(new { success = false, message = "Données invalides" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public ActionResult DeleteModeLivraison(int id)
+        {
+            try
+            {
+                using (var db = new ECommerceDbContext())
+                {
+                    db.DeleteModeLivraison(id);
+                    return Json(new { success = true, message = "Mode de livraison supprimé" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // --- Delivery Zones ---
+
+        [HttpGet]
+        public ActionResult GetZoneLivraison(int id)
+        {
+            try
+            {
+                using (var db = new ECommerceDbContext())
+                {
+                    var zone = db.GetZoneLivraison(id);
+                    if (zone == null) return Json(new { success = false, message = "Zone introuvable" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = true, zone = zone }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public ActionResult CreateZoneLivraison(ZoneLivraison zone)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    using (var db = new ECommerceDbContext())
+                    {
+                        db.CreateZoneLivraison(zone);
+                        return Json(new { success = true, message = "Zone de livraison ajoutée" });
+                    }
+                }
+                return Json(new { success = false, message = "Données invalides" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public ActionResult UpdateZoneLivraison(ZoneLivraison zone)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    using (var db = new ECommerceDbContext())
+                    {
+                        db.UpdateZoneLivraison(zone);
+                        return Json(new { success = true, message = "Zone de livraison mise à jour" });
+                    }
+                }
+                return Json(new { success = false, message = "Données invalides" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public ActionResult DeleteZoneLivraison(int id)
+        {
+            try
+            {
+                using (var db = new ECommerceDbContext())
+                {
+                    db.DeleteZoneLivraison(id);
+                    return Json(new { success = true, message = "Zone de livraison supprimée" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
             }
         }
 
