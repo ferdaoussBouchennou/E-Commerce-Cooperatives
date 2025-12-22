@@ -1,88 +1,94 @@
 @model List<E_Commerce_Cooperatives.Models.ECommerceDbContext.CategorieStats>
-
 @{
     ViewBag.Title = "Gestion des Catégories";
     Layout = "~/Views/Admin/_AdminLayout.cshtml";
-    
-    var totalCategories = Model.Count;
 }
 
 <div class="admin-page">
-    <!-- Top Header with Search -->
-    <div class="admin-page-header-row">
-        <div class="search-form">
-            <div class="search-input-wrapper">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="searchInput" placeholder="Rechercher..." class="search-input-field" autocomplete="off" />
+    <!-- Header with Search - Matching Image 0 -->
+    <div class="admin-page-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <div class="search-form" style="flex: 1; max-width: 400px;">
+            <div class="search-input-wrapper" style="position: relative;">
+                <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #95A5A6;"></i>
+                <input type="text" id="catSearchInput" placeholder="Rechercher une catégorie..." class="form-input" style="padding-left: 40px; border-radius: 8px; border: 1px solid #D09E86;" autocomplete="off" />
             </div>
         </div>
-        <div class="header-notifications">
-           <!-- Placeholder for visual consistency with image -->
+        <div class="header-notifications" style="display: flex; gap: 20px; align-items: center;">
+            <i class="far fa-bell" style="font-size: 20px; color: #305C7D; position: relative;">
+                <span style="position: absolute; top: -8px; right: -8px; background: #C06C50; color: white; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">3</span>
+            </i>
+            <div style="width: 35px; height: 35px; background: #305C7D; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">A</div>
         </div>
     </div>
 
-    <!-- Page Title Section -->
-    <div class="page-title-section">
-        <h1 class="main-title">Gestion des Catégories</h1>
-        <p class="sub-title">Organisez vos produits par catégories</p>
+    <!-- Title Section -->
+    <div class="page-title-section" style="margin-bottom: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <h1 class="admin-page-title" style="margin-bottom: 5px;">Gestion des Catégories</h1>
+                <p class="admin-page-subtitle">Organisez vos produits par secteurs</p>
+            </div>
+            <button class="btn-primary-action" onclick="openAddModal()">
+                <i class="fas fa-plus"></i> Nouvelle Catégorie
+            </button>
+        </div>
     </div>
 
-    <!-- Controls Row -->
-    <div class="categories-controls">
-        <p class="categories-count"><span id="displayedCount">@totalCategories</span> catégories au total</p>
-        <a href="@Url.Action("AjouterCategorie")" class="btn-primary-action">
-            <i class="fas fa-plus"></i> Nouvelle catégorie
-        </a>
+    <!-- Stats Row -->
+    <div class="stats-cards" style="margin-bottom: 30px;">
+        <div class="stat-card" style="background: #FDFBF7;">
+            <div class="stat-value">@ViewBag.TotalCategories</div>
+            <div class="stat-label">Total catégories</div>
+        </div>
+        <div class="stat-card" style="background: #FDFBF7;">
+            <div class="stat-value">@ViewBag.ActiveCategories</div>
+            <div class="stat-label">Actives</div>
+        </div>
+        <div class="stat-card" style="background: #FDFBF7;">
+            <div class="stat-value">@ViewBag.TotalProductsInCategory</div>
+            <div class="stat-label">Produits associés</div>
+        </div>
     </div>
 
-    <!-- Grid -->
-    <div class="categories-grid" id="categoriesGrid">
+    <!-- Categories Grid - Matching Image 0 -->
+    <div class="categories-grid" id="categoriesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
         @foreach (var cat in Model)
         {
-            <div class="category-card" 
-                 data-name="@cat.Nom.ToLower()" 
-                 data-description="@(cat.Description ?? "").ToLower()"
-                 data-products="@cat.NombreProduits"
-                 data-status="@(cat.EstActive ? "active" : "inactive")">
-                <!-- Header Image/Icon -->
-                <div class="category-card-header">
+            <div class="category-card" data-name="@cat.Nom.ToLower()">
+                <div class="category-card-header" style="height: 180px; position: relative; border-radius: 12px 12px 0 0; overflow: hidden; background: #F5F3EF; display: flex; align-items: center; justify-content: center;">
                     @if (!string.IsNullOrEmpty(cat.ImageUrl))
                     {
-                        <img src="@Url.Content(cat.ImageUrl)" alt="@cat.Nom" class="category-image-real" />
+                        <img src="@Url.Content(cat.ImageUrl)" alt="@cat.Nom" class="category-image-real" style="width: 100%; height: 100%; object-fit: cover;" />
                     }
                     else
                     {
-                        <div class="category-folder-icon">
+                        <div class="category-folder-icon" style="font-size: 50px; color: #A0A0A0;">
                             <i class="far fa-folder-open"></i>
                         </div>
                     }
 
-                    <!-- Actions Floating in Header (Bottom Right) -->
-                    <div class="card-actions">
-                        <a href="@Url.Action("ModifierCategorie", new { id = cat.CategorieId })" class="btn-action-icon btn-edit-icon" title="Modifier">
+                    <div class="category-card-actions" style="position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px;">
+                        <button onclick="openEditModal(@cat.CategorieId)" class="btn-card-action" title="Modifier" style="background: #EADBC0; color: #2C3E50; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer;">
                             <i class="fas fa-pen"></i>
-                        </a>
-                        <button onclick="toggleStatus(@cat.CategorieId)" class="btn-action-icon btn-delete-icon" title="@(cat.EstActive ? "Désactiver" : "Activer")">
+                        </button>
+                        <button onclick="deleteCategory(@cat.CategorieId, '@cat.Nom')" class="btn-card-action" title="Supprimer" style="background: #EB5757; color: white; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer;">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Body -->
-                <div class="category-card-body">
-                    <div class="card-title-row">
-                        <h3 class="category-title">@cat.Nom</h3>
-                        <span class="status-badge @(cat.EstActive ? "active" : "inactive")">
+                <div class="category-card-body" style="padding: 20px; background: white; border-radius: 0 0 12px 12px; border: 1px solid #F5F3EF; border-top: none;">
+                    <div class="card-title-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 class="category-title" style="font-family: 'Georgia', serif; color: #305C7D; font-size: 18px; margin: 0; font-weight: 700;">@cat.Nom</h3>
+                        <span class="badge @(cat.EstActive ? "badge-dispo" : "badge-stock-faible")" style="font-size: 10px; padding: 4px 10px; border-radius: 12px; font-weight: 700; text-transform: uppercase; @(cat.EstActive ? "background: #7D8453; color: white;" : "background: #EB5757; color: white;")">
                             @(cat.EstActive ? "Active" : "Inactive")
                         </span>
                     </div>
-                    
-                    <p class="category-desc">
-                        @(string.IsNullOrEmpty(cat.Description) ? "Aucune description" : (cat.Description.Length > 60 ? cat.Description.Substring(0, 60) + "..." : cat.Description))
+                    <p class="category-card-desc" style="font-size: 13px; color: #5D6D7E; margin-bottom: 15px; line-height: 1.4; height: 40px; overflow: hidden;">
+                        @(string.IsNullOrEmpty(cat.Description) ? "Aucune description disponible pour cette catégorie." : (cat.Description.Length > 80 ? cat.Description.Substring(0, 77) + "..." : cat.Description))
                     </p>
-                    
-                    <div class="category-footer">
-                        <span class="product-count">@cat.NombreProduits produits</span>
+                    <div class="category-card-footer" style="color: #305C7D; font-weight: 600; font-size: 13px;">
+                        @cat.NombreProduits produits
                     </div>
                 </div>
             </div>
@@ -90,357 +96,140 @@
     </div>
 
     <!-- Message si aucun résultat -->
-    <div id="noResultsMessage" style="display: none; text-align: center; padding: 60px 20px;">
+    <div id="noResults" style="display: none; text-align: center; padding: 60px 20px;">
         <i class="fas fa-search" style="font-size: 48px; color: #95A5A6; margin-bottom: 20px;"></i>
-        <h3 style="color: #2D4C61; font-size: 20px; margin-bottom: 10px;">Aucune catégorie trouvée</h3>
-        <p style="color: #7F8C8D;">Essayez avec d'autres mots-clés</p>
+        <h3 style="color: #305C7D; font-size: 20px;">Aucune catégorie trouvée</h3>
     </div>
 </div>
 
 @section scripts {
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Sélection des éléments
-        const searchInput = document.getElementById('searchInput');
-        const cards = document.querySelectorAll('.category-card');
-        const noResults = document.getElementById('noResultsMessage');
-        const countDisplay = document.getElementById('displayedCount');
-        const totalCount = cards.length;
-
-        // Fonction de recherche temps réel
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase().trim();
-            let visibleCount = 0;
-
-            cards.forEach(card => {
-                // Récupération des données data-* (plus rapide que le DOM)
-                const name = card.dataset.name || '';
-                const desc = card.dataset.description || '';
-
-                if (name.includes(searchTerm) || desc.includes(searchTerm)) {
-                    card.style.display = ""; // Afficher
-                    // Animation d'apparition si c'était caché
-                    if(card.style.display !== "none") {
-                        card.style.animation = "fadeInCard 0.3s ease-in";
+    <script>
+        $(document).ready(function() {
+            // Real-time Search
+            $('#catSearchInput').on('keyup', function() {
+                var term = $(this).val().toLowerCase();
+                var visibleCount = 0;
+                $('.category-card').each(function() {
+                    var name = $(this).data('name');
+                    if (name.indexOf(term) > -1) {
+                        $(this).show();
+                        visibleCount++;
+                    } else {
+                        $(this).hide();
                     }
-                    visibleCount++;
-                } else {
-                    card.style.display = "none"; // Masquer
-                }
+                });
+                if (visibleCount === 0) $('#noResults').show(); else $('#noResults').hide();
             });
 
-            // Mise à jour du compteur
-            if (countDisplay) {
-                countDisplay.textContent = visibleCount;
-            }
+            // Form Submit (AJAX) - Delegated event for robustness
+            $(document).on('submit', '#categorieForm', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                var id = $('#CategorieId').val();
+                var url = id == "0" ? '@Url.Action("AjouterCategorie", "Admin")' : '@Url.Action("ModifierCategorie", "Admin")';
 
-            // Gestion du message "Aucun résultat"
-            if (visibleCount === 0) {
-                noResults.style.display = "block";
-            } else {
-                noResults.style.display = "none";
-            }
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            $('#categorieModal').modal('hide');
+                            location.reload();
+                        } else {
+                            alert('Erreur: ' + (response.errors ? response.errors.join("\n") : response.message));
+                        }
+                    },
+                    error: function() {
+                        alert('Une erreur est survenue lors de l\'enregistrement.');
+                    }
+                });
+            });
         });
-    });
 
-    function toggleStatus(id) {
-        if (confirm("Voulez-vous vraiment changer le statut de cette catégorie ?")) {
-            fetch('@Url.Action("ToggleCategorieStatus", "Admin")', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
+        function openAddModal() {
+            $('#categorieForm')[0].reset();
+            $('#CategorieId').val("0");
+            $('#catModalTitle').text("Nouvelle Catégorie");
+            // Fix for backdrop issue: move modal to body
+            $('#categorieModal').appendTo("body").modal('show');
+        }
+
+        function openEditModal(id) {
+            $.get('@Url.Action("GetCategorie", "Admin")', { id: id }, function(response) {
+                if (response.success) {
+                    var c = response.categorie;
+                    $('#CategorieId').val(c.CategorieId);
+                    $('#Nom').val(c.Nom);
+                    $('#Description').val(c.Description);
+                    $('#ImageUrl').val(c.ImageUrl);
+                    $('#EstActive').prop('checked', c.EstActive);
+
+                    $('#catModalTitle').text("Modifier la Catégorie");
+                    // Fix for backdrop issue: move modal to body
+                    $('#categorieModal').appendTo("body").modal('show');
                 } else {
-                    alert("Erreur lors de la mise à jour du statut.");
+                    alert(response.message);
                 }
             });
         }
-    }
-</script>
+
+        function deleteCategory(id, nom) {
+            if (confirm('Voulez-vous vraiment supprimer la catégorie "' + nom + '" ?')) {
+                $.post('@Url.Action("SupprimerCategorie", "Admin")', { id: id }, function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Erreur: ' + response.message);
+                    }
+                });
+            }
+        }
+    </script>
 }
 
-<style>
-    /* Global Clean Layout additions */
-    .admin-page-header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-    }
+<!-- Modal Moved Here (End of file to avoid z-index/nesting issues) -->
+<div id="categorieModal" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="catModalTitle">Catégorie</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categorieForm" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="CategorieId" name="CategorieId" value="0" />
+                    
+                    <div class="form-group mb-3">
+                        <label class="form-label">Nom de la catégorie</label>
+                        <input type="text" id="Nom" name="Nom" class="form-input" required />
+                    </div>
 
-    .search-input-wrapper {
-        position: relative;
-        width: 400px;
-    }
+                    <div class="form-group mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea id="Description" name="Description" class="form-input" rows="3"></textarea>
+                    </div>
 
-    .search-icon {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #95A5A6;
-        pointer-events: none;
-    }
+                    <div class="form-group mb-3">
+                        <label class="form-label">Image/Icône (Optionnel)</label>
+                        <input type="file" id="imageFile" name="imageFile" class="form-input" accept="image/*" />
+                        <input type="hidden" id="ImageUrl" name="ImageUrl" />
+                    </div>
 
-    .search-input-field {
-        width: 100%;
-        padding: 12px 12px 12px 40px;
-        border-radius: 8px;
-        border: 1px solid #D09E86;
-        background: white;
-        font-size: 14px;
-        outline: none;
-        color: #555;
-        transition: all 0.3s ease;
-    }
+                    <div class="form-check mb-4">
+                        <input type="checkbox" class="form-check-input" id="EstActive" name="EstActive" value="true" checked />
+                        <label class="form-check-label" for="EstActive">Catégorie active</label>
+                    </div>
 
-    .search-input-field:focus {
-        border-color: #2D4C61;
-        box-shadow: 0 0 0 3px rgba(45, 76, 97, 0.1);
-    }
-
-    .page-title-section { 
-        margin-bottom: 25px; 
-    }
-    
-    .main-title {
-        font-family: 'Georgia', serif;
-        color: #2D4C61;
-        font-size: 28px;
-        font-weight: 700;
-        margin-bottom: 5px;
-    }
-    
-    .sub-title { 
-        color: #7F8C8D; 
-        font-size: 14px; 
-        margin: 0; 
-    }
-
-    .categories-controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-
-    .categories-count {
-        color: #7F8C8D;
-        font-size: 15px;
-        margin: 0;
-    }
-
-    #displayedCount {
-        font-weight: 600;
-        color: #2D4C61;
-    }
-
-    .btn-primary-action {
-        background-color: #2D4C61;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 14px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.2s;
-    }
-    
-    .btn-primary-action:hover { 
-        background-color: #1a3344; 
-        color: white;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(45, 76, 97, 0.2);
-    }
-
-    /* Grid & Cards */
-    .categories-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 24px;
-        margin-bottom: 30px;
-    }
-
-    .category-card {
-        background: #FDFBF7;
-        border-radius: 12px;
-        overflow: hidden;
-        border: none;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        display: flex;
-        flex-direction: column;
-        transition: all 0.3s ease;
-    }
-
-    .category-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    }
-
-    .category-card-header {
-        height: 160px;
-        background-color: #F1EBE4;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-    }
-
-    .category-folder-icon { 
-        font-size: 50px; 
-        color: #A0A0A0; 
-    }
-    
-    .category-image-real { 
-        width: 100%; 
-        height: 100%; 
-        object-fit: cover; 
-    }
-
-    /* Action Buttons - Bottom Right of Header */
-    .card-actions {
-        position: absolute;
-        bottom: 15px;
-        right: 15px;
-        display: flex;
-        gap: 10px;
-    }
-
-    .btn-action-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-decoration: none;
-        font-size: 14px;
-    }
-
-    .btn-edit-icon {
-        background-color: #EADBC0; 
-        color: #2C3E50;
-    }
-    
-    .btn-edit-icon:hover { 
-        background-color: #dcc8a4;
-        transform: scale(1.05);
-    }
-
-    .btn-delete-icon {
-        background-color: #EB5757;
-        color: white;
-    }
-    
-    .btn-delete-icon:hover { 
-        background-color: #c0392b;
-        transform: scale(1.05);
-    }
-
-    /* Body */
-    .category-card-body { 
-        padding: 20px; 
-        flex: 1; 
-        display: flex; 
-        flex-direction: column; 
-    }
-    
-    .card-title-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .category-title {
-        font-family: 'Georgia', serif;
-        color: #2D4C61;
-        font-size: 18px;
-        margin: 0;
-        font-weight: 700;
-    }
-
-    .status-badge {
-        font-size: 10px;
-        padding: 3px 10px;
-        border-radius: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-    
-    .status-badge.active { 
-        background-color: #6B8E23; 
-        color: white; 
-    }
-    
-    .status-badge.inactive { 
-        background-color: #95A5A6; 
-        color: white; 
-    }
-
-    .category-desc {
-        font-size: 13px;
-        color: #5D6D7E;
-        margin-bottom: 15px;
-        line-height: 1.4;
-        flex: 1;
-    }
-
-    .category-footer {
-        color: #2D4C61;
-        font-weight: 600;
-        font-size: 13px;
-    }
-
-    /* Message aucun résultat */
-    #noResultsMessage {
-        animation: fadeIn 0.3s ease-in;
-    }
-
-    @@keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Animation pour les cartes qui apparaissent/disparaissent */
-    .category-card {
-        animation: fadeInCard 0.3s ease-in;
-    }
-
-    @@keyframes fadeInCard {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
-    }
-
-    /* Responsive */
-    @@media (max-width: 768px) {
-        .search-input-wrapper {
-            width: 100%;
-        }
-
-        .admin-page-header-row {
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .categories-controls {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 15px;
-        }
-
-        .categories-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
+                    <div class="form-footer mt-4">
+                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn-save">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

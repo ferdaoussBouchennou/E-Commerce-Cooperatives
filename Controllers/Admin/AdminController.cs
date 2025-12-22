@@ -240,6 +240,10 @@ namespace E_Commerce_Cooperatives.Controllers
                 ViewBag.CategorieFilter = categorieFilter;
                 ViewBag.StatutFilter = statutFilter;
 
+                // For Modals
+                ViewBag.Categories = categories;
+                ViewBag.Cooperatives = cooperatives;
+
                 return View("Admin_Produit", produits);
             }
             catch (Exception ex)
@@ -248,6 +252,40 @@ namespace E_Commerce_Cooperatives.Controllers
                 System.Diagnostics.Debug.WriteLine($"Erreur dans Produits: {ex.Message}");
                 TempData["ErrorMessage"] = "Erreur lors du chargement des produits";
                 return View("Admin_Produit", new List<Produit>());
+            }
+        }
+
+        [HttpGet]
+        public JsonResult GetProduit(int id)
+        {
+            try
+            {
+                var p = db.ProduitsSet.Find(id);
+                if (p == null) return Json(new { success = false, message = "Produit non trouvé" }, JsonRequestBehavior.AllowGet);
+
+                return Json(new
+                {
+                    success = true,
+                    produit = new
+                    {
+                        p.ProduitId,
+                        p.Nom,
+                        p.Description,
+                        p.Prix,
+                        p.CategorieId,
+                        p.CooperativeId,
+                        p.StockTotal,
+                        p.SeuilAlerte,
+                        p.EstDisponible,
+                        p.EstEnVedette,
+                        p.EstNouveau,
+                        p.ImageUrl
+                    }
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -300,8 +338,19 @@ namespace E_Commerce_Cooperatives.Controllers
                     db.ProduitsSet.Add(produit);
                     db.SaveChanges();
 
+                    if (Request.IsAjaxRequest())
+                    {
+                        return Json(new { success = true, message = "Produit ajouté avec succès" });
+                    }
+
                     TempData["SuccessMessage"] = "Produit ajouté avec succès";
                     return RedirectToAction("Produits");
+                }
+
+                if (Request.IsAjaxRequest())
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return Json(new { success = false, errors = errors });
                 }
 
                 ViewBag.Categories = db.Categories.ToList();
@@ -438,8 +487,19 @@ namespace E_Commerce_Cooperatives.Controllers
                     db.UpdateProduit(produitExistant);
                     db.SaveChanges();
 
+                    if (Request.IsAjaxRequest())
+                    {
+                        return Json(new { success = true, message = "Produit modifié avec succès" });
+                    }
+
                     TempData["SuccessMessage"] = "Produit modifié avec succès";
                     return RedirectToAction("Produits");
+                }
+
+                if (Request.IsAjaxRequest())
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return Json(new { success = false, errors = errors });
                 }
 
                 ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();
@@ -743,6 +803,10 @@ namespace E_Commerce_Cooperatives.Controllers
                 }
 
                 ViewBag.SearchTerm = searchTerm;
+                ViewBag.TotalCategories = categories.Count;
+                ViewBag.ActiveCategories = categories.Count(c => c.EstActive);
+                ViewBag.TotalProductsInCategory = categories.Sum(c => c.NombreProduits);
+
                 return View(categories);
             }
             catch (Exception ex)
@@ -750,6 +814,36 @@ namespace E_Commerce_Cooperatives.Controllers
                 System.Diagnostics.Debug.WriteLine($"Erreur dans Categories: {ex.Message}");
                 TempData["ErrorMessage"] = "Erreur lors du chargement des catégories";
                 return RedirectToAction("Index");
+            }
+        }
+
+        /// <summary>
+        /// Récupère les données d'une catégorie pour le modal d'édition
+        /// </summary>
+        [HttpGet]
+        public JsonResult GetCategorie(int id)
+        {
+            try
+            {
+                var c = db.GetCategorie(id);
+                if (c == null) return Json(new { success = false, message = "Catégorie non trouvée" }, JsonRequestBehavior.AllowGet);
+
+                return Json(new
+                {
+                    success = true,
+                    categorie = new
+                    {
+                        c.CategorieId,
+                        c.Nom,
+                        c.Description,
+                        c.ImageUrl,
+                        c.EstActive
+                    }
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -781,8 +875,20 @@ namespace E_Commerce_Cooperatives.Controllers
 
                     categorie.DateCreation = DateTime.Now;
                     db.AddCategorie(categorie);
+
+                    if (Request.IsAjaxRequest())
+                    {
+                        return Json(new { success = true, message = "Catégorie ajoutée avec succès" });
+                    }
+
                     TempData["SuccessMessage"] = "Catégorie ajoutée avec succès";
                     return RedirectToAction("Categories");
+                }
+
+                if (Request.IsAjaxRequest())
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return Json(new { success = false, errors = errors });
                 }
                 return View(categorie);
             }
@@ -803,6 +909,29 @@ namespace E_Commerce_Cooperatives.Controllers
                 return RedirectToAction("Categories");
             }
             return View(categorie);
+        }
+
+        [HttpPost]
+        public JsonResult SupprimerCategorie(int id)
+        {
+            try
+            {
+                var c = db.GetCategorie(id);
+                if (c == null) return Json(new { success = false, message = "Catégorie non trouvée" });
+
+                // Optionnel: vérifier s'il y a des produits
+                if (db.Produits.Any(p => p.CategorieId == id))
+                {
+                    return Json(new { success = false, message = "Impossible de supprimer une catégorie contenant des produits" });
+                }
+
+                db.DeleteCategorie(id);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost]

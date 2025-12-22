@@ -57,9 +57,16 @@
 
     /* Stat card text colors - EXACT colors from image */
     --stat-number-color: #325A77;
-    /* Dark blue */
     --stat-label-color: #6D6C6A;
-    /* Dark grey */
+
+    /* Specific category color schemes - EXACT colors from Image 0 */
+    --cat-cosmetique-bg: #F0DCC8;
+    --cat-cosmetique-text: #8B6B47;
+    --cat-poterie-bg: #FDFBF7;
+    --cat-poterie-text: #5A6C7D;
+    --cat-alimentaire-bg: #E8DCC2;
+    --cat-alimentaire-text: #7A663C;
+
 
     /* Status badge colors - using platform colors (light versions) */
     --badge-pending-bg: var(--secondary);
@@ -753,10 +760,252 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 .stat-label {
     font-size: 14px;
     color: var(--stat-label-color);
-    /* #6D6C6A - Dark grey from image */
     font-weight: 400;
     font-family: var(--font-sans);
 }
+
+/* Category Grid & Cards - EXACTLY matching Image 0 */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.category-card {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.category-card-header {
+    height: 160px;
+    background-color: #F1EBE4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.category-card-header img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.category-folder-icon {
+    font-size: 48px;
+    color: #A0A0A0;
+    opacity: 0.6;
+}
+
+.category-card-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.category-card:hover .category-card-actions {
+    opacity: 1;
+}
+
+.btn-card-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-card-edit {
+    background-color: #EADBC0;
+    color: #2C3E50;
+}
+
+.btn-card-delete {
+    background-color: #EB5757;
+    color: white;
+}
+
+.category-card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.category-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #305C7D;
+    margin: 0;
+}
+
+.category-card-desc {
+    font-size: 14px;
+    color: #6D6C6A;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    flex: 1;
+}
+
+.category-card-footer {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: #305C7D;
+}
+
+/* Product Specific Table Styles - Image 1 */
+.product-image-cell {
+    width: 60px;
+}
+
+.product-image-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background-color: #F0F0F0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-image-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-info-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.product-name-text {
+    font-weight: 600;
+    color: #305C7D;
+    font-size: 15px;
+}
+
+.product-coop-text {
+    font-size: 12px;
+    color: #95A5A6;
+}
+
+.product-price-cell {
+    font-weight: 600;
+    color: #305C7D;
+}
+
+.badge-stock {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+    padding: 4px 10px;
+}
+
+.badge-stock-faible {
+    background-color: #FFEBEE;
+    color: #C62828;
+}
+
+.badge-dispo {
+    background-color: #7D8453;
+    color: white;
+}
+
+.badge-vedette {
+    background-color: #C06C50;
+    color: white;
+}
+
+/* Form Styles for Modals */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #305C7D;
+    font-size: 14px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #D0D0D0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    border-color: #305C7D;
+    box-shadow: 0 0 0 3px rgba(48, 92, 125, 0.1);
+    outline: none;
+}
+
+.form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #F0F0F0;
+}
+
+.btn-save {
+    background-color: #305C7D;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-cancel {
+    background-color: #F5F3EF;
+    color: #6D6C6A;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: 1px solid #D0D0D0;
+    cursor: pointer;
+}
+
 
 /* Table */
 .admin-table-container {

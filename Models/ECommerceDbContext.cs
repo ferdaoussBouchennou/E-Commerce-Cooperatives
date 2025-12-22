@@ -1788,5 +1788,19 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
         }
+
+        public void DeleteCategorie(int id)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Categories WHERE CategorieId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
     }
 }
