@@ -18,129 +18,165 @@
         z-index: 1055 !important;
     }
     
-    /* Styles du modal */
-    .modal-content {
-        border-radius: 15px;
+    /* Styles du modal - Design beige/crème */
+    #categorieModal .modal-content {
+        border-radius: 20px;
         border: none;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        background: #F5F3EF;
     }
     
-    .modal-header {
-        background: linear-gradient(135deg, #305C7D 0%, #3D7BA8 100%);
-        color: white;
-        border-radius: 15px 15px 0 0;
-        padding: 20px 25px;
+    #categorieModal .modal-header {
+        background: transparent;
+        color: #305C7D;
+        border-radius: 20px 20px 0 0;
+        padding: 25px 30px 15px;
         border-bottom: none;
     }
     
-    .modal-title {
+    #categorieModal .modal-title {
         font-family: 'Georgia', serif;
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 700;
+        color: #305C7D;
     }
     
-    .btn-close {
-        filter: brightness(0) invert(1);
-        opacity: 0.8;
+    #categorieModal .close {
+        background: none;
+        border: none;
+        font-size: 32px;
+        color: #305C7D;
+        opacity: 0.6;
+        cursor: pointer;
+        padding: 0;
+        margin: 0;
+        line-height: 1;
+        font-weight: 300;
     }
     
-    .btn-close:hover {
+    #categorieModal .close:hover {
         opacity: 1;
+        color: #305C7D;
     }
     
-    .modal-body {
-        padding: 30px 25px;
+    #categorieModal .modal-body {
+        padding: 20px 30px 30px;
+        background: #F5F3EF;
     }
     
-    .form-label {
+    #categorieModal .form-label {
         font-weight: 600;
         color: #305C7D;
         margin-bottom: 8px;
         font-size: 14px;
+        display: block;
     }
     
-    .form-input {
+    #categorieModal .form-input {
         width: 100%;
-        padding: 12px 15px;
-        border: 1px solid #D09E86;
-        border-radius: 8px;
-        font-size: 14px;
+        padding: 14px 16px;
+        border: 2px solid #D09E86;
+        border-radius: 10px;
+        font-size: 15px;
         transition: all 0.3s ease;
+        background: white;
+        color: #2C3E50;
     }
     
-    .form-input:focus {
+    #categorieModal .form-input:focus {
         outline: none;
-        border-color: #305C7D;
-        box-shadow: 0 0 0 3px rgba(48, 92, 125, 0.1);
+        border-color: #C06C50;
+        box-shadow: 0 0 0 3px rgba(192, 108, 80, 0.1);
     }
     
-    .form-check {
+    #categorieModal .form-input::placeholder {
+        color: #95A5A6;
+        font-style: italic;
+    }
+    
+    #categorieModal .form-check {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 15px;
-        background: #F5F3EF;
-        border-radius: 8px;
+        gap: 12px;
+        padding: 16px;
+        background: white;
+        border-radius: 10px;
+        border: 2px solid #D09E86;
     }
     
-    .form-check-input {
-        width: 20px;
-        height: 20px;
+    #categorieModal .form-check-input {
+        width: 24px;
+        height: 24px;
         border: 2px solid #305C7D;
         cursor: pointer;
-    }
-    
-    .form-check-input:checked {
-        background-color: #7D8453;
-        border-color: #7D8453;
-    }
-    
-    .form-check-label {
-        font-weight: 500;
-        color: #2C3E50;
-        cursor: pointer;
+        border-radius: 6px;
         margin: 0;
     }
     
-    .form-footer {
+    #categorieModal .form-check-input:checked {
+        background-color: #305C7D;
+        border-color: #305C7D;
+    }
+    
+    #categorieModal .form-check-label {
+        font-weight: 500;
+        color: #305C7D;
+        cursor: pointer;
+        margin: 0;
+        font-size: 15px;
+    }
+    
+    #categorieModal .form-footer {
         display: flex;
         gap: 15px;
         justify-content: flex-end;
-        padding-top: 20px;
-        border-top: 1px solid #E8E8E8;
+        padding-top: 25px;
+        border-top: none;
+        margin-top: 10px;
     }
     
-    .btn-cancel {
-        padding: 12px 25px;
-        background: #95A5A6;
-        color: white;
-        border: none;
-        border-radius: 8px;
+    #categorieModal .btn-cancel {
+        padding: 13px 28px;
+        background: white;
+        color: #305C7D;
+        border: 2px solid #305C7D;
+        border-radius: 10px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
+        font-size: 15px;
     }
     
-    .btn-cancel:hover {
-        background: #7F8C8D;
-        transform: translateY(-2px);
-    }
-    
-    .btn-save {
-        padding: 12px 30px;
-        background: linear-gradient(135deg, #7D8453 0%, #9BA36C 100%);
+    #categorieModal .btn-cancel:hover {
+        background: #305C7D;
         color: white;
-        border: none;
-        border-radius: 8px;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(48, 92, 125, 0.2);
+    }
+    
+    #categorieModal .btn-save {
+        padding: 13px 32px;
+        background: #305C7D;
+        color: white;
+        border: 2px solid #305C7D;
+        border-radius: 10px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
+        font-size: 15px;
     }
     
-    .btn-save:hover {
-        background: linear-gradient(135deg, #6B7145 0%, #8A9158 100%);
+    #categorieModal .btn-save:hover {
+        background: #244A63;
+        border-color: #244A63;
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(125, 132, 83, 0.3);
+        box-shadow: 0 4px 12px rgba(48, 92, 125, 0.3);
+    }
+    
+    #categorieModal .btn-save:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
     }
     
     .btn-primary-action {
