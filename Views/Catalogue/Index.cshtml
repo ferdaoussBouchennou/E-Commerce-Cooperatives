@@ -12,6 +12,26 @@
 
 <main style="min-height: calc(100vh - 200px);">
     <div class="container py-5">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" style="color: #305C7D;">Accueil</a></li>
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Catalogue")" style="color: #305C7D;">Catalogue</a></li>
+                @if (selectedCategorie.HasValue)
+                {
+                    var selectedCat = categories.FirstOrDefault(c => c.CategorieId == selectedCategorie.Value);
+                    if (selectedCat != null)
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">@selectedCat.Nom</li>
+                    }
+                }
+                else
+                {
+                    <li class="breadcrumb-item active" aria-current="page">Tous les produits</li>
+                }
+            </ol>
+        </nav>
+
         <!-- Page Header -->
         <div class="mb-4">
             <h1 class="display-5 fw-bold mb-2">
@@ -138,7 +158,7 @@
         <div class="row">
             <!-- Desktop Sidebar Filters -->
             <aside class="col-lg-3 d-none d-lg-block">
-                <form id="filter-form" action="@Url.Action("Index", "Catalogue")" method="get" class="bg-white rounded-3 p-4 shadow-sm sticky-top" style="top: 120px; z-index: 900;">
+                <form id="filter-form" action="@Url.Action("Index", "Catalogue")" method="get" class="bg-white rounded-3 p-4 shadow-sm">
                     <h3 class="h5 fw-bold mb-4">Filtres</h3>
                     
                     <!-- Hidden inputs to preserve other states -->
