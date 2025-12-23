@@ -247,6 +247,7 @@
     <Compile Include="Controllers\Admin\AdminController.cs" />
     <Compile Include="Controllers\FavorisController.cs" />
     <Compile Include="Controllers\CatalogueController.cs" />
+    <Compile Include="Controllers\UserSpaceController.cs" />
     <Compile Include="Controllers\CategoriesController.cs" />
     <Compile Include="Models\InvoiceHelper.cs" />
     <Compile Include="Models\DeliverySlipHelper.cs" />
@@ -272,8 +273,12 @@
     <Compile Include="Models\PagedResult.cs" />
     <Compile Include="Models\PasswordHelper.cs" />
     <Compile Include="Models\Produit.cs" />
+    <Compile Include="Models\ViewModels\AccountPreferencesViewModel.cs" />
+    <Compile Include="Models\ViewModels\AddressViewModel.cs" />
+    <Compile Include="Models\ViewModels\ChangePasswordViewModel.cs" />
     <Compile Include="Models\ViewModels\ForgotPasswordViewModel.cs" />
     <Compile Include="Models\ViewModels\LoginViewModel.cs" />
+    <Compile Include="Models\ViewModels\ProfileViewModel.cs" />
     <Compile Include="Models\ViewModels\RegisterViewModel.cs" />
     <Compile Include="Models\ViewModels\ResetPasswordViewModel.cs" />
     <Compile Include="Models\ViewModels\UserStatisticsViewModel.cs" />
@@ -363,6 +368,17 @@
     <Content Include="Views\Admin\_ViewStart.cshtml" />
     <Content Include="Views\Admin\Commandes.cshtml" />
     <Content Include="Views\Admin\Admin_Produit.cshtml" />
+    <Content Include="Views\UserSpace\_UserSpaceLayout.cshtml" />
+    <Content Include="Views\UserSpace\_UserSidebar.cshtml" />
+    <Content Include="Views\UserSpace\_ViewStart.cshtml" />
+    <Content Include="Views\UserSpace\_AddressesContent.cshtml" />
+    <Content Include="Views\UserSpace\_SecurityContent.cshtml" />
+    <Content Include="Views\UserSpace\Profile.cshtml" />
+    <Content Include="Views\UserSpace\Addresses.cshtml" />
+    <Content Include="Views\UserSpace\AddAddress.cshtml" />
+    <Content Include="Views\UserSpace\EditAddress.cshtml" />
+    <Content Include="Views\UserSpace\ChangePassword.cshtml" />
+    <Content Include="Views\UserSpace\Preferences.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

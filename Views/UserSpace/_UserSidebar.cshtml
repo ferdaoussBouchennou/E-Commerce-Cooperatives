@@ -1,0 +1,92 @@
+@{
+    var prenom = Session["Prenom"] as string ?? "";
+    var nom = Session["Nom"] as string ?? "";
+    var email = Session["Email"] as string ?? "";
+    var dateCreation = ViewBag.DateCreation as DateTime?;
+    
+    // Si DateCreation n'est pas dans ViewBag, on essaie de la récupérer depuis la session
+    if (!dateCreation.HasValue)
+    {
+        dateCreation = Session["DateCreation"] as DateTime?;
+    }
+    
+    var initials = $"{(string.IsNullOrEmpty(prenom) ? "" : prenom.Substring(0, 1))}{(string.IsNullOrEmpty(nom) ? "" : nom.Substring(0, 1))}";
+    var avatarGradient = "linear-gradient(135deg, #7D8453 0%, #305C7D 100%)";
+}
+
+<div class="col-md-3 mb-4">
+    <div class="card shadow-sm" style="border-radius: 16px; border: none; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+        <div class="card-body text-center p-4">
+            <!-- Avatar -->
+            <div class="mb-3">
+                <div style="width: 100px; height: 100px; border-radius: 50%; background: @avatarGradient; display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 36px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    @initials.ToUpper()
+                </div>
+            </div>
+            
+            <!-- Name -->
+            <h4 class="mb-2" style="color: #305C7D; font-weight: 700;">@prenom @nom</h4>
+            
+            <!-- Email -->
+            <p class="text-muted mb-3" style="font-size: 14px;">@email</p>
+            
+            <!-- Badge -->
+            @if (dateCreation.HasValue)
+            {
+                <div class="mb-4">
+                    <span class="badge" style="background-color: #E8DCC2; color: #305C7D; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 12px;">
+                        Client depuis @dateCreation.Value.ToString("MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"))
+                    </span>
+                </div>
+            }
+            
+            <!-- Navigation Links -->
+            <div class="list-group list-group-flush" style="border: none;">
+                <a href="@Url.Action("MesCommandes", "Checkout")" class="list-group-item list-group-item-action border-0 p-3" style="background: transparent; color: #305C7D; text-decoration: none; border-radius: 8px !important;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 10px;">
+                                <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l.84 4.479 9.194-.459L13.89 4H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                            </svg>
+                            <span style="font-weight: 500;">Mes Commandes</span>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                        </svg>
+                    </div>
+                </a>
+                <a href="#" class="list-group-item list-group-item-action border-0 p-3" style="background: transparent; color: #305C7D; text-decoration: none; border-radius: 8px !important;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 10px;">
+                                <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+                            </svg>
+                            <span style="font-weight: 500;">Mes Avis</span>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                        </svg>
+                    </div>
+                </a>
+                @using (Html.BeginForm("LogoutPost", "Account", FormMethod.Post, new { @class = "d-inline", style = "width: 100%;" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="list-group-item list-group-item-action border-0 p-3 w-100 text-start" style="background: transparent; color: #dc3545; text-decoration: none; border-radius: 8px !important; border: none !important;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 10px;">
+                                    <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                                    <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                                </svg>
+                                <span style="font-weight: 500;">Déconnexion</span>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                            </svg>
+                        </div>
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
