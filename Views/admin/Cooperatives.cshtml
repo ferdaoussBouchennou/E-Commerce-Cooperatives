@@ -1,0 +1,294 @@
+@model IEnumerable<E_Commerce_Cooperatives.Models.Cooperative>
+@{
+    ViewBag.Title = "Gestion des Coopératives";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+}
+
+<link rel="stylesheet" href="~/Content/AdminCop.css" />
+
+<div class="cooperatives-page">
+    <div class="page-title-section d-flex justify-content-between align-items-center mb-4">
+        <h1>Coopératives</h1>
+        <button class="btn btn-primary" onclick="openAddModal()" style="background-color: #305C7D; border: none; padding: 10px 20px; border-radius: 8px;">
+            <i class="fas fa-plus mr-2"></i> Ajouter une coopérative
+        </button>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section mb-4" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <form method="get" action="@Url.Action("Cooperatives", "Admin")" class="row align-items-center">
+            <div class="col-md-6">
+                <div class="search-box position-relative">
+                    <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #95A5A6;"></i>
+                    <input type="text" id="coopSearchInput" name="searchTerm" value="@ViewBag.SearchTerm" class="form-control" placeholder="Rechercher une coopérative ou une ville..." style="padding-left: 45px; border-radius: 10px; border: 1px solid #D09E86;">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-block" style="background-color: #305C7D; color: white; border-radius: 10px; padding: 8px;">Filtrer</button>
+            </div>
+        </form>
+    </div>  
+
+    <!-- Grid Section -->
+    <div class="coop-card"
+     data-coop-name="@coop.Nom.ToLower()"
+     data-coop-desc="@((coop.Description ?? "").ToLower())"
+     data-coop-ville="@coop.Ville.ToLower()">   
+        @foreach (var coop in Model)
+        {
+            <div id="dataCoop" class="coop-card">
+                <div class="coop-card-header">
+                    @if (!string.IsNullOrEmpty(coop.Logo))
+                    {
+                        <img src="@Url.Content(coop.Logo)" alt="@coop.Nom" class="coop-card-image" />
+                    }
+                    else
+                    {
+                        <div class="coop-card-image d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                            <i class="fas fa-university fa-4x" style="color: #305C7D; opacity: 0.3;"></i>
+                        </div>
+                    }
+                    @if (coop.EstActive)
+                    {
+                        <span class="coop-badge-active">Active</span>
+                    }
+                </div>
+                <div class="coop-card-body">
+                    <h3 class="coop-name">@coop.Nom</h3>
+                    <p class="coop-desc">@coop.Description</p>
+                    
+                    <div class="coop-info-row">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>@coop.Ville</span>
+                    </div>
+                    <div class="coop-info-row">
+                        <i class="fas fa-phone"></i>
+                        <span>@(string.IsNullOrEmpty(coop.Telephone) ? "Non spécifié" : coop.Telephone)</span>
+                    </div>
+                    <div class="coop-info-row">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Depuis @coop.DateCreation.ToString("yyyy-MM-dd")</span>
+                    </div>
+                    <div class="coop-info-row">
+                        <i class="fas fa-box"></i>
+                        <span>@coop.ProductCount produits</span>
+                    </div>
+                </div>
+                <div class="coop-card-footer">
+                    <button class="btn-modifier" onclick="openEditModal(@coop.CooperativeId)">
+                        <i class="fas fa-edit"></i> Modifier
+                    </button>
+                    <button class="btn-supprimer" onclick="deleteCooperative(@coop.CooperativeId, '@coop.Nom')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal logic would go here, similar to Categories or Products -->
+
+<!-- Modal Coopérative -->
+<div id="cooperativeModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 600px;">
+        <div class="modal-content" style="background-color: #F5F3EF; border-radius: 12px; border: none; box-shadow: 0 15px 50px rgba(0,0,0,0.1);">
+            <div class="modal-header" style="border: none; padding: 25px 35px 10px 35px; display: flex; justify-content: space-between; align-items: center;">
+                <h5 class="modal-title" id="coopModalTitle" style="font-family: 'Georgia', serif; color: #305C7D; font-size: 24px; font-weight: 700;">Nouvelle Coopérative</h5>
+                <button type="button" class="close" onclick="closeModal()" style="background: none; border: none; font-size: 32px; color: #305C7D; opacity: 0.6; cursor: pointer; padding: 0; line-height: 1;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 10px 35px 25px 35px;">
+                <form id="cooperativeForm" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="CooperativeId" name="CooperativeId" value="0" />
+                    
+                    <div class="form-group mb-3">
+                        <label class="form-label">Nom de la coopérative *</label>
+                        <input type="text" id="Nom" name="Nom" class="form-control" required style="border-radius: 10px; border: 1px solid #D09E86; padding: 12px;" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea id="Description" name="Description" class="form-control" rows="3" style="border-radius: 10px; border: 1px solid #D09E86; padding: 12px; resize: none;"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group mb-3">
+                            <label class="form-label">Ville *</label>
+                            <input type="text" id="Ville" name="Ville" class="form-control" required style="border-radius: 10px; border: 1px solid #D09E86; padding: 12px;" />
+                        </div>
+                        <div class="col-md-6 form-group mb-3">
+                            <label class="form-label">Téléphone</label>
+                            <input type="text" id="Telephone" name="Telephone" class="form-control" style="border-radius: 10px; border: 1px solid #D09E86; padding: 12px;" />
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label">Logo / Image</label>
+                        <input type="file" id="logoFile" name="logoFile" class="form-control" accept="image/*" onchange="previewLogo(this)" style="border-radius: 10px; border: 1px solid #D09E86; padding: 10px; height: auto;" />
+                        <input type="hidden" id="Logo" name="Logo" />
+                        
+                        <div id="logoPreviewZone" style="margin-top: 15px; text-align: center; background: white; padding: 15px; border-radius: 10px; border: 1px dashed #D09E86;">
+                            <img id="logoPreview" src="" style="max-height: 100px; display: none;" />
+                            <div id="previewPlaceholder">
+                                <i class="fas fa-university" style="font-size: 30px; color: #95A5A6; opacity: 0.3;"></i>
+                                <p style="font-size: 12px; color: #95A5A6; margin-top: 5px;">Aperçu du logo</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input type="checkbox" class="form-check-input" id="EstActive" name="EstActive" value="true" checked />
+                        <label class="form-check-label" for="EstActive">Coopérative active</label>
+                    </div>
+
+                    <div class="d-flex gap-3" style="gap: 15px;">
+                        <button type="button" class="btn btn-default" onclick="closeModal()" style="flex: 1; border: 2px solid #305C7D; color: #305C7D; border-radius: 8px; padding: 12px; font-weight: 600;">Annuler</button>
+                        <button type="submit" class="btn btn-primary" style="flex: 2; background-color: #305C7D; border: none; border-radius: 8px; padding: 12px; font-weight: 600;">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+
+     // pour automatise la recherche 
+           
+          let searchTimeout;
+
+        $('#coopSearchInput').on('keyup', function () {
+            clearTimeout(searchTimeout);
+
+            const term = $(this).val().trim().toLowerCase();
+
+            searchTimeout = setTimeout(() => {
+                let visibleCount = 0;
+
+                $('.coop-card').each(function () {
+                    const name = $(this).data('coop-name') || '';
+                    const desc = $(this).data('coop-desc') || '';
+                    const ville = $(this).data('coop-ville') || '';
+
+                    const match =
+                        name.includes(term) ||
+                        desc.includes(term) ||
+                        ville.includes(term);
+
+                    $(this).toggle(match);
+
+                    if (match) visibleCount++;
+                });
+
+                $('#noResults').toggle(visibleCount === 0);
+                $('.cooperatives-grid').toggle(visibleCount > 0);
+
+            }, 250); // debounce 250ms
+        });
+
+
+        $(document).ready(function() {
+            // Form Submit (AJAX)
+            $('#cooperativeForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                var formData = new FormData(this);
+                var id = $('#CooperativeId').val();
+                var url = id == "0" ? '@Url.Action("AjouterCooperative", "Admin")' : '@Url.Action("ModifierCooperative", "Admin")';
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            $('#cooperativeModal').modal('hide');
+                            location.reload();
+                        } else {
+                            alert('Erreur: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Une erreur est survenue lors de l\'enregistrement.');
+                    }
+                });
+            });
+        });
+
+        function openAddModal() {
+            $('#cooperativeForm')[0].reset();
+            $('#CooperativeId').val("0");
+            $('#coopModalTitle').text("Nouvelle Coopérative");
+            $('#EstActive').prop('checked', true);
+            resetLogoPreview();
+            $('#cooperativeModal').appendTo('body').modal('show');
+        }
+
+        function openEditModal(id) {
+            $.get('@Url.Action("GetCooperative", "Admin")', { id: id }, function(response) {
+                if (response.success) {
+                    var c = response.cooperative;
+                    $('#CooperativeId').val(c.CooperativeId);
+                    $('#Nom').val(c.Nom);
+                    $('#Description').val(c.Description);
+                    $('#Ville').val(c.Ville);
+                    $('#Telephone').val(c.Telephone);
+                    $('#Logo').val(c.Logo);
+                    $('#EstActive').prop('checked', c.EstActive);
+                    $('#coopModalTitle').text("Modifier la Coopérative");
+                    
+                    if (c.Logo) {
+                        var logoUrl = c.Logo.startsWith('~') ? '@Url.Content("~")'.replace(/\/$/, '') + c.Logo.substring(1) : c.Logo;
+                        $('#logoPreview').attr('src', logoUrl).show();
+                        $('#previewPlaceholder').hide();
+                    } else {
+                        resetLogoPreview();
+                    }
+                    
+                    $('#cooperativeModal').appendTo('body').modal('show');
+                } else {
+                    alert('Erreur: ' + response.message);
+                }
+            });
+        }
+
+        function closeModal() {
+            $('#cooperativeModal').modal('hide');
+        }
+
+        function previewLogo(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#logoPreview').attr('src', e.target.result).show();
+                    $('#previewPlaceholder').hide();
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function resetLogoPreview() {
+            $('#logoPreview').attr('src', '').hide();
+            $('#previewPlaceholder').show();
+        }
+
+        function deleteCooperative(id, name) {
+            if (confirm("Êtes-vous sûr de vouloir supprimer la coopérative '" + name + "' ?")) {
+                $.post('@Url.Action("SupprimerCooperative", "Admin")', { id: id }, function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert("Erreur: " + response.message);
+                    }
+                });
+            }
+        }
+          
+    </script>
+}

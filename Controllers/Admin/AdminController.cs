@@ -168,6 +168,145 @@ namespace E_Commerce_Cooperatives.Controllers
                 return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
             }
         }
+        // GET: Admin/Cooperatives
+        public ActionResult Cooperatives(string searchTerm = "")
+        {
+            try
+            {
+                var db = new ECommerceDbContext();
+                var cooperatives = db.GetCooperativesWithStats();
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    cooperatives = cooperatives.Where(c => 
+                        c.Nom.ToLower().Contains(searchTerm.ToLower()) || 
+                        c.Ville.ToLower().Contains(searchTerm.ToLower())
+                    ).ToList();
+                }
+
+                ViewBag.SearchTerm = searchTerm;
+                return View(cooperatives);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans Cooperatives: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement des coopératives";
+                return View(new List<Cooperative>());
+            }
+        }
+
+        [HttpGet]
+        public JsonResult GetCooperative(int id)
+        {
+            try
+            {
+                var db = new ECommerceDbContext();
+                var c = db.GetCooperative(id);
+                if (c == null) return Json(new { success = false, message = "Coopérative non trouvée" }, JsonRequestBehavior.AllowGet);
+
+                return Json(new { success = true, cooperative = c }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AjouterCooperative(Cooperative coop, System.Web.HttpPostedFileBase logoFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    if (logoFile != null && logoFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(logoFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/cooperatives/"), fileName);
+                        
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        logoFile.SaveAs(path);
+                        coop.Logo = "~/Content/images/cooperatives/" + fileName;
+                    }
+
+                    coop.DateCreation = DateTime.Now;
+                    db.AddCooperative(coop);
+
+                    return Json(new { success = true, message = "Coopérative ajoutée avec succès" });
+                }
+                return Json(new { success = false, message = "Données invalides" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Erreur: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ModifierCooperative(Cooperative coop, System.Web.HttpPostedFileBase logoFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var existing = db.GetCooperative(coop.CooperativeId);
+                    if (existing == null) return Json(new { success = false, message = "Coopérative non trouvée" });
+
+                    if (logoFile != null && logoFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(logoFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/cooperatives/"), fileName);
+                        
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        logoFile.SaveAs(path);
+                        coop.Logo = "~/Content/images/cooperatives/" + fileName;
+                    }
+                    else
+                    {
+                        coop.Logo = existing.Logo;
+                    }
+
+                    db.UpdateCooperative(coop);
+                    return Json(new { success = true, message = "Coopérative modifiée avec succès" });
+                }
+                return Json(new { success = false, message = "Données invalides" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Erreur: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult SupprimerCooperative(int id)
+        {
+            try
+            {
+                var db = new ECommerceDbContext();
+                // Check if there are products associated with this cooperative
+                var hasProducts = db.Produits.Any(p => p.CooperativeId == id);
+                if (hasProducts)
+                {
+                    return Json(new { success = false, message = "Impossible de supprimer : cette coopérative possède des produits" });
+                }
+
+                db.DeleteCooperative(id);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         private readonly ECommerceDbContext db = new ECommerceDbContext();
 
         // ============================================

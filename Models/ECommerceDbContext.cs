@@ -1877,5 +1877,139 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
         }
+
+        // ============================================
+        // GESTION DES COOPERATIVES
+        // ============================================
+
+        public List<Cooperative> GetCooperativesWithStats()
+        {
+            var cooperatives = new List<Cooperative>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT c.CooperativeId, c.Nom, c.Description, c.Adresse, c.Ville, c.Telephone, c.Logo, c.EstActive, c.DateCreation,
+                           (SELECT COUNT(*) FROM Produits p WHERE p.CooperativeId = c.CooperativeId) as ProductCount
+                    FROM Cooperatives c
+                    ORDER BY c.Nom";
+
+                using (var command = new SqlCommand(query, connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        cooperatives.Add(new Cooperative
+                        {
+                            CooperativeId = reader.GetInt32(0),
+                            Nom = reader.GetString(1),
+                            Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                            Adresse = reader.IsDBNull(3) ? null : reader.GetString(3),
+                            Ville = reader.IsDBNull(4) ? null : reader.GetString(4),
+                            Telephone = reader.IsDBNull(5) ? null : reader.GetString(5),
+                            Logo = reader.IsDBNull(6) ? null : reader.GetString(6),
+                            EstActive = reader.GetBoolean(7),
+                            DateCreation = reader.GetDateTime(8),
+                            ProductCount = reader.GetInt32(9)
+                        });
+                    }
+                }
+            }
+            return cooperatives;
+        }
+
+        public Cooperative GetCooperative(int id)
+        {
+            Cooperative coop = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT CooperativeId, Nom, Description, Adresse, Ville, Telephone, Logo, EstActive, DateCreation FROM Cooperatives WHERE CooperativeId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            coop = new Cooperative
+                            {
+                                CooperativeId = reader.GetInt32(0),
+                                Nom = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                Adresse = reader.IsDBNull(3) ? null : reader.GetString(3),
+                                Ville = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                Telephone = reader.IsDBNull(5) ? null : reader.GetString(5),
+                                Logo = reader.IsDBNull(6) ? null : reader.GetString(6),
+                                EstActive = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
+                            };
+                        }
+                    }
+                }
+            }
+            return coop;
+        }
+
+        public void AddCooperative(Cooperative coop)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"INSERT INTO Cooperatives (Nom, Description, Adresse, Ville, Telephone, Logo, EstActive, DateCreation) 
+                              VALUES (@Nom, @Description, @Adresse, @Ville, @Telephone, @Logo, @EstActive, @DateCreation)";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Nom", coop.Nom);
+                    command.Parameters.AddWithValue("@Description", (object)coop.Description ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Adresse", (object)coop.Adresse ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Ville", (object)coop.Ville ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Telephone", (object)coop.Telephone ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Logo", (object)coop.Logo ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstActive", coop.EstActive);
+                    command.Parameters.AddWithValue("@DateCreation", coop.DateCreation);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateCooperative(Cooperative coop)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"UPDATE Cooperatives 
+                              SET Nom = @Nom, Description = @Description, Adresse = @Adresse, 
+                                  Ville = @Ville, Telephone = @Telephone, Logo = @Logo, EstActive = @EstActive 
+                              WHERE CooperativeId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", coop.CooperativeId);
+                    command.Parameters.AddWithValue("@Nom", coop.Nom);
+                    command.Parameters.AddWithValue("@Description", (object)coop.Description ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Adresse", (object)coop.Adresse ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Ville", (object)coop.Ville ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Telephone", (object)coop.Telephone ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Logo", (object)coop.Logo ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstActive", coop.EstActive);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteCooperative(int id)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Cooperatives WHERE CooperativeId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
     }
 }
+
