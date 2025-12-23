@@ -58,7 +58,8 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); min-width: 200px; margin-top: 0.5rem; background-color: white;">
                             <li><h6 class="dropdown-header">@(Session["Prenom"] + " " + Session["Nom"])</h6></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Home")#profil" style="color: #305C7D;">Mon profil</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Profile", "UserSpace")" style="color: #305C7D;">Mon profil</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Addresses", "UserSpace")" style="color: #305C7D;">Mes adresses</a></li>
                             <li><a class="dropdown-item" href="@Url.Action("Index", "Home")#commandes" style="color: #305C7D;">Mes commandes</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>

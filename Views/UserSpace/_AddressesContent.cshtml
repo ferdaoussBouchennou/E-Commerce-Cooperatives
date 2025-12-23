@@ -1,0 +1,161 @@
+@model List<E_Commerce_Cooperatives.Models.ViewModels.AddressViewModel>
+
+@Html.AntiForgeryToken()
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0" style="color: #305C7D; font-weight: 700;">Mes adresses</h4>
+    <a href="@Url.Action("AddAddress", "UserSpace")" class="btn" style="background-color: #305C7D; color: white; border-radius: 8px; font-weight: 600;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;">
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+        </svg>
+        Ajouter une adresse
+    </a>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <div class="row">
+        @foreach (var address in Model)
+        {
+            <div class="col-md-12 mb-3">
+                <div class="card shadow-sm h-100" style="border-radius: 12px; border: @(address.EstParDefaut ? "2px solid #305C7D" : "1px solid #e0e0e0");">
+                    <div class="card-body p-4">
+                        @if (address.EstParDefaut)
+                        {
+                            <div class="mb-3">
+                                <span class="badge" style="background-color: #305C7D; padding: 0.5rem 1rem; border-radius: 20px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 5px;">
+                                        <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                                    </svg>
+                                    Adresse par défaut
+                                </span>
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <strong style="color: #305C7D; font-size: 1.1rem;">@address.AdresseComplete</strong>
+                        </div>
+
+                        <div class="text-muted mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 5px;">
+                                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                            </svg>
+                            @address.Ville
+                            @if (!string.IsNullOrEmpty(address.CodePostal))
+                            {
+                                <text>, @address.CodePostal</text>
+                            }
+                        </div>
+
+                        <div class="text-muted mb-3">
+                            @address.Pays
+                        </div>
+
+                        <div class="d-flex gap-2 mt-auto">
+                            @if (!address.EstParDefaut)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary set-default-btn" data-address-id="@address.AdresseId" style="border-color: #305C7D; color: #305C7D;">
+                                    Définir par défaut
+                                </button>
+                            }
+                            <a href="@Url.Action("EditAddress", "UserSpace", new { id = address.AdresseId })" class="btn btn-sm" style="background-color: #7D8453; color: white;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 5px;">
+                                    <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
+                                </svg>
+                                Modifier
+                            </a>
+                            <button type="button" class="btn btn-sm btn-danger delete-address-btn" data-address-id="@address.AdresseId">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 5px;">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                </svg>
+                                Supprimer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="card shadow-sm text-center p-5" style="border-radius: 12px; border: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="#305C7D" viewBox="0 0 16 16" class="mb-3">
+            <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+        </svg>
+        <h5 style="color: #305C7D;">Aucune adresse enregistrée</h5>
+        <p class="text-muted">Ajoutez votre première adresse de livraison pour faciliter vos commandes.</p>
+        <a href="@Url.Action("AddAddress", "UserSpace")" class="btn mt-3" style="background-color: #305C7D; color: white; border-radius: 8px; font-weight: 600;">
+            Ajouter une adresse
+        </a>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        var token = $('input[name="__RequestVerificationToken"]').first().val();
+
+        // Helper to reload addresses tab if available
+        function reloadAddresses() {
+            if (window.loadAddressesTab) {
+                window.loadAddressesTab();
+            } else {
+                location.reload();
+            }
+        }
+
+        // Set default address
+        $('.set-default-btn').on('click', function () {
+            var addressId = $(this).data('address-id');
+
+            if (confirm('Voulez-vous définir cette adresse comme adresse par défaut ?')) {
+                $.ajax({
+                    url: '@Url.Action("SetDefaultAddress", "UserSpace")',
+                    type: 'POST',
+                    data: {
+                        id: addressId,
+                        __RequestVerificationToken: token
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            reloadAddresses();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Une erreur est survenue.');
+                    }
+                });
+            }
+        });
+
+        // Delete address
+        $('.delete-address-btn').on('click', function () {
+            var addressId = $(this).data('address-id');
+
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette adresse ?')) {
+                $.ajax({
+                    url: '@Url.Action("DeleteAddress", "UserSpace")',
+                    type: 'POST',
+                    data: {
+                        id: addressId,
+                        __RequestVerificationToken: token
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            reloadAddresses();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Une erreur est survenue.');
+                    }
+                });
+            }
+        });
+    });
+</script>
+
