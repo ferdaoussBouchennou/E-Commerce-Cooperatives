@@ -1,0 +1,288 @@
+@model E_Commerce_Cooperatives.Models.ViewModels.CheckoutViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Finaliser la commande";
+}
+
+@Html.Partial("_Header")
+
+<main class="py-8" style="background-color: #F5F3EF; min-height: 80vh;">
+    <div class="container">
+        <a href="@Url.Action("Index", "Panier")" class="d-inline-flex align-items-center gap-2 text-muted text-decoration-none mb-4" style="color: #5a6c7d !important;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+            Retour au panier
+        </a>
+
+        <h1 class="font-display mb-4" style="font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: #305C7D;">
+            Finaliser la commande
+        </h1>
+
+        <!-- Progress Steps -->
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-5">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold checkout-step" 
+                     style="width: 40px; height: 40px; background-color: #C06C50; color: white;" id="step-1" data-step="1">
+                    1
+                </div>
+                <span class="ms-2 d-none d-sm-inline" style="color: #305C7D; font-weight: 500;">Livraison</span>
+            </div>
+            <div class="mx-2 rounded step-connector" style="width: 80px; height: 4px; background-color: #C06C50;" id="connector-1-2"></div>
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold checkout-step" 
+                     style="width: 40px; height: 40px; background-color: #e0e0e0; color: #9e9e9e;" id="step-2" data-step="2">
+                    2
+                </div>
+                <span class="ms-2 d-none d-sm-inline" style="color: #9e9e9e;">Paiement</span>
+            </div>
+            <div class="mx-2 rounded step-connector" style="width: 80px; height: 4px; background-color: #e0e0e0;" id="connector-2-3"></div>
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold checkout-step" 
+                     style="width: 40px; height: 40px; background-color: #e0e0e0; color: #9e9e9e;" id="step-3" data-step="3">
+                    3
+                </div>
+                <span class="ms-2 d-none d-sm-inline" style="color: #9e9e9e;">Confirmation</span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Form Section -->
+            <div class="col-lg-8">
+                <!-- Step 1: Delivery Address -->
+                <div id="step-delivery" class="checkout-step-content">
+                    <div class="bg-white rounded-4 p-4 shadow-soft" style="box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                        <!-- Delivery Address Section -->
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#C06C50" viewBox="0 0 16 16">
+                                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                            </svg>
+                            <h2 class="font-display mb-0" style="font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #305C7D;">
+                                Adresse de livraison
+                            </h2>
+                        </div>
+
+                        <form id="checkout-form-step1">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label for="Prenom" class="form-label">Prénom <span class="text-danger">*</span></label>
+                                    @Html.TextBoxFor(m => m.Prenom, new { @class = "form-control", placeholder = "Votre prénom", required = "required", id = "Prenom" })
+                                    @Html.ValidationMessageFor(m => m.Prenom, "", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="Nom" class="form-label">Nom <span class="text-danger">*</span></label>
+                                    @Html.TextBoxFor(m => m.Nom, new { @class = "form-control", placeholder = "Votre nom", required = "required", id = "Nom" })
+                                    @Html.ValidationMessageFor(m => m.Nom, "", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="Email" class="form-label">Email <span class="text-danger">*</span></label>
+                                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", type = "email", placeholder = "votre@email.com", required = "required", id = "Email" })
+                                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="Telephone" class="form-label">Téléphone <span class="text-danger">*</span></label>
+                                    @Html.TextBoxFor(m => m.Telephone, new { @class = "form-control", placeholder = "+212 6XX XXX XXX", required = "required", id = "Telephone" })
+                                    @Html.ValidationMessageFor(m => m.Telephone, "", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-12">
+                                    <label for="AdresseComplete" class="form-label">Adresse complète <span class="text-danger">*</span></label>
+                                    @Html.TextBoxFor(m => m.AdresseComplete, new { @class = "form-control", placeholder = "Numéro, rue, quartier", required = "required", id = "AdresseComplete" })
+                                    @Html.ValidationMessageFor(m => m.AdresseComplete, "", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="Ville" class="form-label">Ville <span class="text-danger">*</span></label>
+                                    @Html.TextBoxFor(m => m.Ville, new { @class = "form-control", placeholder = "Votre ville", required = "required", id = "Ville" })
+                                    @Html.ValidationMessageFor(m => m.Ville, "", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="CodePostal" class="form-label">Code postal <span class="text-danger">*</span></label>
+                                    @Html.TextBoxFor(m => m.CodePostal, new { @class = "form-control", placeholder = "XXXXX", required = "required", id = "CodePostal" })
+                                    @Html.ValidationMessageFor(m => m.CodePostal, "", new { @class = "text-danger small" })
+                                </div>
+                                <div class="col-12">
+                                    <label for="Notes" class="form-label">Notes (optionnel)</label>
+                                    @Html.TextAreaFor(m => m.Notes, new { @class = "form-control", rows = "3", placeholder = "Instructions spéciales pour la livraison...", id = "Notes" })
+                                </div>
+                            </div>
+
+                            <!-- Delivery Method Section -->
+                            <div class="border-top pt-4">
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#C06C50" viewBox="0 0 16 16">
+                                        <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 0 10.5v-7zM1.5 3a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5h-9z"/>
+                                        <path d="M2 4.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
+                                    </svg>
+                                    <h3 class="font-display mb-0" style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700; color: #305C7D;">
+                                        Mode de livraison
+                                    </h3>
+                                </div>
+
+                                <div class="delivery-options">
+                                    @foreach (var mode in Model.ModesLivraison)
+                                    {
+                                        <div class="delivery-option mb-3 p-3 rounded-3 border-2" 
+                                             style="border: 2px solid #dee2e6; cursor: pointer; transition: all 0.3s;"
+                                             data-mode-id="@mode.ModeLivraisonId"
+                                             data-price="@mode.Tarif"
+                                             data-delai="@mode.DelaiEstime">
+                                            <div class="form-check d-flex align-items-center justify-content-between">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <input class="form-check-input" type="radio" name="ModeLivraisonId" 
+                                                           id="mode_@mode.ModeLivraisonId" value="@mode.ModeLivraisonId" 
+                                                           @(mode.ModeLivraisonId == Model.ModesLivraison.First().ModeLivraisonId ? "checked" : "") required>
+                                                    <div>
+                                                        <label class="form-check-label fw-medium" for="mode_@mode.ModeLivraisonId" style="cursor: pointer; color: #305C7D;">
+                                                            @mode.Nom
+                                                        </label>
+                                                        <p class="small text-muted mb-0">@mode.DelaiEstime</p>
+                                                    </div>
+                                                </div>
+                                                <span class="fw-bold" style="color: #305C7D;">@mode.Tarif.ToString("F2") MAD</span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                @Html.ValidationMessageFor(m => m.ModeLivraisonId, "", new { @class = "text-danger small" })
+                            </div>
+
+                            <button type="button" class="btn btn-lg w-100 mt-4" 
+                                    style="background-color: #C06C50; color: white; border: none; padding: 0.75rem 1.5rem;"
+                                    id="btn-continue-payment">
+                                Continuer vers le paiement
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Step 2: Payment -->
+                <div id="step-payment" class="checkout-step-content" style="display: none;">
+                    <div class="bg-white rounded-4 p-4 shadow-soft" style="box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#C06C50" viewBox="0 0 16 16">
+                                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7z"/>
+                                <path d="M2 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1z"/>
+                            </svg>
+                            <h2 class="font-display mb-0" style="font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #305C7D;">
+                                Mode de paiement
+                            </h2>
+                        </div>
+
+                        <div class="payment-options">
+                            <div class="payment-option mb-3 p-3 rounded-3 border-2" 
+                                 style="border: 2px solid #C06C50; background-color: rgba(192, 108, 80, 0.05); cursor: pointer; transition: all 0.3s;"
+                                 data-payment="cod">
+                                <div class="form-check d-flex align-items-center gap-3">
+                                    <input class="form-check-input" type="radio" name="PaymentMethod" id="payment-cod" value="cod" checked>
+                                    <div>
+                                        <label class="form-check-label fw-medium" for="payment-cod" style="cursor: pointer; color: #305C7D;">
+                                            Paiement à la livraison
+                                        </label>
+                                        <p class="small text-muted mb-0">Payez en espèces à la réception</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" id="btn-back-delivery">
+                                Retour
+                            </button>
+                            <button type="button" class="btn btn-lg flex-fill" 
+                                    style="background-color: #C06C50; color: white; border: none;"
+                                    id="btn-verify-order">
+                                Vérifier la commande
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Confirmation -->
+                <div id="step-confirmation" class="checkout-step-content" style="display: none;">
+                    <div class="bg-white rounded-4 p-4 shadow-soft" style="box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                        <h2 class="font-display mb-4" style="font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #305C7D;">
+                            Récapitulatif de la commande
+                        </h2>
+
+                        <div class="mb-4">
+                            <div class="p-3 rounded-3 mb-3" style="background-color: #f8f9fa;">
+                                <h3 class="fw-semibold mb-2" style="color: #305C7D;">Adresse de livraison</h3>
+                                <p class="text-muted mb-0" id="summary-address"></p>
+                            </div>
+
+                            <div class="p-3 rounded-3 mb-3" style="background-color: #f8f9fa;">
+                                <h3 class="fw-semibold mb-2" style="color: #305C7D;">Mode de livraison</h3>
+                                <p class="text-muted mb-0" id="summary-delivery"></p>
+                            </div>
+
+                            <div class="p-3 rounded-3 mb-3" style="background-color: #f8f9fa;">
+                                <h3 class="fw-semibold mb-2" style="color: #305C7D;">Mode de paiement</h3>
+                                <p class="text-muted mb-0" id="summary-payment"></p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" id="btn-back-payment">
+                                Retour
+                            </button>
+                            <button type="button" class="btn btn-lg flex-fill" 
+                                    style="background-color: #C06C50; color: white; border: none;"
+                                    id="btn-confirm-order">
+                                Confirmer la commande
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <div class="bg-white rounded-4 p-4 shadow-soft sticky-top" style="top: 100px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                    <h2 class="font-display mb-4" style="font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #305C7D;">
+                        Votre commande
+                    </h2>
+
+                    <div id="order-items" class="mb-4" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Items will be loaded by JavaScript -->
+                    </div>
+
+                    <div class="border-top pt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Sous-total</span>
+                            <span class="fw-medium" id="subtotal">0.00 MAD</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Livraison</span>
+                            <span class="fw-medium" id="delivery-fee">0.00 MAD</span>
+                        </div>
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <span class="fw-bold" style="color: #305C7D;">Total</span>
+                            <span class="fw-bold fs-5" style="color: #C06C50;" id="total">0.00 MAD</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@using (Html.BeginForm("ProcessOrder", "Checkout", FormMethod.Post, new { id = "checkout-form", style = "display: none;" }))
+{
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="cartItems" id="cart-items-input" value="" />
+    @Html.HiddenFor(m => m.Prenom, new { id = "form-Prenom" })
+    @Html.HiddenFor(m => m.Nom, new { id = "form-Nom" })
+    @Html.HiddenFor(m => m.Email, new { id = "form-Email" })
+    @Html.HiddenFor(m => m.Telephone, new { id = "form-Telephone" })
+    @Html.HiddenFor(m => m.AdresseComplete, new { id = "form-AdresseComplete" })
+    @Html.HiddenFor(m => m.Ville, new { id = "form-Ville" })
+    @Html.HiddenFor(m => m.CodePostal, new { id = "form-CodePostal" })
+    @Html.HiddenFor(m => m.Notes, new { id = "form-Notes" })
+    @Html.HiddenFor(m => m.ModeLivraisonId, new { id = "form-ModeLivraisonId" })
+}
+
+@section scripts {
+    <script src="~/Scripts/checkout.js"></script>
+}
+
+@Html.Partial("_Footer")
+

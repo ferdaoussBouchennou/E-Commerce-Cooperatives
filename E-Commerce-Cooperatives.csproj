@@ -253,12 +253,14 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\PanierController.cs" />
     <Compile Include="Controllers\ProduitController.cs" />
+    <Compile Include="Controllers\CheckoutController.cs" />
     <Compile Include="Models\Adresse.cs" />
     <Compile Include="Models\AvisProduit.cs" />
     <Compile Include="Models\Categorie.cs" />
     <Compile Include="Models\Client.cs" />
     <Compile Include="Models\Commande.cs" />
     <Compile Include="Models\CommandeItem.cs" />
+    <Compile Include="Models\CartItemForOrder.cs" />
     <Compile Include="Models\Cooperative.cs" />
     <Compile Include="Models\ECommerceDbContext.cs" />
     <Compile Include="Models\Favori.cs" />
@@ -284,6 +286,9 @@
     <Compile Include="Models\ViewModels\UserDetailsViewModel.cs" />
     <Compile Include="Models\ViewModels\DashboardViewModel.cs" />
     <Compile Include="Models\ViewModels\VerifyEmailViewModel.cs" />
+    <Compile Include="Models\ViewModels\CheckoutViewModel.cs" />
+    <Compile Include="Models\ViewModels\OrderConfirmationViewModel.cs" />
+    <Compile Include="Models\ViewModels\MesCommandesViewModel.cs" />
     <Compile Include="Models\ZoneLivraison.cs" />
     <Compile Include="Models\Variante.cs" />
     <Compile Include="Global.asax.cs">
@@ -331,6 +336,7 @@
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Scripts\site.js" />
     <Content Include="Scripts\panier.js" />
+    <Content Include="Scripts\checkout.js" />
     <Content Include="Scripts\admin.js" />
     <Content Include="style\Admin_Produits.css" />
     <Content Include="Web.config" />
@@ -353,6 +359,9 @@
     <Content Include="Views\Cooperatives\Index.cshtml" />
     <Content Include="Views\Produit\Details.cshtml" />
     <Content Include="Views\Panier\Index.cshtml" />
+    <Content Include="Views\Checkout\Index.cshtml" />
+    <Content Include="Views\Checkout\Confirmation.cshtml" />
+    <Content Include="Views\Checkout\MesCommandes.cshtml" />
     <Content Include="Views\Admin\_AdminLayout.cshtml" />
     <Content Include="Views\Admin\_ViewStart.cshtml" />
     <Content Include="Views\Admin\Commandes.cshtml" />
