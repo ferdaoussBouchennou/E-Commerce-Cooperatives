@@ -307,6 +307,52 @@ namespace E_Commerce_Cooperatives.Controllers
             }
         }
 
+
+        // GET: Admin/PrintInvoice/5
+        public ActionResult PrintInvoice(int id)
+        {
+            using (var db = new ECommerceDbContext())
+            {
+                var commande = db.GetCommandeDetails(id);
+                if (commande == null)
+                {
+                    return HttpNotFound();
+                }
+
+                try
+                {
+                    byte[] pdfBytes = E_Commerce_Cooperatives.Helpers.InvoiceHelper.GenerateInvoice(commande);
+                    return File(pdfBytes, "application/pdf", $"Facture_{commande.NumeroCommande}.pdf");
+                }
+                catch (Exception ex)
+                {
+                    return Content($"Erreur lors de la génération de la facture: {ex.Message}");
+                }
+            }
+        }
+
+        // GET: Admin/PrintDeliverySlip/5
+        public ActionResult PrintDeliverySlip(int id)
+        {
+            using (var db = new ECommerceDbContext())
+            {
+                var commande = db.GetCommandeDetails(id);
+                if (commande == null)
+                {
+                    return HttpNotFound();
+                }
+
+                try
+                {
+                    byte[] pdfBytes = E_Commerce_Cooperatives.Helpers.DeliverySlipHelper.GenerateDeliverySlip(commande);
+                    return File(pdfBytes, "application/pdf", $"Bordereau_{commande.NumeroCommande}.pdf");
+                }
+                catch (Exception ex)
+                {
+                    return Content($"Erreur lors de la génération du bordereau: {ex.Message}");
+                }
+            }
+        }
         private readonly ECommerceDbContext db = new ECommerceDbContext();
 
         // ============================================

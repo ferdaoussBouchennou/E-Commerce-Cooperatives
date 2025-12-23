@@ -137,20 +137,39 @@ h6 {
     min-height: 100vh;
 }
 
-/* Sidebar */
+/* Sidebar - Modern Design */
 .admin-sidebar {
     position: fixed;
     left: 0;
     top: 0;
-    width: 256px;
+    width: 270px;
     height: 100vh;
-    background-color: var(--sidebar-bg);
+    background: linear-gradient(180deg, #2B4C60 0%, #1e3a4d 100%);
     color: var(--sidebar-text);
     z-index: 1000;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    font-family: Georgia, serif;
+    font-family: var(--font-sans);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom scrollbar for sidebar */
+.admin-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 /* Forcer toutes les images dans la sidebar à ne pas avoir de filtre */
@@ -163,11 +182,14 @@ h6 {
 }
 
 .sidebar-header {
-    padding: 24px;
+    padding: 32px 24px 28px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 12px;
+    background: rgba(255, 255, 255, 0.02);
 }
 
 /* Forcer le logo à s'afficher en couleur - Règle très spécifique */
@@ -194,16 +216,19 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 .sidebar-header img[src*="logo-coop"] {
     height: auto !important;
     width: 100% !important;
-    max-width: 180px !important;
-    max-height: 120px !important;
-    margin-bottom: 12px;
+    max-width: 100px !important;
+    max-height: 100px !important;
+    margin-bottom: 16px;
     filter: none !important;
     -webkit-filter: none !important;
     -moz-filter: none !important;
     -ms-filter: none !important;
     -o-filter: none !important;
     opacity: 1 !important;
-    background: transparent !important;
+    background: #F5E6D3 !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     mix-blend-mode: normal !important;
     image-rendering: auto !important;
     object-fit: contain !important;
@@ -215,88 +240,108 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 }
 
 .sidebar-title {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
     margin: 0;
-    font-family: Georgia, serif;
+    font-family: var(--font-sans);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
 }
 
 .sidebar-nav {
-    padding: 0 16px;
+    padding: 8px 16px;
     flex: 1;
 }
 
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    color: var(--sidebar-text);
+    gap: 14px;
+    padding: 13px 16px;
+    color: rgba(255, 255, 255, 0.75);
     text-decoration: none;
-    border-radius: 8px;
-    transition: background-color 0.2s;
+    border-radius: 12px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     margin-bottom: 4px;
     position: relative;
-    font-family: Georgia, serif;
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    font-weight: 500;
 }
 
 .nav-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--sidebar-text);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
     text-decoration: none;
+    transform: translateX(2px);
 }
 
 .nav-item.active {
-    background-color: var(--sidebar-active);
-    color: var(--sidebar-text);
+    background: linear-gradient(135deg, rgba(232, 220, 194, 0.18) 0%, rgba(232, 220, 194, 0.08) 100%);
+    color: #ffffff;
+    box-shadow: inset 3px 0 0 #E8DCC2;
 }
 
 .nav-item.active::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 60%;
-    background-color: var(--sidebar-active);
-    border-radius: 0 2px 2px 0;
+    display: none;
 }
 
 .nav-item svg {
     flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.nav-item:hover svg,
+.nav-item.active svg {
+    opacity: 1;
 }
 
 .sidebar-footer {
-    padding: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px 16px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: auto;
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .sidebar-return {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: var(--sidebar-text);
+    justify-content: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    padding: 8px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-    font-family: Georgia, serif;
+    padding: 12px 16px;
+    border-radius: 10px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-return:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--sidebar-text);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
     text-decoration: none;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-return svg {
+    transition: transform 0.25s ease;
+}
+
+.sidebar-return:hover svg {
+    transform: translateX(-3px);
 }
 
 /* Main Content Area */
 .admin-main {
-    margin-left: 256px;
+    margin-left: 270px;
     flex: 1;
     display: flex;
-    width: calc(100% - 256px);
-    max-width: calc(100% - 256px);
+    width: calc(100% - 270px);
+    max-width: calc(100% - 270px);
     flex-direction: column;
     min-height: 100vh;
 }
@@ -2733,13 +2778,14 @@ body.modal-open {
         flex-wrap: wrap;
     }
 }
+
 #categorieModal {
     z-index: 1060 !important;
 }
 
-    #categorieModal .modal-dialog {
-        z-index: 1061 !important;
-    }
+#categorieModal .modal-dialog {
+    z-index: 1061 !important;
+}
 
 .modal-backdrop {
     z-index: 1050 !important;
