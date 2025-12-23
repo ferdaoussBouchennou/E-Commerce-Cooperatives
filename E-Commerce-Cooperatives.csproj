@@ -245,6 +245,7 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\Admin\AdminController.cs" />
+    <Compile Include="Controllers\FavorisController.cs" />
     <Compile Include="Controllers\CatalogueController.cs" />
     <Compile Include="Controllers\CategoriesController.cs" />
     <Compile Include="Controllers\CooperativesController.cs" />
@@ -261,6 +262,7 @@
     <Compile Include="Models\CartItemForOrder.cs" />
     <Compile Include="Models\Cooperative.cs" />
     <Compile Include="Models\ECommerceDbContext.cs" />
+    <Compile Include="Models\Favori.cs" />
     <Compile Include="Models\EmailHelper.cs" />
     <Compile Include="Models\ImageProduit.cs" />
     <Compile Include="Models\LivraisonSuivi.cs" />
@@ -277,6 +279,7 @@
     <Compile Include="Models\ViewModels\UserEvolutionViewModel.cs" />
     <Compile Include="Models\ViewModels\UserListViewModel.cs" />
     <Compile Include="Models\ViewModels\UserDetailsViewModel.cs" />
+    <Compile Include="Models\ViewModels\DashboardViewModel.cs" />
     <Compile Include="Models\ViewModels\VerifyEmailViewModel.cs" />
     <Compile Include="Models\ViewModels\CheckoutViewModel.cs" />
     <Compile Include="Models\ViewModels\OrderConfirmationViewModel.cs" />
@@ -347,6 +350,7 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Categories\Index.cshtml" />
     <Content Include="Views\Catalogue\Index.cshtml" />
+    <Content Include="Views\Favoris\Index.cshtml" />
     <Content Include="Views\Cooperatives\Index.cshtml" />
     <Content Include="Views\Produit\Details.cshtml" />
     <Content Include="Views\Panier\Index.cshtml" />

@@ -6,6 +6,7 @@ using E_Commerce_Cooperatives.Models;
 using E_Commerce_Cooperatives.Models.ViewModels;
 using System.Data.SqlClient;
 using System.Configuration;
+using System.Data;
 
 namespace E_Commerce_Cooperatives.Controllers
 {
@@ -906,13 +907,17 @@ namespace E_Commerce_Cooperatives.Controllers
                 if (Request.IsAjaxRequest())
                 {
                     var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                    return Json(new { success = false, errors = errors });
+                    return Json(new { success = false, message = "Données invalides", errors = errors });
                 }
                 return View(categorie);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterCategorie: {ex.Message}");
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(new { success = false, message = "Erreur lors de l'ajout: " + ex.Message });
+                }
                 TempData["ErrorMessage"] = "Erreur lors de l'ajout";
                 return View(categorie);
             }
@@ -958,11 +963,17 @@ namespace E_Commerce_Cooperatives.Controllers
         {
             try
             {
+                // DateCreation n'est pas dans le formulaire, on l'ignore pour la validation
+                ModelState.Remove("DateCreation");
+
                 if (ModelState.IsValid)
                 {
                     var existing = db.GetCategorie(categorie.CategorieId);
                     if (existing == null)
                     {
+                        if (Request.IsAjaxRequest())
+                            return Json(new { success = false, message = "Catégorie non trouvée" });
+
                         TempData["ErrorMessage"] = "Catégorie non trouvée";
                         return RedirectToAction("Categories");
                     }
@@ -984,15 +995,32 @@ namespace E_Commerce_Cooperatives.Controllers
                         categorie.ImageUrl = existing.ImageUrl; // Garder l'ancienne image
                     }
 
+                    // On s'assure de garder la date de création originale
+                    categorie.DateCreation = existing.DateCreation;
+
                     db.UpdateCategorie(categorie);
+
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = true, message = "Catégorie mise à jour avec succès" });
+
                     TempData["SuccessMessage"] = "Catégorie mise à jour avec succès";
                     return RedirectToAction("Categories");
                 }
+
+                if (Request.IsAjaxRequest())
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return Json(new { success = false, message = "Validation échouée", errors = errors });
+                }
+
                 return View(categorie);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Erreur dans ModifierCategorie: {ex.Message}");
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, message = "Erreur lors de la modification: " + ex.Message });
+
                 TempData["ErrorMessage"] = "Erreur lors de la modification";
                 return View(categorie);
             }
@@ -1025,18 +1053,115 @@ namespace E_Commerce_Cooperatives.Controllers
             {
                 connection.Open();
 
-                // Statistiques générales
-                var stats = GetUserStatistics(connection);
+                var dashboard = new DashboardViewModel();
 
-                // Graphiques d'évolution
-                var evolutionData = GetUserEvolutionData(connection);
-                ViewBag.EvolutionData = evolutionData;
+                // Stats Cards
+                dashboard = GetDashboardStats(connection, dashboard);
+                
+                // Recent Orders
+                dashboard.RecentOrders = GetRecentOrders(connection, 4);
+                
+                // Low Stock Products
+                dashboard.LowStockProducts = GetLowStockProducts(connection);
+                
+                // Best Selling Products
+                dashboard.BestSellingProducts = GetBestSellingProducts(connection, 5);
+                
+                // Cooperatives
+                dashboard.Cooperatives = GetCooperatives(connection);
 
-                // Utilisateurs les plus actifs
-                var activeUsers = GetMostActiveUsers(connection);
-                ViewBag.ActiveUsers = activeUsers;
+                return View(dashboard);
+            }
+        }
 
-                return View(stats);
+        // POST: Admin/AddUser
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AddUser(string Prenom, string Nom, string Email, string Telephone, string MotDePasse)
+        {
+            // Handle anti-forgery token validation errors
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                if (errors.Any(e => e.Contains("token") || e.Contains("Token") || e.Contains("anti-forgery")))
+                {
+                    return Json(new { success = false, message = "Erreur de sécurité. Veuillez recharger la page et réessayer." }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return Json(new { success = false, message = "Non autorisé" }, JsonRequestBehavior.AllowGet);
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(Prenom) || string.IsNullOrEmpty(Nom) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(MotDePasse))
+                {
+                    return Json(new { success = false, message = "Tous les champs obligatoires doivent être remplis." }, JsonRequestBehavior.AllowGet);
+                }
+
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Check if email exists
+                    var checkEmailQuery = "SELECT COUNT(*) FROM Utilisateurs WHERE Email = @Email";
+                    using (var checkCommand = new SqlCommand(checkEmailQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@Email", Email);
+                        var emailExists = (int)checkCommand.ExecuteScalar() > 0;
+
+                        if (emailExists)
+                        {
+                            return Json(new { success = false, message = "Cet email est déjà utilisé." }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+
+                    // Hash password
+                    string hashedPassword = E_Commerce_Cooperatives.Models.PasswordHelper.HashPassword(MotDePasse);
+
+                    // Insert user
+                    var insertUserQuery = @"INSERT INTO Utilisateurs (Email, MotDePasse, TypeUtilisateur, DateCreation) 
+                                           VALUES (@Email, @MotDePasse, 'Client', GETDATE());
+                                           SELECT CAST(SCOPE_IDENTITY() as int);";
+                    
+                    int utilisateurId;
+                    using (var userCommand = new SqlCommand(insertUserQuery, connection))
+                    {
+                        userCommand.Parameters.AddWithValue("@Email", Email);
+                        userCommand.Parameters.AddWithValue("@MotDePasse", hashedPassword);
+                        utilisateurId = (int)userCommand.ExecuteScalar();
+                    }
+
+                    // Insert client
+                    var insertClientQuery = @"INSERT INTO Clients (UtilisateurId, Nom, Prenom, Telephone, EstActif, DateCreation) 
+                                             VALUES (@UtilisateurId, @Nom, @Prenom, @Telephone, 1, GETDATE());
+                                             SELECT CAST(SCOPE_IDENTITY() as int);";
+                    
+                    int clientId;
+                    using (var clientCommand = new SqlCommand(insertClientQuery, connection))
+                    {
+                        clientCommand.Parameters.AddWithValue("@UtilisateurId", utilisateurId);
+                        clientCommand.Parameters.AddWithValue("@Nom", Nom);
+                        clientCommand.Parameters.AddWithValue("@Prenom", Prenom);
+                        clientCommand.Parameters.AddWithValue("@Telephone", string.IsNullOrEmpty(Telephone) ? (object)DBNull.Value : Telephone);
+                        clientId = (int)clientCommand.ExecuteScalar();
+                    }
+
+                    return Json(new { success = true, message = "Client ajouté avec succès" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                System.Diagnostics.Debug.WriteLine("SQL Error in AddUser: " + sqlEx.Message);
+                return Json(new { success = false, message = "Erreur de base de données: " + sqlEx.Message }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error in AddUser: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack trace: " + ex.StackTrace);
+                return Json(new { success = false, message = "Erreur: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -1142,6 +1267,147 @@ namespace E_Commerce_Cooperatives.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = "Erreur: " + ex.Message });
+            }
+        }
+
+        // GET: Admin/GetUserDetailsJson/5 (JSON)
+        [HttpGet]
+        public JsonResult GetUserDetailsJson(int id)
+        {
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return Json(new { success = false, message = "Non autorisé" }, JsonRequestBehavior.AllowGet);
+            }
+
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    var user = GetUserDetails(connection, id);
+                    if (user == null)
+                    {
+                        return Json(new { success = false, message = "Utilisateur introuvable" }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    // Create a serializable object with proper date formatting
+                    var userData = new
+                    {
+                        ClientId = user.ClientId,
+                        UtilisateurId = user.UtilisateurId,
+                        Prenom = user.Prenom ?? "",
+                        Nom = user.Nom ?? "",
+                        Email = user.Email ?? "",
+                        Telephone = user.Telephone ?? "",
+                        DateNaissance = user.DateNaissance.HasValue ? user.DateNaissance.Value.ToString("yyyy-MM-dd") : (string)null,
+                        EstActif = user.EstActif,
+                        DateCreation = user.DateCreation.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        DerniereConnexion = user.DerniereConnexion.HasValue ? user.DerniereConnexion.Value.ToString("yyyy-MM-ddTHH:mm:ss") : (string)null,
+                        OrderCount = user.OrderCount,
+                        TotalSpent = user.TotalSpent
+                    };
+
+                    return Json(new { success = true, user = userData }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error in GetUserDetailsJson: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack trace: " + ex.StackTrace);
+                return Json(new { success = false, message = "Erreur: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        // POST: Admin/UpdateUser
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult UpdateUser(int ClientId, string Prenom, string Nom, string Email, string Telephone)
+        {
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return Json(new { success = false, message = "Non autorisé" }, JsonRequestBehavior.AllowGet);
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(Prenom) || string.IsNullOrEmpty(Nom) || string.IsNullOrEmpty(Email))
+                {
+                    return Json(new { success = false, message = "Les champs Prénom, Nom et Email sont obligatoires." }, JsonRequestBehavior.AllowGet);
+                }
+
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Check if email exists for another user
+                    var checkEmailQuery = @"SELECT COUNT(*) FROM Utilisateurs u
+                                           INNER JOIN Clients c ON u.UtilisateurId = c.UtilisateurId
+                                           WHERE u.Email = @Email AND c.ClientId != @ClientId";
+                    using (var checkCommand = new SqlCommand(checkEmailQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@Email", Email);
+                        checkCommand.Parameters.AddWithValue("@ClientId", ClientId);
+                        var emailExists = (int)checkCommand.ExecuteScalar() > 0;
+
+                        if (emailExists)
+                        {
+                            return Json(new { success = false, message = "Cet email est déjà utilisé par un autre utilisateur." }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+
+                    // Get UtilisateurId for this ClientId
+                    var getUserIdQuery = "SELECT UtilisateurId FROM Clients WHERE ClientId = @ClientId";
+                    int utilisateurId;
+                    using (var getUserIdCmd = new SqlCommand(getUserIdQuery, connection))
+                    {
+                        getUserIdCmd.Parameters.AddWithValue("@ClientId", ClientId);
+                        var result = getUserIdCmd.ExecuteScalar();
+                        if (result == null)
+                        {
+                            return Json(new { success = false, message = "Client introuvable" }, JsonRequestBehavior.AllowGet);
+                        }
+                        utilisateurId = (int)result;
+                    }
+
+                    // Update Utilisateur
+                    var updateUserQuery = @"UPDATE Utilisateurs 
+                                           SET Email = @Email 
+                                           WHERE UtilisateurId = @UtilisateurId";
+                    using (var userCommand = new SqlCommand(updateUserQuery, connection))
+                    {
+                        userCommand.Parameters.AddWithValue("@Email", Email);
+                        userCommand.Parameters.AddWithValue("@UtilisateurId", utilisateurId);
+                        userCommand.ExecuteNonQuery();
+                    }
+
+                    // Update Client
+                    var updateClientQuery = @"UPDATE Clients 
+                                             SET Nom = @Nom, 
+                                                 Prenom = @Prenom, 
+                                                 Telephone = @Telephone
+                                             WHERE ClientId = @ClientId";
+                    using (var clientCommand = new SqlCommand(updateClientQuery, connection))
+                    {
+                        clientCommand.Parameters.AddWithValue("@Nom", Nom);
+                        clientCommand.Parameters.AddWithValue("@Prenom", Prenom);
+                        clientCommand.Parameters.AddWithValue("@Telephone", string.IsNullOrEmpty(Telephone) ? (object)DBNull.Value : Telephone);
+                        clientCommand.Parameters.AddWithValue("@ClientId", ClientId);
+                        clientCommand.ExecuteNonQuery();
+                    }
+
+                    return Json(new { success = true, message = "Client modifié avec succès" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                System.Diagnostics.Debug.WriteLine("SQL Error in UpdateUser: " + sqlEx.Message);
+                return Json(new { success = false, message = "Erreur de base de données: " + sqlEx.Message }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error in UpdateUser: " + ex.Message);
+                return Json(new { success = false, message = "Erreur: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -1346,9 +1612,10 @@ namespace E_Commerce_Cooperatives.Controllers
 
             using (var countCommand = new SqlCommand(countQuery, connection))
             {
-                foreach (var param in parameters)
+                // Add parameters to count command (create new instances)
+                if (!string.IsNullOrEmpty(searchTerm))
                 {
-                    countCommand.Parameters.Add(param);
+                    countCommand.Parameters.AddWithValue("@SearchTerm", "%" + searchTerm + "%");
                 }
                 totalCount = (int)countCommand.ExecuteScalar();
             }
@@ -1376,12 +1643,13 @@ namespace E_Commerce_Cooperatives.Controllers
 
             using (var command = new SqlCommand(query, connection))
             {
-                foreach (var param in parameters)
+                // Add parameters to main command (create new instances)
+                if (!string.IsNullOrEmpty(searchTerm))
                 {
-                    command.Parameters.Add(param);
+                    command.Parameters.AddWithValue("@SearchTerm", "%" + searchTerm + "%");
                 }
-                command.Parameters.Add(new SqlParameter("@Offset", offset));
-                command.Parameters.Add(new SqlParameter("@PageSize", pageSize));
+                command.Parameters.AddWithValue("@Offset", offset);
+                command.Parameters.AddWithValue("@PageSize", pageSize);
 
                 using (var reader = command.ExecuteReader())
                 {
@@ -1456,6 +1724,232 @@ namespace E_Commerce_Cooperatives.Controllers
             }
 
             return null;
+        }
+
+        private DashboardViewModel GetDashboardStats(SqlConnection connection, DashboardViewModel dashboard)
+        {
+            // Total Sales
+            var salesQuery = @"SELECT 
+                                ISNULL(SUM(TotalTTC), 0) as TotalSales,
+                                ISNULL(SUM(CASE WHEN DateCommande >= DATEADD(DAY, -30, GETDATE()) THEN TotalTTC ELSE 0 END), 0) as LastMonthSales
+                              FROM Commandes
+                              WHERE Statut != 'Annulée'";
+            
+            using (var command = new SqlCommand(salesQuery, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        dashboard.TotalSales = reader.IsDBNull(0) ? 0 : reader.GetDecimal(0);
+                        var lastMonthSales = reader.IsDBNull(1) ? 0 : reader.GetDecimal(1);
+                        var previousMonthSales = dashboard.TotalSales - lastMonthSales;
+                        dashboard.SalesChangePercent = previousMonthSales > 0 
+                            ? Math.Round(((lastMonthSales - previousMonthSales) / previousMonthSales) * 100, 1)
+                            : 0;
+                    }
+                }
+            }
+
+            // Orders Today
+            var ordersTodayQuery = @"SELECT 
+                                        COUNT(*) as OrdersToday,
+                                        (SELECT COUNT(*) FROM Commandes 
+                                         WHERE CAST(DateCommande AS DATE) = CAST(DATEADD(DAY, -1, GETDATE()) AS DATE)) as YesterdayOrders
+                                     FROM Commandes
+                                     WHERE CAST(DateCommande AS DATE) = CAST(GETDATE() AS DATE)";
+            
+            using (var command = new SqlCommand(ordersTodayQuery, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        dashboard.OrdersToday = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                        var yesterdayOrders = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                        dashboard.OrdersTodayChange = dashboard.OrdersToday - yesterdayOrders;
+                    }
+                }
+            }
+
+            // Active Products
+            var activeProductsQuery = "SELECT COUNT(*) FROM Produits WHERE EstDisponible = 1";
+            using (var command = new SqlCommand(activeProductsQuery, connection))
+            {
+                dashboard.ActiveProducts = (int)command.ExecuteScalar();
+            }
+
+            // Total Users
+            var usersQuery = @"SELECT 
+                                COUNT(*) as TotalUsers,
+                                (SELECT COUNT(*) FROM Utilisateurs 
+                                 WHERE TypeUtilisateur = 'Client' 
+                                 AND DateCreation >= DATEADD(DAY, -30, GETDATE())) as NewUsers
+                              FROM Utilisateurs
+                              WHERE TypeUtilisateur = 'Client'";
+            
+            using (var command = new SqlCommand(usersQuery, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        dashboard.TotalUsers = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                        dashboard.UsersChange = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                    }
+                }
+            }
+
+            // Total Orders
+            var totalOrdersQuery = "SELECT COUNT(*) FROM Commandes";
+            using (var command = new SqlCommand(totalOrdersQuery, connection))
+            {
+                dashboard.TotalOrders = (int)command.ExecuteScalar();
+            }
+
+            return dashboard;
+        }
+
+        private List<RecentOrderViewModel> GetRecentOrders(SqlConnection connection, int limit = 4)
+        {
+            var orders = new List<RecentOrderViewModel>();
+            
+            var query = @"SELECT TOP (@Limit)
+                            c.NumeroCommande,
+                            cl.Prenom + ' ' + LEFT(cl.Nom, 1) + '.' as CustomerName,
+                            c.TotalTTC,
+                            c.Statut,
+                            c.DateCommande
+                         FROM Commandes c
+                         INNER JOIN Clients cl ON c.ClientId = cl.ClientId
+                         ORDER BY c.DateCommande DESC";
+            
+            using (var command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@Limit", limit);
+                
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        orders.Add(new RecentOrderViewModel
+                        {
+                            OrderNumber = reader.GetString(0),
+                            CustomerName = reader.GetString(1),
+                            Amount = reader.GetDecimal(2),
+                            Status = reader.GetString(3),
+                            OrderDate = reader.GetDateTime(4)
+                        });
+                    }
+                }
+            }
+            
+            return orders;
+        }
+
+        private List<LowStockProductViewModel> GetLowStockProducts(SqlConnection connection)
+        {
+            var products = new List<LowStockProductViewModel>();
+            
+            var query = @"SELECT 
+                            ProduitId,
+                            Nom,
+                            StockTotal,
+                            SeuilAlerte
+                         FROM Produits
+                         WHERE StockTotal <= SeuilAlerte
+                         AND EstDisponible = 1
+                         ORDER BY StockTotal ASC";
+            
+            using (var command = new SqlCommand(query, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        products.Add(new LowStockProductViewModel
+                        {
+                            ProductId = reader.GetInt32(0),
+                            ProductName = reader.GetString(1),
+                            Stock = reader.GetInt32(2),
+                            AlertThreshold = reader.GetInt32(3)
+                        });
+                    }
+                }
+            }
+            
+            return products;
+        }
+
+        private List<BestSellingProductViewModel> GetBestSellingProducts(SqlConnection connection, int limit = 5)
+        {
+            var products = new List<BestSellingProductViewModel>();
+            
+            var query = @"SELECT TOP (@Limit)
+                            p.ProduitId,
+                            p.Nom,
+                            ISNULL(SUM(ci.Quantite), 0) as SalesCount,
+                            p.Prix
+                         FROM Produits p
+                         LEFT JOIN CommandeItems ci ON p.ProduitId = ci.ProduitId
+                         LEFT JOIN Commandes c ON ci.CommandeId = c.CommandeId
+                         WHERE (c.Statut != 'Annulée' OR c.Statut IS NULL)
+                         GROUP BY p.ProduitId, p.Nom, p.Prix
+                         ORDER BY SalesCount DESC";
+            
+            using (var command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@Limit", limit);
+                
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        products.Add(new BestSellingProductViewModel
+                        {
+                            ProductId = reader.GetInt32(0),
+                            ProductName = reader.GetString(1),
+                            SalesCount = reader.GetInt32(2),
+                            Price = reader.GetDecimal(3)
+                        });
+                    }
+                }
+            }
+            
+            return products;
+        }
+
+        private List<CooperativeViewModel> GetCooperatives(SqlConnection connection)
+        {
+            var cooperatives = new List<CooperativeViewModel>();
+            
+            var query = @"SELECT 
+                            CooperativeId,
+                            Nom,
+                            Ville,
+                            EstActive
+                         FROM Cooperatives
+                         WHERE EstActive = 1
+                         ORDER BY Nom";
+            
+            using (var command = new SqlCommand(query, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        cooperatives.Add(new CooperativeViewModel
+                        {
+                            CooperativeId = reader.GetInt32(0),
+                            Name = reader.GetString(1),
+                            City = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                            IsActive = reader.IsDBNull(3) ? false : reader.GetBoolean(3)
+                        });
+                    }
+                }
+            }
+            
+            return cooperatives;
         }
     }
 }
