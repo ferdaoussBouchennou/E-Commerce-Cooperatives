@@ -15,26 +15,49 @@
 
 <main class="py-4" style="background-color: #F5F3EF; min-height: 80vh;">
     <div class="container">
-        <div class="d-flex align-items-center gap-3 mb-4">
-            <a href="@Url.Action("Index", "Home")" class="text-muted text-decoration-none">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-                </svg>
-            </a>
-            <h1 class="font-display mb-0" style="font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: #305C7D;">
-                Mes Commandes
-            </h1>
-        </div>
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <a href="@Url.Action("Index", "Home")" class="text-muted text-decoration-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                </a>
+                <h1 class="font-display mb-0" style="font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: #305C7D;">
+                    @(Model.IsHistory ? "Historique des Commandes" : "Mes Commandes en cours")
+                </h1>
+            </div>
 
+            @if (!Model.SelectedCommandeId.HasValue)
+            {
+                if (Model.IsHistory)
+                {
+                    <a href="@Url.Action("MesCommandes", "Checkout")" class="btn text-decoration-none d-inline-flex align-items-center gap-2" 
+                       style="color: #305C7D; border: 1px solid #305C7D; background-color: transparent; border-radius: 8px; padding: 0.5rem 1rem; transition: all 0.3s ease;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                        </svg>
+                        Retour aux commandes en cours
+                    </a>
+                }
+                else
+                {
+                    <a href="@Url.Action("HistoriqueCommandes", "Checkout")" class="btn text-decoration-none d-inline-flex align-items-center gap-2" 
+                       style="color: #fff; background-color: #305C7D; border-radius: 8px; padding: 0.5rem 1rem; transition: all 0.3s ease;">
+                        Historique des commandes
+                    </a>
+                }
+            }
+        </div>
+        
         @if (Model.SelectedCommandeId.HasValue && Model.CommandeDetail != null)
         {
             <!-- Order Detail View -->
             <div class="max-w-3xl mx-auto" style="max-width: 48rem;">
-                <a href="/mes-commandes?page=@Model.CurrentPage" class="btn btn-link text-muted text-decoration-none mb-4 d-inline-flex align-items-center gap-2">
+                <a href="@(Model.IsHistory ? Url.Action("HistoriqueCommandes", "Checkout", new { page = Model.CurrentPage, id = (int?)null }) : Url.Action("MesCommandes", "Checkout", new { page = Model.CurrentPage, id = (int?)null }))" class="btn btn-link text-muted text-decoration-none mb-4 d-inline-flex align-items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
                     </svg>
-                    Retour aux commandes
+                    @(Model.IsHistory ? "Retour à l'historique" : "Retour aux commandes")
                 </a>
 
                 <div class="bg-white rounded-4 p-4 shadow-soft" style="box-shadow: 0 4px 25px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);">
@@ -47,9 +70,19 @@
                                 Passée le @Model.CommandeDetail.DateCommande.ToString("dd/MM/yyyy")
                             </p>
                         </div>
-                        <span class="badge" style="font-size: 0.85rem; padding: 0.6rem 1.2rem; background-color: #305C7D; color: white; border-radius: 20px; font-weight: 500;">
-                            @Model.CommandeDetail.Statut
-                        </span>
+                        <div class="d-flex gap-2">
+                            <a href="@Url.Action("DownloadInvoice", "Checkout", new { id = Model.CommandeDetail.CommandeId })" target="_blank" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" 
+                               style="border-radius: 8px; padding: 0.6rem 1.2rem; font-weight: 500;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-pdf" viewBox="0 0 16 16">
+                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                                    <path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029zm1.379-1.901c-.166.076-.32.156-.459.238-.328.194-.541.383-.647.545-.094.145-.096.25-.04.361.01.022.02.036.026.044a.266.266 0 0 0 .035-.012c.137-.056.355-.235.635-.572a8.18 8.18 0 0 0 .45-.606zm1.64-1.33a12.71 12.71 0 0 1 1.01-.193 11.744 11.744 0 0 1-.51-.858 20.801 20.801 0 0 1-.5 1.05zm2.446.45c.15.163.296.3.435.41.24.19.407.253.498.256a.107.107 0 0 0 .07-.015.307.307 0 0 0 .094-.125.436.436 0 0 0 .059-.2.095.095 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a3.876 3.876 0 0 0-.612-.053zM8.097 9.388c.063-.564.11-1.248.115-1.854.004-.619-.058-1.125-.275-1.485-.098-.163-.262-.29-.449-.317-.186-.027-.366.022-.51.127-.246.177-.333.565-.246 1.085.08.455.337.954.717 1.48.197.276.43.66.648.964z"/>
+                                </svg>
+                                Facture
+                            </a>
+                            <span class="badge d-flex align-items-center" style="font-size: 0.85rem; padding: 0.6rem 1.2rem; background-color: #305C7D; color: white; border-radius: 20px; font-weight: 500;">
+                                @Model.CommandeDetail.Statut
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Tracking -->
@@ -242,7 +275,7 @@
                                 <div class="d-flex align-items-center gap-4">
                                     <span class="fw-bold" style="color: #305C7D; font-size: 1.25rem;">@commande.TotalTTC.ToString("N2") MAD</span>
                                     
-                                    <a href="/mes-commandes?id=@commande.CommandeId&page=@Model.CurrentPage" 
+                                    <a href="@(Model.IsHistory ? Url.Action("HistoriqueCommandes", "Checkout", new { id = commande.CommandeId, page = Model.CurrentPage }) : Url.Action("MesCommandes", "Checkout", new { id = commande.CommandeId, page = Model.CurrentPage }))" 
                                        class="btn btn-sm px-4 py-2 d-inline-flex align-items-center gap-2 btn-details-custom" 
                                        style="border: 1.5px solid #305C7D; color: #305C7D; background-color: transparent; border-radius: 8px; font-weight: 500; transition: all 0.3s ease;">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -263,7 +296,7 @@
                                 <ul class="pagination pagination-sm gap-2 border-0">
                                     <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
                                         <a class="page-link rounded-3 border-0 px-3 py-2" 
-                                           href="/mes-commandes?page=@(Model.CurrentPage - 1)" 
+                                           href="@(Model.IsHistory ? Url.Action("HistoriqueCommandes", "Checkout", new { page = Model.CurrentPage - 1 }) : Url.Action("MesCommandes", "Checkout", new { page = Model.CurrentPage - 1 }))" 
                                            style="background-color: @(Model.CurrentPage == 1 ? "#f8f9fa" : "#fff"); color: #305C7D; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                                             Précédent
                                         </a>
@@ -273,7 +306,7 @@
                                     {
                                         <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
                                             <a class="page-link rounded-3 border-0 px-3 py-2" 
-                                               href="/mes-commandes?page=@i"
+                                               href="@(Model.IsHistory ? Url.Action("HistoriqueCommandes", "Checkout", new { page = i }) : Url.Action("MesCommandes", "Checkout", new { page = i }))"
                                                style="background-color: @(Model.CurrentPage == i ? "#305C7D" : "#fff"); color: @(Model.CurrentPage == i ? "#fff" : "#305C7D"); box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                                                 @i
                                             </a>
@@ -282,7 +315,7 @@
 
                                     <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
                                         <a class="page-link rounded-3 border-0 px-3 py-2" 
-                                           href="/mes-commandes?page=@(Model.CurrentPage + 1)"
+                                           href="@(Model.IsHistory ? Url.Action("HistoriqueCommandes", "Checkout", new { page = Model.CurrentPage + 1 }) : Url.Action("MesCommandes", "Checkout", new { page = Model.CurrentPage + 1 }))"
                                            style="background-color: @(Model.CurrentPage == Model.TotalPages ? "#f8f9fa" : "#fff"); color: #305C7D; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                                             Suivant
                                         </a>

@@ -137,12 +137,21 @@ namespace E_Commerce_Cooperatives.Controllers
                     decimal deliveryFee = deliveryMode?.Tarif ?? 0;
                     decimal total = subtotal + deliveryFee;
 
-                    // Envoyer l'email de confirmation
+                    // Envoyer l'email de confirmation avec facture
                     try
                     {
-                        string clientFullName = $"{model.Prenom} {model.Nom}";
-                        string deliveryMethodName = deliveryMode?.Nom ?? "Standard";
-                        EmailHelper.SendOrderConfirmationEmail(model.Email, clientFullName, numeroCommande, cartItems, subtotal, deliveryMethodName, deliveryFee, total);
+                        var commande = db.GetCommandeByNumber(numeroCommande);
+                        if (commande != null)
+                        {
+                            EmailHelper.SendOrderConfirmationEmail(commande);
+                        }
+                        else
+                        {
+                            // Fallback (ne devrait pas arriver)
+                            string clientFullName = $"{model.Prenom} {model.Nom}";
+                            string deliveryMethodName = deliveryMode?.Nom ?? "Standard";
+                            EmailHelper.SendOrderConfirmationEmail(model.Email, clientFullName, numeroCommande, cartItems, subtotal, deliveryMethodName, deliveryFee, total);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -222,14 +231,21 @@ namespace E_Commerce_Cooperatives.Controllers
             using (var db = new ECommerceDbContext())
             {
                 var allCommandes = db.GetCommandesByClient(clientId);
-                int totalCommandes = allCommandes.Count;
+                
+                // Filtrer pour ne garder que les commandes en cours (non Livrée et non Annulée)
+                var activeCommandes = allCommandes
+                    .Where(c => c.Statut != "Livrée" && c.Statut != "Annulée")
+                    .OrderByDescending(c => c.DateCommande)
+                    .ToList();
+
+                int totalCommandes = activeCommandes.Count;
                 int totalPages = (int)Math.Ceiling((double)totalCommandes / pageSize);
 
                 // Ensure page is within valid range
                 if (page < 1) page = 1;
                 if (totalPages > 0 && page > totalPages) page = totalPages;
 
-                var paginatedCommandes = allCommandes
+                var paginatedCommandes = activeCommandes
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .ToList();
@@ -239,7 +255,61 @@ namespace E_Commerce_Cooperatives.Controllers
                     Commandes = paginatedCommandes,
                     SelectedCommandeId = id,
                     CurrentPage = page,
-                    TotalPages = totalPages
+                    TotalPages = totalPages,
+                    IsHistory = false
+                };
+
+                if (id.HasValue)
+                {
+                    // Pour le détail, on cherche dans toutes les commandes au cas où on vient d'un lien direct
+                    viewModel.CommandeDetail = allCommandes.FirstOrDefault(c => c.CommandeId == id.Value);
+                }
+
+                return View("MesCommandes", viewModel);
+            }
+        }
+
+        // GET: Checkout/HistoriqueCommandes
+        public ActionResult HistoriqueCommandes(int? id, int page = 1)
+        {
+            // Vérifier si l'utilisateur est connecté
+            if (Session["ClientId"] == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            int clientId = (int)Session["ClientId"];
+            int pageSize = 4;
+
+            using (var db = new ECommerceDbContext())
+            {
+                var allCommandes = db.GetCommandesByClient(clientId);
+
+                // Filtrer pour ne garder que l'historique (Livrée ou Annulée)
+                var historyCommandes = allCommandes
+                    .Where(c => c.Statut == "Livrée" || c.Statut == "Annulée")
+                    .OrderByDescending(c => c.DateCommande)
+                    .ToList();
+
+                int totalCommandes = historyCommandes.Count;
+                int totalPages = (int)Math.Ceiling((double)totalCommandes / pageSize);
+
+                // Ensure page is within valid range
+                if (page < 1) page = 1;
+                if (totalPages > 0 && page > totalPages) page = totalPages;
+
+                var paginatedCommandes = historyCommandes
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var viewModel = new MesCommandesViewModel
+                {
+                    Commandes = paginatedCommandes,
+                    SelectedCommandeId = id,
+                    CurrentPage = page,
+                    TotalPages = totalPages,
+                    IsHistory = true
                 };
 
                 if (id.HasValue)
@@ -247,7 +317,7 @@ namespace E_Commerce_Cooperatives.Controllers
                     viewModel.CommandeDetail = allCommandes.FirstOrDefault(c => c.CommandeId == id.Value);
                 }
 
-                return View(viewModel);
+                return View("MesCommandes", viewModel);
             }
         }
 
@@ -367,30 +437,49 @@ namespace E_Commerce_Cooperatives.Controllers
             }
         }
 
-        private string GetStatusDescription(string statut)
+        private string GetStatusDescription(string status)
         {
-            switch (statut.ToLower())
+            switch (status)
             {
-                case "confirmée":
-                case "confirme":
-                    return "Commande confirmée et paiement reçu";
-                case "préparation":
-                case "preparation":
-                    return "Commande préparée et emballée";
-                case "expédiée":
-                case "expedie":
-                    return "Colis expédié depuis l'entrepôt";
-                case "en transit":
-                case "en_transit":
-                    return "Colis en cours d'acheminement vers le centre de distribution local";
-                case "en livraison":
-                case "en_livraison":
-                    return "Colis en cours de livraison";
-                case "livrée":
-                case "livre":
-                    return "Colis livré au destinataire";
-                default:
-                    return "Statut : " + statut;
+                case "En attente": return "Votre commande a été reçue et est en attente de confirmation.";
+                case "Validée": return "Votre commande a été confirmée et est en cours de traitement.";
+                case "Préparation": return "Votre commande est en cours de préparation dans notre entrepôt.";
+                case "Expédiée": return "Votre commande a été expédiée et est en route.";
+                case "Livrée": return "Votre commande a été livrée avec succès.";
+                case "Annulée": return "Votre commande a été annulée.";
+                default: return "Statut : " + status;
+            }
+        }
+
+        // GET: Checkout/DownloadInvoice/5
+        public ActionResult DownloadInvoice(int id)
+        {
+            if (Session["ClientId"] == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            int clientId = (int)Session["ClientId"];
+
+            using (var db = new ECommerceDbContext())
+            {
+                var commande = db.GetCommandeDetails(id);
+
+                if (commande == null || commande.ClientId != clientId)
+                {
+                    return HttpNotFound();
+                }
+
+                try
+                {
+                    byte[] pdfBytes = E_Commerce_Cooperatives.Helpers.InvoiceHelper.GenerateInvoice(commande);
+                    return File(pdfBytes, "application/pdf", $"Facture_{commande.NumeroCommande}.pdf");
+                }
+                catch (Exception ex)
+                {
+                    // Log error
+                    return new HttpStatusCodeResult(500, "Erreur lors de la génération de la facture: " + ex.Message);
+                }
             }
         }
     }

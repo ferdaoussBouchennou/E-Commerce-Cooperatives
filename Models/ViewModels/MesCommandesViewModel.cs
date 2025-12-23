@@ -10,6 +10,7 @@ namespace E_Commerce_Cooperatives.Models.ViewModels
         public int? SelectedCommandeId { get; set; }
         public int CurrentPage { get; set; }
         public int TotalPages { get; set; }
+        public bool IsHistory { get; set; }
     }
 }
 

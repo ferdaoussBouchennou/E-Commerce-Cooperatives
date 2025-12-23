@@ -985,6 +985,79 @@ namespace E_Commerce_Cooperatives.Models
             return commande;
         }
 
+        public Commande GetCommandeByNumber(string numeroCommande)
+        {
+            Commande commande = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT c.CommandeId, c.NumeroCommande, c.ClientId, c.AdresseId, c.ModeLivraisonId, 
+                           c.DateCommande, c.FraisLivraison, c.TotalHT, c.MontantTVA, c.TotalTTC, 
+                           c.Statut, c.Commentaire, c.DateAnnulation, c.RaisonAnnulation,
+                           cl.Nom, cl.Prenom, cl.Telephone, 
+                           u.Email,
+                           ml.ModeLivraisonId, ml.Nom as ModeLivraisonNom, ml.Description as ModeLivraisonDesc, ml.Tarif
+                    FROM Commandes c
+                    INNER JOIN Clients cl ON c.ClientId = cl.ClientId
+                    INNER JOIN Utilisateurs u ON cl.UtilisateurId = u.UtilisateurId
+                    LEFT JOIN ModesLivraison ml ON c.ModeLivraisonId = ml.ModeLivraisonId
+                    WHERE c.NumeroCommande = @NumeroCommande";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@NumeroCommande", numeroCommande);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            commande = new Commande
+                            {
+                                CommandeId = reader.GetInt32(0),
+                                NumeroCommande = reader.GetString(1),
+                                ClientId = reader.GetInt32(2),
+                                AdresseId = reader.GetInt32(3),
+                                ModeLivraisonId = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
+                                DateCommande = reader.GetDateTime(5),
+                                FraisLivraison = reader.GetDecimal(6),
+                                TotalHT = reader.GetDecimal(7),
+                                MontantTVA = reader.GetDecimal(8),
+                                TotalTTC = reader.GetDecimal(9),
+                                Statut = reader.IsDBNull(10) ? null : reader.GetString(10),
+                                Commentaire = reader.IsDBNull(11) ? null : reader.GetString(11),
+                                DateAnnulation = reader.IsDBNull(12) ? (DateTime?)null : reader.GetDateTime(12),
+                                RaisonAnnulation = reader.IsDBNull(13) ? null : reader.GetString(13),
+                                Client = new Client
+                                {
+                                    ClientId = reader.GetInt32(2),
+                                    Nom = reader.GetString(14),
+                                    Prenom = reader.GetString(15),
+                                    Telephone = reader.IsDBNull(16) ? null : reader.GetString(16),
+                                    Email = reader.GetString(17)
+                                },
+                                ModeLivraison = reader.IsDBNull(18) ? null : new ModeLivraison
+                                {
+                                    ModeLivraisonId = reader.GetInt32(18),
+                                    Nom = reader.GetString(19),
+                                    Description = reader.IsDBNull(20) ? null : reader.GetString(20),
+                                    Tarif = reader.IsDBNull(21) ? 0 : reader.GetDecimal(21)
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+
+            if (commande != null)
+            {
+                commande.Adresse = GetAdresse(commande.AdresseId);
+                commande.Items = GetCommandeItems(commande.CommandeId);
+                commande.SuiviLivraison = GetLivraisonSuivi(commande.CommandeId);
+            }
+
+            return commande;
+        }
+
         private Adresse GetAdresse(int adresseId)
         {
             Adresse adresse = null;

@@ -248,6 +248,8 @@
     <Compile Include="Controllers\FavorisController.cs" />
     <Compile Include="Controllers\CatalogueController.cs" />
     <Compile Include="Controllers\CategoriesController.cs" />
+    <Compile Include="Models\InvoiceHelper.cs" />
+    <Compile Include="Models\DeliverySlipHelper.cs" />
     <Compile Include="Controllers\CooperativesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\PanierController.cs" />

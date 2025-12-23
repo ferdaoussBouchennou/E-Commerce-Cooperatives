@@ -813,5 +813,31 @@
                 activeBtn.addClass('active');
             }
         }
+
+        // Auto-filter Logic
+        $(function() {
+            var $form = $('.filter-form');
+            var $applyBtn = $('.btn-filter-apply');
+            var debounceTimer;
+
+            // Hide apply button initially
+            $applyBtn.hide();
+
+            // Function to submit form
+            function submitForm() {
+                $form.submit();
+            }
+
+            // Debounce for text inputs (search, amounts)
+            $('.search-input, .amount-filter').on('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(submitForm, 600); // 600ms delay to wait for typing
+            });
+
+            // Immediate submit for select and date
+            $('.status-filter, .date-filter').on('change', function() {
+                submitForm();
+            });
+        });
     </script>
 }
