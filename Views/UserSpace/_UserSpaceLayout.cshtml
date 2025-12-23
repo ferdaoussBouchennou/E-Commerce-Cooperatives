@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - CoopShop</title>
+    <link rel="icon" type="image/png" href="@Url.Content("~/Content/images/logo-coop.png")" />
+    <link rel="shortcut icon" type="image/png" href="@Url.Content("~/Content/images/logo-coop.png")" />
+    @Styles.Render("~/Content/css")
+    <style>
+        /* Dark Links "Voir tout" */
+        .btn-link-dark {
+            color: #305C7D !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+        .btn-link-dark:hover {
+            color: #1e3d54 !important;
+            transform: translateX(4px);
+        }
+        .list-group-item.active {
+            background-color: #305C7D !important;
+            color: white !important;
+            border-color: #305C7D !important;
+        }
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+        .list-group-item.active:hover {
+            background-color: #244a66 !important;
+        }
+    </style>
+    @Scripts.Render("~/bundles/modernizr")
+</head>
+<body>
+    <!-- Hidden element to store authentication status -->
+    <div id="user-authenticated" data-authenticated="@((Session["UserId"] != null).ToString().ToLower())" style="display: none;"></div>
+    
+    @Html.Partial("_Header")
+    
+    <div class="container my-5">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 8px;">
+                @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius: 8px;">
+                @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @RenderBody()
+    </div>
+
+    @Html.Partial("_Footer")
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @Scripts.Render("~/bundles/site")
+    @RenderSection("scripts", required: false)
+</body>
+</html>

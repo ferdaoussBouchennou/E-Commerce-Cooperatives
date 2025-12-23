@@ -738,3 +738,106 @@ textarea {
 ::-webkit-scrollbar-thumb:hover {
     background: #9ca3af;
 }
+
+/* ============================================
+   CHECKOUT PAGES STYLES
+   ============================================ */
+
+/* Checkout Progress Steps */
+.checkout-step {
+    transition: all 0.3s ease;
+}
+
+.checkout-step.active {
+    background-color: var(--terracota-calido) !important;
+    color: white !important;
+}
+
+.checkout-step.completed {
+    background-color: var(--terracota-calido) !important;
+    color: white !important;
+}
+
+/* Delivery Option Selection */
+.delivery-option {
+    transition: all 0.3s ease;
+}
+
+.delivery-option:hover {
+    border-color: var(--terracota-calido) !important;
+    background-color: rgba(192, 108, 80, 0.05) !important;
+}
+
+.delivery-option.selected {
+    border-color: var(--terracota-calido) !important;
+    background-color: rgba(192, 108, 80, 0.05) !important;
+}
+
+/* Order Summary Sticky */
+.order-summary-sticky {
+    position: sticky;
+    top: 100px;
+}
+
+/* Order Tracking Progress */
+.order-tracking-progress {
+    position: relative;
+}
+
+.order-tracking-progress::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: #e0e0e0;
+    z-index: 0;
+    margin: 0 40px;
+}
+
+.order-tracking-progress-bar {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 4px;
+    background-color: var(--terracota-calido);
+    z-index: 1;
+    margin: 0 40px;
+    transition: width 0.3s ease;
+}
+
+/* Order Status Badges */
+.order-status-livree {
+    color: #28a745 !important;
+}
+
+.order-status-expediee,
+.order-status-en-cours {
+    color: #007bff !important;
+}
+
+.order-status-preparation {
+    color: #ffc107 !important;
+}
+
+/* Checkout Form Validation */
+.checkout-form .form-control:invalid {
+    border-color: #dc3545;
+}
+
+.checkout-form .form-control:valid {
+    border-color: #28a745;
+}
+
+/* Responsive adjustments for checkout */
+@media (max-width: 768px) {
+    .order-summary-sticky {
+        position: relative;
+        top: 0;
+    }
+    
+    .checkout-step span {
+        display: none;
+    }
+}

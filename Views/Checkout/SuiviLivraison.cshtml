@@ -1,0 +1,397 @@
+@using E_Commerce_Cooperatives.Models
+@{
+    ViewBag.Title = "Suivi de Livraison";
+}
+
+@Html.Partial("_Header")
+
+<main class="py-5" style="background-color: #F5F3EF; min-height: 80vh;">
+    <div class="container" style="max-width: 800px;">
+        <!-- Header -->
+        <div id="tracking-header" class="d-flex align-items-center gap-3 mb-4">
+            <a href="javascript:history.back()" class="text-dark" style="text-decoration: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+            </a>
+            <div>
+                <h1 class="font-display mb-1" style="font-family: 'Playfair Display', serif; font-size: 2.25rem; font-weight: 700; color: #305C7D;">Suivi de Livraison</h1>
+                <p class="text-muted mb-0">Suivez votre colis en temps réel</p>
+            </div>
+        </div>
+
+        <!-- Search Card -->
+        <div id="search-card" class="bg-white rounded-4 p-4 shadow-soft mb-4" style="box-shadow: 0 4px 25px rgba(0,0,0,0.04);">
+            <h3 class="fw-bold mb-3" style="color: #305C7D; font-size: 1.15rem;">Entrez votre numéro de commande ou de suivi</h3>
+            <div class="row g-3">
+                <div class="col-md-9">
+                    <input type="text" id="tracking-input" class="form-control form-control-lg rounded-3" 
+                           placeholder="EX: CMD-12345678" 
+                           style="border-color: #e0e0e0; background-color: #F8F9FA; font-size: 1rem;">
+                </div>
+                <div class="col-md-3">
+                    <button id="btn-search" class="btn btn-lg w-100 d-flex align-items-center justify-content-center gap-2" 
+                            style="background-color: #C06C50; color: white; border: none; border-radius: 8px; font-weight: 500;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                        Rechercher
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div id="info-card" class="bg-white rounded-4 p-4 shadow-soft mb-4" style="background-color: #F8F6F2 !important; box-shadow: 0 4px 25px rgba(0,0,0,0.02);">
+            <h3 class="fw-bold mb-3" style="font-family: 'Playfair Display', serif; color: #305C7D; font-size: 1.25rem;">Où trouver mon numéro de suivi ?</h3>
+            <ul class="list-unstyled space-y-3 mb-0">
+                <li class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; background-color: #C06C50;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="white" viewBox="0 0 16 16">
+                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                        </svg>
+                    </div>
+                    <span style="color: #4a5568;">Dans l'email de confirmation de commande</span>
+                </li>
+                <li class="d-flex align-items-center gap-3 mb-0">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; background-color: #C06C50;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="white" viewBox="0 0 16 16">
+                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                        </svg>
+                    </div>
+                    <span style="color: #4a5568;">Dans votre espace "Mes commandes" sur votre profil</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Progress Section (Hidden by default) -->
+        <div id="tracking-results" style="display: none;">
+            <!-- Result Main Card -->
+            <div class="bg-white rounded-4 p-4 shadow-soft mb-4 position-relative" style="box-shadow: 0 4px 25px rgba(0,0,0,0.04);">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <p class="text-muted small mb-0">Commande</p>
+                        <h2 id="res-order-number" class="font-display fw-bold mb-0" style="font-family: 'Playfair Display', serif; color: #305C7D; font-size: 1.75rem;"></h2>
+                    </div>
+                    <div id="res-status-badge-container">
+                        <span id="res-status-badge" class="badge d-inline-flex align-items-center gap-2 px-3 py-2" style="background-color: rgba(48, 92, 125, 0.1); color: #305C7D; font-weight: 500; border-radius: 12px; font-size: 0.9rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-1h11V3.5zM3 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                            </svg>
+                            <span id="res-status-text"></span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="mb-5 px-3">
+                    <div class="d-flex justify-content-between align-items-center position-relative mb-2">
+                        <div class="position-absolute top-50 start-0 end-0" style="height: 3px; background-color: #e0e0e0; z-index: 0; margin: 0 40px; transform: translateY(-50%);">
+                            <div id="res-progress-line" class="h-100 rounded" style="width: 0%; background-color: #C06C50;"></div>
+                        </div>
+
+                        <!-- Step 1: Confirmée -->
+                        <div class="d-flex flex-column align-items-center position-relative" style="z-index: 10;">
+                            <div id="step-1-icon" class="rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px; background-color: #e0e0e0; color: white;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z"/>
+                                </svg>
+                            </div>
+                            <span class="small mt-2 fw-semibold" style="color: #9e9e9e; font-size: 0.75rem;">Confirmée</span>
+                        </div>
+
+                        <!-- Step 2: Préparation -->
+                        <div class="d-flex flex-column align-items-center position-relative" style="z-index: 10;">
+                            <div id="step-2-icon" class="rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px; background-color: #e0e0e0; color: white;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 .114 0l7.129 2.852A.5.5 0 0 1 15 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                                </svg>
+                            </div>
+                            <span class="small mt-2 fw-semibold" style="color: #9e9e9e; font-size: 0.75rem;">Préparation</span>
+                        </div>
+
+                        <!-- Step 3: Expédition -->
+                        <div class="d-flex flex-column align-items-center position-relative" style="z-index: 10;">
+                            <div id="step-3-icon" class="rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px; background-color: #e0e0e0; color: white;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-1h11V3.5zM3 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM2 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5V7H2V5.5z"/>
+                                </svg>
+                            </div>
+                            <span class="small mt-2 fw-semibold" style="color: #9e9e9e; font-size: 0.75rem;">Expédition</span>
+                        </div>
+
+                        <!-- Step 4: Livrée -->
+                        <div class="d-flex flex-column align-items-center position-relative" style="z-index: 10;">
+                            <div id="step-4-icon" class="rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px; background-color: #e0e0e0; color: white;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z"/>
+                                </svg>
+                            </div>
+                            <span class="small mt-2 fw-semibold" style="color: #9e9e9e; font-size: 0.75rem;">Livrée</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-4" style="background-color: #F8F9FA;">
+                            <p class="text-muted small mb-2">Adresse de livraison</p>
+                            <div class="d-flex gap-2 align-items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#C06C50" viewBox="0 0 16 16" class="mt-1">
+                                    <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                                </svg>
+                                <span id="res-address" class="fw-medium" style="color: #305C7D;"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-4" style="background-color: #F8F9FA;">
+                            <p class="text-muted small mb-2">Livraison estimée</p>
+                            <div class="d-flex gap-2 align-items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#C06C50" viewBox="0 0 16 16" class="mt-1">
+                                    <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                                </svg>
+                                <span id="res-delivery-date" class="fw-medium" style="color: #305C7D;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Card -->
+            <div class="bg-white rounded-4 p-4 shadow-soft" style="box-shadow: 0 4px 25px rgba(0,0,0,0.04);">
+                <h3 class="font-display fw-bold mb-4" style="font-family: 'Playfair Display', serif; color: #305C7D; font-size: 1.5rem;">Historique du colis</h3>
+                <div id="res-history-timeline" class="position-relative ps-4" style="border-left: 2px solid #F0F0F0; margin-left: 20px;">
+                    <!-- History events will be injected here -->
+                </div>
+
+                <div class="text-center mt-5">
+                    <button onclick="window.location.href='/suivi-livraison'" class="btn btn-outline-secondary rounded-pill px-4" style="border-color: #e0e0e0; color: #718096; font-weight: 500;">
+                        Nouvelle recherche
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@Html.Partial("_Footer")
+
+<style>
+    .timeline-event::before {
+        content: '';
+        position: absolute;
+        left: -29px;
+        top: 0;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #E2E8F0;
+        border: 3px solid white;
+        z-index: 2;
+    }
+    .timeline-event.active::before {
+        background-color: #C06C50;
+        box-shadow: 0 0 0 4px rgba(192, 108, 80, 0.15);
+    }
+    .timeline-event:last-child {
+        margin-bottom: 0 !important;
+    }
+    .timeline-icon-container {
+        position: absolute;
+        left: -48px;
+        top: 0;
+        z-index: 5;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnSearch = document.getElementById('btn-search');
+        const input = document.getElementById('tracking-input');
+        const results = document.getElementById('tracking-results');
+
+        btnSearch.addEventListener('click', performSearch);
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') performSearch();
+        });
+
+        // Auto-search if trackingNumber is in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const trackingNum = urlParams.get('trackingNumber');
+        if (trackingNum) {
+            input.value = trackingNum;
+            performSearch();
+        }
+
+        function performSearch() {
+            const val = input.value.trim();
+            if (!val) return;
+
+            btnSearch.disabled = true;
+            btnSearch.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+            fetch('/Checkout/SearchTracking?trackingNumber=' + encodeURIComponent(val))
+                .then(response => response.json())
+                .then(data => {
+                    btnSearch.disabled = false;
+                    btnSearch.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg> Rechercher';
+
+                    if (data.success) {
+                        displayResults(data.result);
+                    } else {
+                        alert(data.message || 'Numéro de suivi introuvable.');
+                    }
+                })
+                .catch(err => {
+                    btnSearch.disabled = false;
+                    btnSearch.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg> Rechercher';
+                    console.error('Tracking Error:', err);
+                    alert('Une erreur est survenue lors de la recherche. Veuillez réessayer (Détails: ' + err.message + ')');
+                });
+        }
+
+        function displayResults(res) {
+            // Hide elements as requested
+            document.getElementById('tracking-header')?.style.setProperty('display', 'none', 'important');
+            document.getElementById('search-card')?.style.setProperty('display', 'none', 'important');
+            document.getElementById('info-card')?.style.setProperty('display', 'none', 'important');
+
+            results.style.display = 'block';
+            document.getElementById('res-order-number').textContent = res.numeroCommande;
+            document.getElementById('res-status-text').textContent = res.statut;
+            document.getElementById('res-address').textContent = res.adresseLivraison;
+            document.getElementById('res-delivery-date').textContent = formatDate(res.dateLivraisonEstimee);
+
+            // Progress handling
+            const stages = ['confirmée', 'préparation', 'expédition', 'livrée'];
+            const currentStatus = res.statut.toLowerCase();
+            let currentIndex = 0;
+            
+            if (currentStatus.includes('livr')) currentIndex = 3;
+            else if (currentStatus.includes('exp') || currentStatus.includes('transit')) currentIndex = 2;
+            else if (currentStatus.includes('prépar')) currentIndex = 1;
+            
+            const progressPercent = currentIndex === 0 ? 0 : currentIndex === 1 ? 33 : currentIndex === 2 ? 66 : 100;
+            document.getElementById('res-progress-line').style.width = progressPercent + '%';
+
+            for (let i = 1; i <= 4; i++) {
+                const icon = document.getElementById('step-' + i + '-icon');
+                if (icon) {
+                    if (i <= (currentIndex + 1)) {
+                        icon.style.backgroundColor = '#C06C50';
+                        icon.style.boxShadow = '0 0 0 4px rgba(192, 108, 80, 0.1)';
+                        icon.nextElementSibling.style.color = '#305C7D';
+                    } else {
+                        icon.style.backgroundColor = '#e0e0e0';
+                        icon.style.boxShadow = 'none';
+                        icon.nextElementSibling.style.color = '#9e9e9e';
+                    }
+                }
+            }
+
+            // Timeline - Merge server events with synthetic stages to ensure full history
+            const timeline = document.getElementById('res-history-timeline');
+            timeline.innerHTML = '';
+
+            const hierarchyNames = ["Confirmée", "Préparation", "Expédiée", "Livrée"];
+            const hierarchyDescriptions = {
+                "Confirmée": "Commande confirmée et paiement reçu",
+                "Préparation": "Commande préparée et emballée",
+                "Expédiée": "Colis expédié depuis l'entrepôt",
+                "Livrée": "Colis livré au destinataire"
+            };
+            const hierarchyLieux = {
+                "Confirmée": "En ligne",
+                "Préparation": "Coopérative Atlas",
+                "Expédiée": "Entrepôt Marrakech",
+                "Livrée": "Adresse de livraison"
+            };
+
+            // Build full events list
+            let effectiveEvents = [];
+            for (let i = currentIndex; i >= 0; i--) {
+                const stageName = hierarchyNames[i];
+                // Try to find if this stage exists in server response (case-insensitive partial match)
+                const realEvent = res.events.find(e => e.status.toLowerCase().includes(stageName.toLowerCase().substring(0, 4)));
+                
+                if (realEvent) {
+                    effectiveEvents.push(realEvent);
+                } else {
+                    // Generate synthetic date (approximate relative to order date)
+                    let synthDate = res.dateCommande; // Format YYYY-MM-DD
+                    let synthTime = "10:30";
+                    if (i === 1) synthTime = "14:15";
+                    if (i === 2) synthTime = "09:45";
+                    
+                    effectiveEvents.push({
+                        status: stageName,
+                        description: hierarchyDescriptions[stageName],
+                        lieu: hierarchyLieux[stageName],
+                        date: synthDate,
+                        heure: synthTime
+                    });
+                }
+            }
+
+            effectiveEvents.forEach((ev, idx) => {
+                const isActive = idx === 0;
+                const isConfirmed = ev.status.toLowerCase().includes('conf');
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'timeline-event mb-5 position-relative ' + (isActive ? 'active' : '');
+                
+                // Get icon based on status
+                let iconSvg = '';
+                const s = ev.status.toLowerCase();
+                if (s.includes('livr')) {
+                    iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z"/></svg>';
+                } else if (s.includes('exp') || s.includes('transit') || s.includes('achemin')) {
+                    iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-1h11V3.5z"/></svg>';
+                } else if (s.includes('prépar') || s.includes('prepar')) {
+                    iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6z"/></svg>';
+                } else {
+                    iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z"/></svg>';
+                }
+
+                eventDiv.innerHTML = `
+                    <div class="timeline-icon-container rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 36px; height: 36px; background-color: ${isActive ? '#C06C50' : '#CBD5E0'};">
+                        ${iconSvg}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="pe-3">
+                            <h5 class="fw-bold mb-1" style="color: ${isActive ? '#305C7D' : '#4A5568'}; font-size: 1.05rem;">${ev.status}</h5>
+                            <p class="text-muted small mb-1" style="line-height: 1.4;">${ev.description}</p>
+                            ${isConfirmed ? `
+                            <div class="d-flex align-items-center gap-1" style="color: #94A3B8; font-size: 0.8rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                                </svg>
+                                <span>${ev.lieu}</span>
+                            </div>` : ''}
+                        </div>
+                        ${isConfirmed ? `
+                        <div class="text-end text-nowrap">
+                            <p class="mb-0 fw-medium" style="color: #64748B; font-size: 0.9rem;">${ev.date.split('-').reverse().join('/')}</p>
+                            <p class="text-muted small mb-0">à ${ev.heure}</p>
+                        </div>` : ''}
+                    </div>
+                `;
+                timeline.appendChild(eventDiv);
+            });
+            
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            return date.toLocaleDateString('fr-FR', options);
+        }
+    });
+</script>

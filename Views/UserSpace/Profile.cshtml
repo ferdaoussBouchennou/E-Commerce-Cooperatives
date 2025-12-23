@@ -1,0 +1,264 @@
+@model E_Commerce_Cooperatives.Models.ViewModels.ProfileViewModel
+@{
+    ViewBag.Title = "Mon Profil";
+    Layout = "~/Views/UserSpace/_UserSpaceLayout.cshtml";
+}
+
+<div class="row">
+    <!-- Left Sidebar -->
+    @Html.Partial("_UserSidebar")
+
+    <!-- Main Content -->
+    <div class="col-md-9">
+        <div class="card shadow-sm" style="border-radius: 16px; border: none;">
+            <!-- Tabs -->
+            <div class="card-header border-0 p-0" style="background: transparent;">
+                <ul class="nav nav-tabs border-0 px-4 pt-3" style="border-bottom: 2px solid #e9ecef !important;">
+                    <li class="nav-item">
+                        <a class="nav-link active profile-tab" data-tab="informations" href="#" style="color: #305C7D; font-weight: 600; border: none; border-bottom: 3px solid #305C7D; padding: 1rem 1.5rem;">
+                            Informations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link profile-tab" data-tab="adresses" href="#" style="color: #6c757d; font-weight: 600; border: none; padding: 1rem 1.5rem;">
+                            Adresses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link profile-tab" data-tab="securite" href="#" style="color: #6c757d; font-weight: 600; border: none; padding: 1rem 1.5rem;">
+                            Sécurité
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="tab-content">
+                    <!-- Informations Tab -->
+                    <div id="tab-informations" class="tab-pane-content">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0" style="color: #305C7D; font-weight: 700;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 10px; vertical-align: middle;">
+                                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                                </svg>
+                                Informations Personnelles
+                            </h4>
+                            <button type="button" class="btn btn-outline-primary" id="editBtn" style="border-color: #305C7D; color: #305C7D; border-radius: 8px; font-weight: 600; padding: 0.5rem 1.5rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 5px;">
+                                    <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
+                                </svg>
+                                Modifier
+                            </button>
+                        </div>
+
+                        <!-- View Mode -->
+                        <div id="viewMode">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="info-card p-4" style="background: #f8f9fa; border-radius: 12px; border: 1px solid #e9ecef;">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#305C7D" viewBox="0 0 16 16" style="margin-right: 10px;">
+                                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                                            </svg>
+                                            <small class="text-muted" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Nom complet</small>
+                                        </div>
+                                        <div style="color: #305C7D; font-size: 16px; font-weight: 600;">@Model.Prenom @Model.Nom</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-card p-4" style="background: #f8f9fa; border-radius: 12px; border: 1px solid #e9ecef;">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#305C7D" viewBox="0 0 16 16" style="margin-right: 10px;">
+                                                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+                                            </svg>
+                                            <small class="text-muted" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Email</small>
+                                        </div>
+                                        <div style="color: #305C7D; font-size: 16px; font-weight: 600;">@Model.Email</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-card p-4" style="background: #f8f9fa; border-radius: 12px; border: 1px solid #e9ecef;">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#305C7D" viewBox="0 0 16 16" style="margin-right: 10px;">
+                                                <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122L9.96 11.107a.678.678 0 0 1-.58-.122l-2.539-2.539a.678.678 0 0 1-.122-.58l.724-3.547a.678.678 0 0 0-.122-.58L4.758 1.328z"/>
+                                            </svg>
+                                            <small class="text-muted" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Téléphone</small>
+                                        </div>
+                                        <div style="color: #305C7D; font-size: 16px; font-weight: 600;">@(string.IsNullOrEmpty(Model.Telephone) ? "Non renseigné" : Model.Telephone)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-card p-4" style="background: #f8f9fa; border-radius: 12px; border: 1px solid #e9ecef;">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#305C7D" viewBox="0 0 16 16" style="margin-right: 10px;">
+                                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
+                                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                                            </svg>
+                                            <small class="text-muted" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Date de naissance</small>
+                                        </div>
+                                        <div style="color: #305C7D; font-size: 16px; font-weight: 600;">
+                                            @if (Model.DateNaissance.HasValue)
+                                            {
+                                                @Model.DateNaissance.Value.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"))
+                                            }
+                                            else
+                                            {
+                                                <text>Non renseignée</text>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Mode -->
+                        <div id="editMode" style="display: none;">
+                            @using (Html.BeginForm("Profile", "UserSpace", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                @Html.HiddenFor(m => m.ClientId)
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            @Html.LabelFor(m => m.Prenom, new { @class = "form-label fw-bold", style = "color: #305C7D;" })
+                                            @Html.TextBoxFor(m => m.Prenom, new { @class = "form-control", required = "required", style = "border-radius: 8px; padding: 0.75rem;" })
+                                            @Html.ValidationMessageFor(m => m.Prenom, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            @Html.LabelFor(m => m.Nom, new { @class = "form-label fw-bold", style = "color: #305C7D;" })
+                                            @Html.TextBoxFor(m => m.Nom, new { @class = "form-control", required = "required", style = "border-radius: 8px; padding: 0.75rem;" })
+                                            @Html.ValidationMessageFor(m => m.Nom, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            @Html.LabelFor(m => m.Email, new { @class = "form-label fw-bold", style = "color: #305C7D;" })
+                                            @Html.TextBoxFor(m => m.Email, new { @class = "form-control", type = "email", required = "required", style = "border-radius: 8px; padding: 0.75rem;" })
+                                            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            @Html.LabelFor(m => m.Telephone, new { @class = "form-label fw-bold", style = "color: #305C7D;" })
+                                            @Html.TextBoxFor(m => m.Telephone, new { @class = "form-control", type = "tel", style = "border-radius: 8px; padding: 0.75rem;" })
+                                            @Html.ValidationMessageFor(m => m.Telephone, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            @Html.LabelFor(m => m.DateNaissance, new { @class = "form-label fw-bold", style = "color: #305C7D;" })
+                                            @Html.TextBoxFor(m => m.DateNaissance, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", style = "border-radius: 8px; padding: 0.75rem;" })
+                                            @Html.ValidationMessageFor(m => m.DateNaissance, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-outline-secondary" id="cancelBtn" style="border-radius: 8px; padding: 0.75rem 2rem; font-weight: 600;">
+                                        Annuler
+                                    </button>
+                                    <button type="submit" class="btn" style="background-color: #305C7D; color: white; border-radius: 8px; padding: 0.75rem 2rem; font-weight: 600;">
+                                        Enregistrer
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Dynamic content for Adresses / Sécurité -->
+                    <div id="tab-dynamic" class="tab-pane-content" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function() {
+            // Tabs logic: stay on same page and load content dynamically
+            const $tabs = $('.profile-tab');
+            const $infoTab = $('#tab-informations');
+            const $dynamicTab = $('#tab-dynamic');
+
+            function activateTab(tabName) {
+                $tabs.removeClass('active').css({'color':'#6c757d','border-bottom':'none'});
+                $tabs.filter('[data-tab="'+tabName+'"]').addClass('active').css({'color':'#305C7D','border-bottom':'3px solid #305C7D'});
+
+                if (tabName === 'informations') {
+                    $dynamicTab.hide().empty();
+                    $infoTab.show();
+                } else {
+                    $infoTab.hide();
+                    $dynamicTab.show().html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div></div>');
+
+                    let url = '';
+                    if (tabName === 'adresses') {
+                        url = '@Url.Action("AddressesPartial", "UserSpace")';
+                    } else if (tabName === 'securite') {
+                        url = '@Url.Action("SecurityPartial", "UserSpace")';
+                    }
+
+                    if (url) {
+                        $.get(url, function (html) {
+                            $dynamicTab.html(html);
+                        }).fail(function () {
+                            $dynamicTab.html('<div class="alert alert-danger">Impossible de charger le contenu.</div>');
+                        });
+                    }
+                }
+            }
+
+            $tabs.on('click', function(e){
+                e.preventDefault();
+                const tabName = $(this).data('tab');
+                activateTab(tabName);
+            });
+
+            // Expose reload for addresses
+            window.loadAddressesTab = function() {
+                activateTab('adresses');
+            };
+
+            // Activer tab selon query string ?tab=...
+            const params = new URLSearchParams(window.location.search);
+            const initialTab = params.get('tab');
+            if (initialTab === 'adresses' || initialTab === 'securite') {
+                activateTab(initialTab);
+            } else {
+                activateTab('informations');
+            }
+
+            // Toggle between view and edit mode
+            $('#editBtn').on('click', function() {
+                $('#viewMode').hide();
+                $('#editMode').show();
+                $(this).hide();
+            });
+
+            $('#cancelBtn').on('click', function() {
+                $('#editMode').hide();
+                $('#viewMode').show();
+                $('#editBtn').show();
+            });
+
+            // Bootstrap validation
+            (function() {
+                'use strict';
+                var forms = document.querySelectorAll('.needs-validation');
+                Array.prototype.slice.call(forms).forEach(function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            })();
+        });
+    </script>
+}
