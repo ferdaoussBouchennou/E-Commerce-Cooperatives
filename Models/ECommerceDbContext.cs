@@ -1803,5 +1803,205 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
         }
+
+        // ============================================
+        // GESTION DES COMMANDES - CRÉATION
+        // ============================================
+
+        public string CreateCommande(int clientId, int adresseId, int modeLivraisonId, List<CartItemForOrder> items, string commentaire = null)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // Générer le numéro de commande
+                        string numeroCommande = "CMD-" + DateTime.Now.ToString("yyyyMMdd") + "-" + new Random().Next(10000, 99999).ToString();
+
+                        // Calculer les totaux
+                        decimal totalHT = 0;
+                        foreach (var item in items)
+                        {
+                            totalHT += item.PrixUnitaire * item.Quantite;
+                        }
+                        decimal montantTVA = totalHT * 0.20m; // TVA 20%
+                        decimal fraisLivraison = GetModeLivraison(modeLivraisonId)?.Tarif ?? 0;
+                        decimal totalTTC = totalHT + montantTVA + fraisLivraison;
+
+                        // Insérer la commande
+                        var insertCommandeQuery = @"INSERT INTO Commandes (NumeroCommande, ClientId, AdresseId, ModeLivraisonId, DateCommande, 
+                                                      FraisLivraison, TotalHT, MontantTVA, TotalTTC, Statut, Commentaire)
+                                                  VALUES (@NumeroCommande, @ClientId, @AdresseId, @ModeLivraisonId, GETDATE(), 
+                                                      @FraisLivraison, @TotalHT, @MontantTVA, @TotalTTC, 'Validée', @Commentaire);
+                                                  SELECT CAST(SCOPE_IDENTITY() as int);";
+
+                        int commandeId;
+                        using (var command = new SqlCommand(insertCommandeQuery, connection, transaction))
+                        {
+                            command.Parameters.AddWithValue("@NumeroCommande", numeroCommande);
+                            command.Parameters.AddWithValue("@ClientId", clientId);
+                            command.Parameters.AddWithValue("@AdresseId", adresseId);
+                            command.Parameters.AddWithValue("@ModeLivraisonId", modeLivraisonId);
+                            command.Parameters.AddWithValue("@FraisLivraison", fraisLivraison);
+                            command.Parameters.AddWithValue("@TotalHT", totalHT);
+                            command.Parameters.AddWithValue("@MontantTVA", montantTVA);
+                            command.Parameters.AddWithValue("@TotalTTC", totalTTC);
+                            command.Parameters.AddWithValue("@Commentaire", (object)commentaire ?? DBNull.Value);
+                            commandeId = (int)command.ExecuteScalar();
+                        }
+
+                        // Insérer les items de la commande
+                        foreach (var item in items)
+                        {
+                            var insertItemQuery = @"INSERT INTO CommandeItems (CommandeId, ProduitId, VarianteId, Quantite, PrixUnitaire, TotalLigne)
+                                                  VALUES (@CommandeId, @ProduitId, @VarianteId, @Quantite, @PrixUnitaire, @TotalLigne)";
+                            using (var itemCommand = new SqlCommand(insertItemQuery, connection, transaction))
+                            {
+                                itemCommand.Parameters.AddWithValue("@CommandeId", commandeId);
+                                itemCommand.Parameters.AddWithValue("@ProduitId", item.ProduitId);
+                                itemCommand.Parameters.AddWithValue("@VarianteId", (object)item.VarianteId ?? DBNull.Value);
+                                itemCommand.Parameters.AddWithValue("@Quantite", item.Quantite);
+                                itemCommand.Parameters.AddWithValue("@PrixUnitaire", item.PrixUnitaire);
+                                itemCommand.Parameters.AddWithValue("@TotalLigne", item.PrixUnitaire * item.Quantite);
+                                itemCommand.ExecuteNonQuery();
+                            }
+                        }
+
+                        // Créer le suivi de livraison initial
+                        var insertSuiviQuery = @"INSERT INTO LivraisonSuivi (CommandeId, Statut, Description, DateStatut)
+                                               VALUES (@CommandeId, 'Confirmée', 'Votre commande a été confirmée', GETDATE())";
+                        using (var suiviCommand = new SqlCommand(insertSuiviQuery, connection, transaction))
+                        {
+                            suiviCommand.Parameters.AddWithValue("@CommandeId", commandeId);
+                            suiviCommand.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                        return numeroCommande;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public int CreateOrUpdateAdresse(int clientId, string adresseComplete, string ville, string codePostal, string pays = "Maroc")
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                
+                // Vérifier si une adresse existe déjà pour ce client
+                var checkQuery = "SELECT TOP 1 AdresseId FROM Adresses WHERE ClientId = @ClientId ORDER BY EstParDefaut DESC, DateCreation DESC";
+                int? existingAdresseId = null;
+                using (var checkCommand = new SqlCommand(checkQuery, connection))
+                {
+                    checkCommand.Parameters.AddWithValue("@ClientId", clientId);
+                    var result = checkCommand.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        existingAdresseId = (int)result;
+                    }
+                }
+
+                if (existingAdresseId.HasValue)
+                {
+                    // Mettre à jour l'adresse existante
+                    var updateQuery = @"UPDATE Adresses SET AdresseComplete = @AdresseComplete, Ville = @Ville, 
+                                      CodePostal = @CodePostal, Pays = @Pays, EstParDefaut = 1
+                                      WHERE AdresseId = @AdresseId";
+                    using (var updateCommand = new SqlCommand(updateQuery, connection))
+                    {
+                        updateCommand.Parameters.AddWithValue("@AdresseId", existingAdresseId.Value);
+                        updateCommand.Parameters.AddWithValue("@AdresseComplete", adresseComplete);
+                        updateCommand.Parameters.AddWithValue("@Ville", ville);
+                        updateCommand.Parameters.AddWithValue("@CodePostal", codePostal);
+                        updateCommand.Parameters.AddWithValue("@Pays", pays);
+                        updateCommand.ExecuteNonQuery();
+                    }
+                    return existingAdresseId.Value;
+                }
+                else
+                {
+                    // Créer une nouvelle adresse
+                    var insertQuery = @"INSERT INTO Adresses (ClientId, AdresseComplete, Ville, CodePostal, Pays, EstParDefaut, DateCreation)
+                                      VALUES (@ClientId, @AdresseComplete, @Ville, @CodePostal, @Pays, 1, GETDATE());
+                                      SELECT CAST(SCOPE_IDENTITY() as int)";
+                    using (var insertCommand = new SqlCommand(insertQuery, connection))
+                    {
+                        insertCommand.Parameters.AddWithValue("@ClientId", clientId);
+                        insertCommand.Parameters.AddWithValue("@AdresseComplete", adresseComplete);
+                        insertCommand.Parameters.AddWithValue("@Ville", ville);
+                        insertCommand.Parameters.AddWithValue("@CodePostal", codePostal);
+                        insertCommand.Parameters.AddWithValue("@Pays", pays);
+                        return (int)insertCommand.ExecuteScalar();
+                    }
+                }
+            }
+        }
+
+        public List<Commande> GetCommandesByClient(int clientId)
+        {
+            var commandes = new List<Commande>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"SELECT c.CommandeId, c.NumeroCommande, c.ClientId, c.AdresseId, c.ModeLivraisonId, 
+                           c.DateCommande, c.FraisLivraison, c.TotalHT, c.MontantTVA, c.TotalTTC, 
+                           c.Statut, c.Commentaire, c.DateAnnulation, c.RaisonAnnulation,
+                           ml.Nom as ModeLivraisonNom
+                    FROM Commandes c
+                    LEFT JOIN ModesLivraison ml ON c.ModeLivraisonId = ml.ModeLivraisonId
+                    WHERE c.ClientId = @ClientId
+                    ORDER BY c.DateCommande DESC";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            commandes.Add(new Commande
+                            {
+                                CommandeId = reader.GetInt32(0),
+                                NumeroCommande = reader.GetString(1),
+                                ClientId = reader.GetInt32(2),
+                                AdresseId = reader.GetInt32(3),
+                                ModeLivraisonId = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
+                                DateCommande = reader.GetDateTime(5),
+                                FraisLivraison = reader.GetDecimal(6),
+                                TotalHT = reader.GetDecimal(7),
+                                MontantTVA = reader.GetDecimal(8),
+                                TotalTTC = reader.GetDecimal(9),
+                                Statut = reader.IsDBNull(10) ? null : reader.GetString(10),
+                                Commentaire = reader.IsDBNull(11) ? null : reader.GetString(11),
+                                DateAnnulation = reader.IsDBNull(12) ? (DateTime?)null : reader.GetDateTime(12),
+                                RaisonAnnulation = reader.IsDBNull(13) ? null : reader.GetString(13),
+                                ModeLivraison = reader.IsDBNull(14) ? null : new ModeLivraison
+                                {
+                                    Nom = reader.GetString(14)
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Charger les adresses et items pour chaque commande
+            foreach (var commande in commandes)
+            {
+                commande.Adresse = GetAdresse(commande.AdresseId);
+                commande.Items = GetCommandeItems(commande.CommandeId);
+                commande.SuiviLivraison = GetLivraisonSuivi(commande.CommandeId);
+            }
+
+            return commandes;
+        }
     }
 }

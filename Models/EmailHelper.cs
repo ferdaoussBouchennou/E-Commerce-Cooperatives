@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Mail;
 using System.Configuration;
 using System.Web;
+using System.Text;
+using System.Collections.Generic;
 
 namespace E_Commerce_Cooperatives.Models
 {
@@ -232,6 +234,114 @@ namespace E_Commerce_Cooperatives.Models
     </div>
 </body>
 </html>";
+        }
+        public static bool SendOrderConfirmationEmail(string toEmail, string clientName, string orderNumber, List<CartItemForOrder> items, decimal subtotal, string modeLivraison, decimal fraisLivraison, decimal totalTTC)
+        {
+            try
+            {
+                string smtpServer = ConfigurationManager.AppSettings["SmtpServer"] ?? "smtp.gmail.com";
+                int smtpPort = int.Parse(ConfigurationManager.AppSettings["SmtpPort"] ?? "587");
+                string smtpUsername = ConfigurationManager.AppSettings["SmtpUsername"] ?? "";
+                string smtpPassword = ConfigurationManager.AppSettings["SmtpPassword"] ?? "";
+                bool enableSsl = bool.Parse(ConfigurationManager.AppSettings["SmtpEnableSsl"] ?? "true");
+
+                var mail = new MailMessage();
+                mail.From = new MailAddress(smtpUsername, "CoopShop");
+                mail.To.Add(new MailAddress(toEmail));
+                mail.Subject = $"Confirmation de votre commande #{orderNumber} - CoopShop";
+                mail.IsBodyHtml = true;
+
+                StringBuilder body = new StringBuilder();
+                body.Append("<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;'>");
+                
+                // Header
+                body.Append("<div style='background-color: #305C7D; color: white; padding: 20px; text-align: center;'>");
+                body.Append("<h1 style='margin: 0;'>Merci pour votre commande !</h1>");
+                body.Append("</div>");
+                
+                // Content
+                body.Append("<div style='padding: 20px;'>");
+                body.Append($"<p>Bonjour {clientName},</p>");
+                body.Append($"<p>Nous avons bien reçu votre commande <strong>#{orderNumber}</strong> et nous la préparons avec soin.</p>");
+                
+                body.Append("<h3 style='color: #305C7D; border-bottom: 2px solid #C06C50; padding-bottom: 5px;'>Récapitulatif de la commande</h3>");
+                body.Append("<table style='width: 100%; border-collapse: collapse; margin-top: 10px;'>");
+                body.Append("<thead><tr style='background-color: #f8f9fa;'>");
+                body.Append("<th style='text-align: left; padding: 10px; border-bottom: 1px solid #dee2e6;'>Produit</th>");
+                body.Append("<th style='text-align: center; padding: 10px; border-bottom: 1px solid #dee2e6;'>Quantité</th>");
+                body.Append("<th style='text-align: right; padding: 10px; border-bottom: 1px solid #dee2e6;'>Prix</th>");
+                body.Append("</tr></thead><tbody>");
+
+                foreach (var item in items)
+                {
+                    decimal lineTotal = item.PrixUnitaire * item.Quantite;
+                    body.Append("<tr>");
+                    body.Append($"<td style='padding: 10px; border-bottom: 1px solid #eee;'>{item.Nom}</td>");
+                    body.Append($"<td style='padding: 10px; text-align: center; border-bottom: 1px solid #eee;'>{item.Quantite}</td>");
+                    body.Append($"<td style='padding: 10px; text-align: right; border-bottom: 1px solid #eee;'>{lineTotal:N2} MAD</td>");
+                    body.Append("</tr>");
+                }
+
+                body.Append("</tbody></table>");
+                
+                // Totals Section
+                body.Append("<div style='margin-top: 20px; border-top: 2px solid #eee; padding-top: 10px;'>");
+                body.Append("<table style='width: 100%; border-collapse: collapse;'>");
+                
+                // Sous-total
+                body.Append("<tr>");
+                body.Append("<td style='padding: 5px 0; color: #666;'>Sous-total :</td>");
+                body.Append($"<td style='padding: 5px 0; text-align: right; font-weight: bold;'>{subtotal:N2} MAD</td>");
+                body.Append("</tr>");
+                
+                // Mode de livraison
+                body.Append("<tr>");
+                body.Append($"<td style='padding: 5px 0; color: #666;'>Livraison ({modeLivraison}) :</td>");
+                body.Append($"<td style='padding: 5px 0; text-align: right; font-weight: bold;'>{fraisLivraison:N2} MAD</td>");
+                body.Append("</tr>");
+                
+                // Total Final
+                body.Append("<tr style='border-top: 1px solid #eee;'>");
+                body.Append("<td style='padding: 15px 0 5px 0; font-size: 1.2rem; color: #305C7D; font-weight: bold;'>Total TTC :</td>");
+                body.Append($"<td style='padding: 15px 0 5px 0; text-align: right; font-size: 1.2rem; color: #305C7D; font-weight: bold;'>{totalTTC:N2} MAD</td>");
+                body.Append("</tr>");
+                
+                body.Append("</table>");
+                body.Append("</div>");
+                
+                body.Append("<div style='margin-top: 30px; padding: 20px; background-color: #fcf8e3; border-radius: 4px; color: #8a6d3b;'>");
+                body.Append("<p style='margin: 0;'><strong>Prochaines étapes :</strong></p>");
+                body.Append("<ul style='margin-top: 10px;'>");
+                body.Append("<li>Vous pouvez suivre votre commande sur notre site.</li>");
+                body.Append("<li>Notre équipe vous contactera si nécessaire pour la livraison.</li>");
+                body.Append("</ul>");
+                body.Append("</div>");
+                
+                body.Append("<p style='margin-top: 30px;'>Si vous avez des questions, n'hésitez pas à répondre à cet email ou à nous contacter via notre service client.</p>");
+                body.Append("<p>Cordialement,<br>L'équipe CoopShop</p>");
+                body.Append("</div>");
+                
+                // Footer
+                body.Append("<div style='background-color: #f8f9fa; color: #999; padding: 10px; text-align: center; font-size: 0.8rem;'>");
+                body.Append("<p>&copy; 2025 CoopShop. Tous droits réservés.</p>");
+                body.Append("</div>");
+                
+                body.Append("</div>");
+
+                mail.Body = body.ToString();
+
+                var smtpClient = new SmtpClient(smtpServer, smtpPort);
+                smtpClient.Credentials = new NetworkCredential(smtpUsername, smtpPassword);
+                smtpClient.EnableSsl = enableSsl;
+                smtpClient.Send(mail);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Email sending failed: " + ex.Message);
+                return false;
+            }
         }
     }
 }

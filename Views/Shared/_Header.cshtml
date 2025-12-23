@@ -58,7 +58,7 @@
                             <li><h6 class="dropdown-header">@(Session["Prenom"] + " " + Session["Nom"])</h6></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="@Url.Action("Index", "Home")#profil" style="color: #305C7D;">Mon profil</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Home")#commandes" style="color: #305C7D;">Mes commandes</a></li>
+                            <li><a class="dropdown-item" href="/mes-commandes" style="color: #305C7D;">Mes commandes</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 @using (Html.BeginForm("LogoutPost", "Account", FormMethod.Post, new { @class = "d-inline", id = "logout-form" }))

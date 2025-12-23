@@ -1,0 +1,301 @@
+@model E_Commerce_Cooperatives.Models.ViewModels.MesCommandesViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Mes Commandes";
+}
+
+<style>
+    .btn-details-custom:hover {
+        background-color: #305C7D !important;
+        color: white !important;
+    }
+</style>
+
+@Html.Partial("_Header")
+
+<main class="py-4" style="background-color: #F5F3EF; min-height: 80vh;">
+    <div class="container">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="@Url.Action("Index", "Home")" class="text-muted text-decoration-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+            </a>
+            <h1 class="font-display mb-0" style="font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: #305C7D;">
+                Mes Commandes
+            </h1>
+        </div>
+
+        @if (Model.SelectedCommandeId.HasValue && Model.CommandeDetail != null)
+        {
+            <!-- Order Detail View -->
+            <div class="max-w-3xl mx-auto" style="max-width: 48rem;">
+                <a href="/mes-commandes?page=@Model.CurrentPage" class="btn btn-link text-muted text-decoration-none mb-4 d-inline-flex align-items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                    Retour aux commandes
+                </a>
+
+                <div class="bg-white rounded-4 p-4 shadow-soft" style="box-shadow: 0 4px 25px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-md-between gap-3 mb-4">
+                        <div>
+                            <h2 class="font-display mb-1" style="font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 700; color: #305C7D;">
+                                Commande @Model.CommandeDetail.NumeroCommande
+                            </h2>
+                            <p class="text-muted mb-0" style="font-size: 0.95rem;">
+                                Passée le @Model.CommandeDetail.DateCommande.ToString("dd/MM/yyyy")
+                            </p>
+                        </div>
+                        <span class="badge" style="font-size: 0.85rem; padding: 0.6rem 1.2rem; background-color: #305C7D; color: white; border-radius: 20px; font-weight: 500;">
+                            @Model.CommandeDetail.Statut
+                        </span>
+                    </div>
+
+                    <!-- Tracking -->
+                    <div class="mb-4 p-4 rounded-4" style="background-color: #F8F6F2;">
+                        <h3 class="fw-bold mb-4" style="color: #305C7D; font-size: 1.1rem;">Suivi de livraison</h3>
+                        <div class="d-flex justify-content-between align-items-center position-relative mb-2">
+                            <div class="position-absolute top-50 start-0 end-0" style="height: 3px; background-color: #e0e0e0; z-index: 0; margin: 0 40px; transform: translateY(-50%);">
+                                @{
+                                    var progressWidth = Model.CommandeDetail.Statut == "Livrée" ? "100%" :
+                                                       Model.CommandeDetail.Statut == "Expédiée" || Model.CommandeDetail.Statut == "En cours de livraison" ? "66%" :
+                                                       Model.CommandeDetail.Statut == "Préparation" ? "33%" : "0%";
+                                }
+                                <div class="h-100 rounded" style="width: @progressWidth; background-color: #C06C50;"></div>
+                            </div>
+
+                            @{
+                                var trackingSteps = new[]
+                                {
+                                    new { Icon = "check-circle", Label = "Confirmée" },
+                                    new { Icon = "box", Label = "Préparation" },
+                                    new { Icon = "truck", Label = "Expédition" },
+                                    new { Icon = "check-circle", Label = "Livrée" }
+                                };
+                                var currentStep = Model.CommandeDetail.Statut == "Livrée" ? 3 :
+                                                 Model.CommandeDetail.Statut == "Expédiée" || Model.CommandeDetail.Statut == "En cours de livraison" ? 2 :
+                                                 Model.CommandeDetail.Statut == "Préparation" ? 1 : 0;
+                            }
+
+                            @for (int i = 0; i < trackingSteps.Length; i++)
+                            {
+                                var isActive = i <= currentStep;
+                                <div class="d-flex flex-column align-items-center position-relative" style="z-index: 10;">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                         style="width: 42px; height: 42px; background-color: @(isActive ? "#C06C50" : "#e0e0e0"); color: white; @(isActive ? "box-shadow: 0 0 0 4px rgba(192, 108, 80, 0.1);" : "")">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                            @if (trackingSteps[i].Icon == "check-circle")
+                                            {
+                                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z"/>
+                                            }
+                                            else if (trackingSteps[i].Icon == "box")
+                                            {
+                                                <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 .114 0l7.129 2.852A.5.5 0 0 1 15 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                                            }
+                                            else
+                                            {
+                                                <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-1h11V3.5zM3 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM2 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5V7H2V5.5z"/>
+                                            }
+                                        </svg>
+                                    </div>
+                                    <span class="small mt-2 text-center" style="color: @(isActive ? "#305C7D" : "#9e9e9e"); font-weight: @(isActive ? "600" : "400"); font-size: 0.75rem;">
+                                        @trackingSteps[i].Label
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                        <div class="text-center mt-4">
+                            <a href="/suivi-livraison?trackingNumber=@Model.CommandeDetail.NumeroCommande" class="small fw-semibold text-decoration-none px-3 py-2 rounded-pill" style="color: #C06C50; background-color: rgba(192, 108, 80, 0.05); border: 1px solid rgba(192, 108, 80, 0.1);">
+                                Voir l'historique détaillé de la livraison
+                                <svg xmlns="http://www.w3.org/2000/center" width="14" height="14" fill="currentColor" class="bi bi-arrow-right ms-1" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 1 0-.708-.708l4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="mb-4">
+                        <h3 class="fw-bold mb-3" style="color: #305C7D; font-size: 1.1rem;">Articles commandés</h3>
+                        <div class="space-y-3">
+                            @foreach (var item in Model.CommandeDetail.Items)
+                            {
+                                <div class="d-flex align-items-center gap-3 p-3 mb-3 rounded-4" style="background-color: #F8F9FA;">
+                                    <img src="@(item.Produit != null && !string.IsNullOrEmpty(item.Produit.ImageUrl) ? item.Produit.ImageUrl : "/Content/images/default-product.jpg")" 
+                                         alt="@(item.Produit != null ? item.Produit.Nom : "Produit")" 
+                                         class="rounded-3" 
+                                         style="width: 72px; height: 72px; object-fit: cover; background-color: white;">
+                                    <div class="flex-grow-1">
+                                        <h4 class="fw-bold mb-1" style="color: #305C7D; font-size: 1rem;">@(item.Produit != null ? item.Produit.Nom : "Produit")</h4>
+                                        <p class="small text-muted mb-0">Quantité: @item.Quantite</p>
+                                    </div>
+                                    <p class="fw-bold mb-0 text-nowrap" style="color: #305C7D; font-size: 1.1rem;">@((item.PrixUnitaire * item.Quantite).ToString("F0")) MAD</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Delivery Address -->
+                    <div class="mb-4 p-4 rounded-4" style="background-color: #F8F6F2;">
+                        <h3 class="fw-bold mb-3" style="color: #305C7D; font-size: 1.1rem;">Adresse de livraison</h3>
+                        <p class="text-muted mb-2" style="font-size: 1rem; line-height: 1.6;">
+                            @(Model.CommandeDetail.Adresse != null ? Model.CommandeDetail.Adresse.AdresseComplete : "")<br>
+                            @(Model.CommandeDetail.Adresse != null ? Model.CommandeDetail.Adresse.CodePostal : "") @(Model.CommandeDetail.Adresse != null ? Model.CommandeDetail.Adresse.Ville : "")
+                        </p>
+                        @if (Model.CommandeDetail.Statut == "Livrée")
+                        {
+                            <p class="mb-0 fw-medium" style="color: #198754; font-size: 0.95rem;">
+                                Livrée le @Model.CommandeDetail.DateCommande.AddDays(2).ToString("dd/MM/yyyy")
+                            </p>
+                        }
+                    </div>
+
+                    <!-- Total -->
+                    <div class="pt-3 border-top mt-4">
+                        <div class="d-flex justify-content-between align-items-end">
+                            <span class="fw-bold" style="color: #305C7D; font-size: 1.25rem;">Total</span>
+                            <span class="fw-bold" style="color: #305C7D; font-size: 1.5rem;">@Model.CommandeDetail.TotalTTC.ToString("N2") MAD</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        }
+        else
+        {
+            @* Orders List *@
+            if (Model.Commandes == null || !Model.Commandes.Any())
+            {
+                <div class="text-center py-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" fill="#9e9e9e" class="opacity-25 mb-4" viewBox="0 0 16 16">
+                        <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 .114 0l7.129 2.852A.5.5 0 0 1 15 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                    </svg>
+                    <h2 class="font-display mb-3" style="font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: #305C7D;">
+                        Aucune commande
+                    </h2>
+                    <p class="text-muted mb-4">Vous n'avez pas encore passé de commande.</p>
+                    <a href="@Url.Action("Index", "Catalogue")" class="btn btn-lg" style="background-color: #C06C50; color: white; border: none;">
+                        Découvrir nos produits
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="space-y-4">
+                    @foreach (var commande in Model.Commandes)
+                    {
+                        var statusInfo = new
+                        {
+                            Label = commande.Statut,
+                            Color = commande.Statut == "Livrée" ? "text-success" :
+                                   commande.Statut == "Expédiée" || commande.Statut == "En cours de livraison" ? "text-primary" :
+                                   commande.Statut == "Préparation" ? "text-warning" : "text-muted",
+                            Icon = commande.Statut == "Livrée" ? "check-circle" :
+                                  commande.Statut == "Expédiée" || commande.Statut == "En cours de livraison" ? "truck" :
+                                  commande.Statut == "clock" ? "clock" : "clock" // Default to clock for preparation
+                        };
+
+                        // Specific icons for status based on image
+                        string iconSvg = "";
+                        if (commande.Statut == "Livrée") {
+                            iconSvg = "<path d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z'/><path d='M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z'/>";
+                        } else if (commande.Statut == "Expédiée" || commande.Statut == "En cours de livraison") {
+                            iconSvg = "<path d='M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-1h11V3.5zM3 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM2 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5V7H2V5.5z'/>";
+                        } else {
+                            iconSvg = "<path d='M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z'/><path d='M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z'/>";
+                        }
+
+                        <div class="bg-white rounded-4 p-4 mb-4" style="box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);">
+                            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-md-between gap-4">
+                                <div class="d-flex align-items-center gap-4">
+                                    <div class="d-flex align-items-center" style="padding-left: 10px;">
+                                        @{
+                                            var itemsToDisplay = commande.Items.Take(3).ToList();
+                                            for (int i = 0; i < itemsToDisplay.Count; i++)
+                                            {
+                                                var item = itemsToDisplay[i];
+                                                <div class="rounded-3 overflow-hidden border border-white" 
+                                                     style="width: 56px; height: 56px; margin-left: @(i == 0 ? "0" : "-20px"); z-index: @(10-i); box-shadow: -2px 0 5px rgba(0,0,0,0.1);">
+                                                    <img src="@(item.Produit != null && !string.IsNullOrEmpty(item.Produit.ImageUrl) ? item.Produit.ImageUrl : "/Content/images/default-product.jpg")" 
+                                                         alt="Produit" 
+                                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+
+                                    <div>
+                                        <h3 class="fw-bold mb-1" style="color: #305C7D; font-size: 1.15rem;">@commande.NumeroCommande</h3>
+                                        <p class="small text-muted mb-2">
+                                            @commande.DateCommande.ToString("dd/MM/yyyy") • @commande.Items.Count article(s)
+                                        </p>
+                                        <div class="d-flex align-items-center gap-2 @statusInfo.Color" style="font-weight: 500; font-size: 0.9rem;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                @Html.Raw(iconSvg)
+                                            </svg>
+                                            <span>@commande.Statut</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-4">
+                                    <span class="fw-bold" style="color: #305C7D; font-size: 1.25rem;">@commande.TotalTTC.ToString("N2") MAD</span>
+                                    
+                                    <a href="/mes-commandes?id=@commande.CommandeId&page=@Model.CurrentPage" 
+                                       class="btn btn-sm px-4 py-2 d-inline-flex align-items-center gap-2 btn-details-custom" 
+                                       style="border: 1.5px solid #305C7D; color: #305C7D; background-color: transparent; border-radius: 8px; font-weight: 500; transition: all 0.3s ease;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                                            <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                                        </svg>
+                                        Détails
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.TotalPages > 1)
+                    {
+                        <div class="d-flex justify-content-center mt-5 mb-3">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination pagination-sm gap-2 border-0">
+                                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                        <a class="page-link rounded-3 border-0 px-3 py-2" 
+                                           href="/mes-commandes?page=@(Model.CurrentPage - 1)" 
+                                           style="background-color: @(Model.CurrentPage == 1 ? "#f8f9fa" : "#fff"); color: #305C7D; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                            Précédent
+                                        </a>
+                                    </li>
+
+                                    @for (int i = 1; i <= Model.TotalPages; i++)
+                                    {
+                                        <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                            <a class="page-link rounded-3 border-0 px-3 py-2" 
+                                               href="/mes-commandes?page=@i"
+                                               style="background-color: @(Model.CurrentPage == i ? "#305C7D" : "#fff"); color: @(Model.CurrentPage == i ? "#fff" : "#305C7D"); box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                                @i
+                                            </a>
+                                        </li>
+                                    }
+
+                                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                        <a class="page-link rounded-3 border-0 px-3 py-2" 
+                                           href="/mes-commandes?page=@(Model.CurrentPage + 1)"
+                                           style="background-color: @(Model.CurrentPage == Model.TotalPages ? "#f8f9fa" : "#fff"); color: #305C7D; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                            Suivant
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</main>
+
+@Html.Partial("_Footer")
+
