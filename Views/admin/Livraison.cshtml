@@ -389,12 +389,20 @@
                         document.getElementById('EstActif').checked = data.mode.EstActif;
                         document.getElementById('modeModal').style.display = 'block';
                     } else {
-                        alert('Erreur: ' + data.message);
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification(data.message || 'Erreur lors du chargement', 'error');
+                        } else {
+                            alert('Erreur: ' + data.message);
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Erreur lors du chargement des données');
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification('Erreur lors du chargement des données', 'error');
+                    } else {
+                        alert('Erreur lors du chargement des données');
+                    }
                 });
         }
 
@@ -421,36 +429,103 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    alert(result.message);
-                    location.reload();
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification(result.message || 'Enregistré avec succès', 'success');
+                        setTimeout(function() { location.reload(); }, 1500);
+                    } else {
+                        alert(result.message);
+                        location.reload();
+                    }
                 } else {
-                    alert('Erreur: ' + result.message);
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification(result.message || 'Erreur lors de l\'enregistrement', 'error');
+                    } else {
+                        alert('Erreur: ' + result.message);
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Erreur lors de l\'enregistrement');
+                if (typeof showAdminNotification !== 'undefined') {
+                    showAdminNotification('Erreur lors de l\'enregistrement', 'error');
+                } else {
+                    alert('Erreur lors de l\'enregistrement');
+                }
             });
         }
 
         function deleteMode(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer ce mode de livraison ?')) {
-                fetch('@Url.Action("DeleteModeLivraison", "Admin")?id=' + id, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        alert(result.message);
-                        location.reload();
-                    } else {
-                        alert('Erreur: ' + result.message);
+            if (typeof showAdminConfirm !== 'undefined') {
+                showAdminConfirm(
+                    'Êtes-vous sûr de vouloir supprimer ce mode de livraison ?\n\nCette action est irréversible.',
+                    'Confirmation de suppression',
+                    'Supprimer',
+                    'Annuler'
+                ).then(function(confirmed) {
+                    if (confirmed) {
+                        fetch('@Url.Action("DeleteModeLivraison", "Admin")?id=' + id, {
+                            method: 'POST'
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                                if (typeof showAdminNotification !== 'undefined') {
+                                    showAdminNotification(result.message || 'Mode de livraison supprimé avec succès', 'success');
+                                    setTimeout(function() { location.reload(); }, 1500);
+                                } else {
+                                    alert(result.message);
+                                    location.reload();
+                                }
+                            } else {
+                                if (typeof showAdminNotification !== 'undefined') {
+                                    showAdminNotification(result.message || 'Erreur lors de la suppression', 'error');
+                                } else {
+                                    alert('Erreur: ' + result.message);
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification('Erreur lors de la suppression', 'error');
+                            } else {
+                                alert('Erreur lors de la suppression');
+                            }
+                        });
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Erreur lors de la suppression');
                 });
+            } else {
+                if (confirm('Êtes-vous sûr de vouloir supprimer ce mode de livraison ?')) {
+                    fetch('@Url.Action("DeleteModeLivraison", "Admin")?id=' + id, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification(result.message || 'Mode de livraison supprimé avec succès', 'success');
+                                setTimeout(function() { location.reload(); }, 1500);
+                            } else {
+                                alert(result.message);
+                                location.reload();
+                            }
+                        } else {
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification(result.message || 'Erreur lors de la suppression', 'error');
+                            } else {
+                                alert('Erreur: ' + result.message);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification('Erreur lors de la suppression', 'error');
+                        } else {
+                            alert('Erreur lors de la suppression');
+                        }
+                    });
+                }
             }
         }
 
@@ -494,12 +569,20 @@
                         document.getElementById('EstActifZone').checked = data.zone.EstActif;
                         document.getElementById('zoneModal').style.display = 'block';
                     } else {
-                        alert('Erreur: ' + data.message);
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification(data.message || 'Erreur lors du chargement', 'error');
+                        } else {
+                            alert('Erreur: ' + data.message);
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Erreur lors du chargement des données');
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification('Erreur lors du chargement des données', 'error');
+                    } else {
+                        alert('Erreur lors du chargement des données');
+                    }
                 });
         }
 
@@ -525,36 +608,103 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    alert(result.message);
-                    location.reload();
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification(result.message || 'Zone enregistrée avec succès', 'success');
+                        setTimeout(function() { location.reload(); }, 1500);
+                    } else {
+                        alert(result.message);
+                        location.reload();
+                    }
                 } else {
-                    alert('Erreur: ' + result.message);
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification(result.message || 'Erreur lors de l\'enregistrement', 'error');
+                    } else {
+                        alert('Erreur: ' + result.message);
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Erreur lors de l\'enregistrement');
+                if (typeof showAdminNotification !== 'undefined') {
+                    showAdminNotification('Erreur lors de l\'enregistrement', 'error');
+                } else {
+                    alert('Erreur lors de l\'enregistrement');
+                }
             });
         }
 
         function deleteZone(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer cette zone de livraison ?')) {
-                fetch('@Url.Action("DeleteZoneLivraison", "Admin")?id=' + id, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        alert(result.message);
-                        location.reload();
-                    } else {
-                        alert('Erreur: ' + result.message);
+            if (typeof showAdminConfirm !== 'undefined') {
+                showAdminConfirm(
+                    'Êtes-vous sûr de vouloir supprimer cette zone de livraison ?\n\nCette action est irréversible.',
+                    'Confirmation de suppression',
+                    'Supprimer',
+                    'Annuler'
+                ).then(function(confirmed) {
+                    if (confirmed) {
+                        fetch('@Url.Action("DeleteZoneLivraison", "Admin")?id=' + id, {
+                            method: 'POST'
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                                if (typeof showAdminNotification !== 'undefined') {
+                                    showAdminNotification(result.message || 'Zone supprimée avec succès', 'success');
+                                    setTimeout(function() { location.reload(); }, 1500);
+                                } else {
+                                    alert(result.message);
+                                    location.reload();
+                                }
+                            } else {
+                                if (typeof showAdminNotification !== 'undefined') {
+                                    showAdminNotification(result.message || 'Erreur lors de la suppression', 'error');
+                                } else {
+                                    alert('Erreur: ' + result.message);
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification('Erreur lors de la suppression', 'error');
+                            } else {
+                                alert('Erreur lors de la suppression');
+                            }
+                        });
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Erreur lors de la suppression');
                 });
+            } else {
+                if (confirm('Êtes-vous sûr de vouloir supprimer cette zone de livraison ?')) {
+                    fetch('@Url.Action("DeleteZoneLivraison", "Admin")?id=' + id, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification(result.message || 'Zone supprimée avec succès', 'success');
+                                setTimeout(function() { location.reload(); }, 1500);
+                            } else {
+                                alert(result.message);
+                                location.reload();
+                            }
+                        } else {
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification(result.message || 'Erreur lors de la suppression', 'error');
+                            } else {
+                                alert('Erreur: ' + result.message);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification('Erreur lors de la suppression', 'error');
+                        } else {
+                            alert('Erreur lors de la suppression');
+                        }
+                    });
+                }
             }
         }
     </script>

@@ -1098,7 +1098,7 @@ namespace E_Commerce_Cooperatives.Models
                 connection.Open();
                 var query = @"
                     SELECT ci.CommandeItemId, ci.CommandeId, ci.ProduitId, ci.VarianteId, ci.Quantite, ci.PrixUnitaire, ci.TotalLigne,
-                           p.Nom as ProduitNom, p.ImageUrl as ProduitImage
+                           p.Nom as ProduitNom, p.ImageUrl as ProduitImage, p.Prix as ProduitPrix
                     FROM CommandeItems ci
                     INNER JOIN Produits p ON ci.ProduitId = p.ProduitId
                     WHERE ci.CommandeId = @CommandeId";
@@ -1122,7 +1122,8 @@ namespace E_Commerce_Cooperatives.Models
                                 {
                                     ProduitId = reader.GetInt32(2),
                                     Nom = reader.GetString(7),
-                                    ImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8)
+                                    ImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8),
+                                    Prix = reader.GetDecimal(9) // Charger le prix HT du produit pour la détection
                                 }
                             });
                         }
@@ -2045,14 +2046,18 @@ namespace E_Commerce_Cooperatives.Models
                         string numeroCommande = "CMD-" + DateTime.Now.ToString("yyyyMMdd") + "-" + new Random().Next(10000, 99999).ToString();
 
                         // Calculer les totaux
+                        // IMPORTANT: Les prix reçus (PrixUnitaire) sont TTC car ils viennent du frontend
+                        // Il faut les convertir en HT avant de calculer la TVA
                         decimal totalHT = 0;
                         foreach (var item in items)
                         {
-                            totalHT += item.PrixUnitaire * item.Quantite;
+                            // Convertir le prix TTC en HT: PrixHT = PrixTTC / 1.20
+                            decimal prixHT = Math.Round(item.PrixUnitaire / 1.20m, 2);
+                            totalHT += prixHT * item.Quantite;
                         }
-                        decimal montantTVA = totalHT * 0.20m; // TVA 20%
+                        decimal montantTVA = Math.Round(totalHT * 0.20m, 2); // TVA 20% sur le HT
                         decimal fraisLivraison = GetModeLivraison(modeLivraisonId)?.Tarif ?? 0;
-                        decimal totalTTC = totalHT + montantTVA + fraisLivraison;
+                        decimal totalTTC = Math.Round(totalHT + montantTVA + fraisLivraison, 2);
 
                         // Insérer la commande
                         var insertCommandeQuery = @"INSERT INTO Commandes (NumeroCommande, ClientId, AdresseId, ModeLivraisonId, DateCommande, 
@@ -2077,8 +2082,13 @@ namespace E_Commerce_Cooperatives.Models
                         }
 
                         // Insérer les items de la commande
+                        // IMPORTANT: Stocker les prix HT dans la base de données
                         foreach (var item in items)
                         {
+                            // Convertir le prix TTC en HT pour le stockage
+                            decimal prixHT = Math.Round(item.PrixUnitaire / 1.20m, 2);
+                            decimal totalLigneHT = Math.Round(prixHT * item.Quantite, 2);
+                            
                             var insertItemQuery = @"INSERT INTO CommandeItems (CommandeId, ProduitId, VarianteId, Quantite, PrixUnitaire, TotalLigne)
                                                   VALUES (@CommandeId, @ProduitId, @VarianteId, @Quantite, @PrixUnitaire, @TotalLigne)";
                             using (var itemCommand = new SqlCommand(insertItemQuery, connection, transaction))
@@ -2087,8 +2097,8 @@ namespace E_Commerce_Cooperatives.Models
                                 itemCommand.Parameters.AddWithValue("@ProduitId", item.ProduitId);
                                 itemCommand.Parameters.AddWithValue("@VarianteId", (object)item.VarianteId ?? DBNull.Value);
                                 itemCommand.Parameters.AddWithValue("@Quantite", item.Quantite);
-                                itemCommand.Parameters.AddWithValue("@PrixUnitaire", item.PrixUnitaire);
-                                itemCommand.Parameters.AddWithValue("@TotalLigne", item.PrixUnitaire * item.Quantite);
+                                itemCommand.Parameters.AddWithValue("@PrixUnitaire", prixHT); // Stocker le prix HT
+                                itemCommand.Parameters.AddWithValue("@TotalLigne", totalLigneHT); // Stocker le total HT
                                 itemCommand.ExecuteNonQuery();
                             }
                         }

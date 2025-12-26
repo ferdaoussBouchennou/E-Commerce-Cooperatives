@@ -232,9 +232,10 @@ namespace E_Commerce_Cooperatives.Controllers
             {
                 var allCommandes = db.GetCommandesByClient(clientId);
                 
-                // Filtrer pour ne garder que les commandes en cours (non Livrée et non Annulée)
+                // Filtrer pour ne garder que les commandes validées (Validée, Préparation, Expédiée) - pas Livrée ni Annulée
+                // Seules les commandes avec statut "Validée" et suivants sont affichées aux clients
                 var activeCommandes = allCommandes
-                    .Where(c => c.Statut != "Livrée" && c.Statut != "Annulée")
+                    .Where(c => c.Statut == "Validée" || c.Statut == "Préparation" || c.Statut == "Expédiée" || c.Statut == "En cours de livraison")
                     .OrderByDescending(c => c.DateCommande)
                     .ToList();
 
@@ -377,20 +378,25 @@ namespace E_Commerce_Cooperatives.Controllers
                     var eventsList = new List<object>();
                     foreach (var s in suiviEvents)
                     {
+                        // Convertir "Validée" en "Confirmée" pour l'affichage client
+                        var displayStatus = s.Statut == "Validée" ? "Confirmée" : s.Statut;
                         eventsList.Add(new
                         {
                             date = s.DateStatut.ToString("yyyy-MM-dd"),
                             heure = s.DateStatut.ToString("HH:mm"),
-                            status = s.Statut,
+                            status = displayStatus,
                             lieu = GetStatusLocation(s.Statut),
                             description = s.Description ?? GetStatusDescription(s.Statut)
                         });
                     }
 
+                    // Convertir "Validée" en "Confirmée" pour l'affichage client
+                    var displayStatut = commande.Statut == "Validée" ? "Confirmée" : commande.Statut;
+                    
                     var result = new
                     {
                         numeroCommande = commande.NumeroCommande,
-                        statut = commande.Statut,
+                        statut = displayStatut,
                         dateCommande = commande.DateCommande.ToString("yyyy-MM-dd"),
                         dateLivraisonEstimee = estimatedDelivery.ToString("yyyy-MM-dd"),
                         adresseLivraison = commande.Adresse != null 
@@ -414,6 +420,8 @@ namespace E_Commerce_Cooperatives.Controllers
         {
             switch (statut.ToLower())
             {
+                case "validée":
+                case "validee":
                 case "confirmée":
                 case "confirme":
                     return "En ligne";
@@ -439,7 +447,10 @@ namespace E_Commerce_Cooperatives.Controllers
 
         private string GetStatusDescription(string status)
         {
-            switch (status)
+            // Normaliser le statut pour gérer "Validée" et "Confirmée"
+            var normalizedStatus = status == "Confirmée" ? "Validée" : status;
+            
+            switch (normalizedStatus)
             {
                 case "En attente": return "Votre commande a été reçue et est en attente de confirmation.";
                 case "Validée": return "Votre commande a été confirmée et est en cours de traitement.";

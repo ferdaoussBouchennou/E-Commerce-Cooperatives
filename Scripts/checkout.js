@@ -301,6 +301,8 @@
             if (btnVerifyOrder) {
                 btnVerifyOrder.addEventListener('click', function () {
                     if (validateStep2()) {
+                        // S'assurer que les données de livraison sont sauvegardées
+                        saveStep1Data();
                         saveStep2Data();
                         updateSummary();
                         goToStep(3);
@@ -397,14 +399,52 @@
         }
 
         function updateSummary() {
+            // S'assurer que les données de livraison sont à jour
+            if (!deliveryData || !deliveryData.adresseComplete) {
+                saveStep1Data();
+            }
+
             const selectedDelivery = document.querySelector('.delivery-option.selected');
             const deliveryName = selectedDelivery?.querySelector('label')?.textContent || '';
             const deliveryDelai = selectedDelivery?.dataset.delai || '';
 
             const summaryAddress = document.getElementById('summary-address');
-            if (summaryAddress) {
-                summaryAddress.textContent =
-                    `${deliveryData.prenom} ${deliveryData.nom}\n${deliveryData.adresseComplete}\n${deliveryData.codePostal} ${deliveryData.ville}\n${deliveryData.telephone}`;
+            if (summaryAddress && deliveryData) {
+                // Afficher uniquement l'adresse comme dans la facture (sans nom, prénom, téléphone)
+                // Format: AdresseComplete sur une ligne, puis Ville, CodePostal sur la ligne suivante
+                let adresse = (deliveryData.adresseComplete || '').trim();
+                const ville = (deliveryData.ville || '').trim();
+                const codePostal = (deliveryData.codePostal || '').trim();
+                const prenom = (deliveryData.prenom || '').trim();
+                const nom = (deliveryData.nom || '').trim();
+                const telephone = (deliveryData.telephone || '').trim();
+                
+                // Retirer le nom et prénom du début de l'adresse si présents
+                const fullName = `${prenom} ${nom}`.trim();
+                if (fullName && adresse.startsWith(fullName)) {
+                    adresse = adresse.substring(fullName.length).trim();
+                }
+                
+                // Retirer le téléphone de la fin de l'adresse si présent
+                if (telephone && adresse.endsWith(telephone)) {
+                    adresse = adresse.substring(0, adresse.length - telephone.length).trim();
+                }
+                // Retirer aussi avec le format +212...
+                if (telephone && adresse.includes(telephone)) {
+                    adresse = adresse.replace(telephone, '').trim();
+                }
+                
+                // Construire l'adresse finale (uniquement adresse, ville, code postal)
+                let addressText = adresse;
+                if (ville || codePostal) {
+                    const villeCodePostal = (ville ? ville : '') + (ville && codePostal ? ', ' : '') + (codePostal ? codePostal : '');
+                    if (villeCodePostal) {
+                        addressText += '<br>' + villeCodePostal;
+                    }
+                }
+                
+                summaryAddress.innerHTML = addressText;
+                console.log('Adresse affichée:', addressText);
             }
 
             const summaryDelivery = document.getElementById('summary-delivery');

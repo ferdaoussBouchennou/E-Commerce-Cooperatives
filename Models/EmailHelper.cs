@@ -284,6 +284,7 @@ namespace E_Commerce_Cooperatives.Models
                 mail.IsBodyHtml = true;
 
                 // Map items
+                // IMPORTANT: Les prix stockés sont HT, on convertit en TTC pour l'affichage dans l'email
                 var cartItems = new List<CartItemForOrder>();
                 foreach (var item in commande.Items)
                 {
@@ -291,14 +292,16 @@ namespace E_Commerce_Cooperatives.Models
                     {
                         Nom = item.Produit != null ? item.Produit.Nom : "Produit",
                         Quantite = item.Quantite,
-                        PrixUnitaire = item.PrixUnitaire
+                        PrixUnitaire = item.PrixUnitaireTTC // Utiliser le prix TTC pour l'affichage
                     });
                 }
 
                 string clientName = $"{commande.Client.Prenom} {commande.Client.Nom}";
                 string modeLivraison = commande.ModeLivraison != null ? commande.ModeLivraison.Nom : "Livraison";
 
-                mail.Body = GenerateOrderEmailBody(clientName, commande.NumeroCommande, cartItems, commande.TotalHT, modeLivraison, commande.FraisLivraison, commande.TotalTTC);
+                // Sous-total = TotalHT + MontantTVA (prix TTC des produits, sans frais de livraison)
+                decimal sousTotalTTC = Math.Round(commande.TotalHT + commande.MontantTVA, 2);
+                mail.Body = GenerateOrderEmailBody(clientName, commande.NumeroCommande, cartItems, sousTotalTTC, modeLivraison, commande.FraisLivraison, commande.TotalTTC);
 
                 // Attach Invoice
                 try
@@ -404,6 +407,170 @@ namespace E_Commerce_Cooperatives.Models
             body.Append("</div>");
             
             body.Append("</div>");
+            
+            return body.ToString();
+        }
+
+        /// <summary>
+        /// Envoie un email d'annulation de commande au client
+        /// </summary>
+        /// <param name="commande">La commande annulée</param>
+        /// <param name="raisonAnnulation">La raison de l'annulation fournie par l'admin</param>
+        /// <returns>True si l'email a été envoyé avec succès</returns>
+        public static bool SendOrderCancellationEmail(Commande commande, string raisonAnnulation)
+        {
+            try
+            {
+                string smtpServer = ConfigurationManager.AppSettings["SmtpServer"] ?? "smtp.gmail.com";
+                int smtpPort = int.Parse(ConfigurationManager.AppSettings["SmtpPort"] ?? "587");
+                string smtpUsername = ConfigurationManager.AppSettings["SmtpUsername"] ?? "";
+                string smtpPassword = ConfigurationManager.AppSettings["SmtpPassword"] ?? "";
+                bool enableSsl = bool.Parse(ConfigurationManager.AppSettings["SmtpEnableSsl"] ?? "true");
+
+                // Si les paramètres SMTP ne sont pas configurés, on simule l'envoi (pour le développement)
+                if (string.IsNullOrEmpty(smtpUsername) || string.IsNullOrEmpty(smtpPassword))
+                {
+                    System.Diagnostics.Debug.WriteLine("=== EMAIL D'ANNULATION DE COMMANDE ===");
+                    System.Diagnostics.Debug.WriteLine("À: " + commande.Client.Email);
+                    System.Diagnostics.Debug.WriteLine("Commande: " + commande.NumeroCommande);
+                    System.Diagnostics.Debug.WriteLine("Raison: " + raisonAnnulation);
+                    System.Diagnostics.Debug.WriteLine("=====================================");
+                    return true; // Simuler le succès en développement
+                }
+
+                var mail = new MailMessage();
+                mail.From = new MailAddress(smtpUsername, "CoopShop");
+                mail.To.Add(new MailAddress(commande.Client.Email));
+                mail.Subject = $"Annulation de votre commande #{commande.NumeroCommande} - CoopShop";
+                mail.IsBodyHtml = true;
+
+                string clientName = $"{commande.Client.Prenom} {commande.Client.Nom}";
+                mail.Body = GenerateCancellationEmailBody(clientName, commande.NumeroCommande, commande, raisonAnnulation);
+
+                var smtpClient = new SmtpClient(smtpServer, smtpPort);
+                smtpClient.Credentials = new NetworkCredential(smtpUsername, smtpPassword);
+                smtpClient.EnableSsl = enableSsl;
+                smtpClient.Send(mail);
+
+                mail.Dispose();
+                smtpClient.Dispose();
+
+                return true;
+            }
+            catch (SmtpException smtpEx)
+            {
+                System.Diagnostics.Debug.WriteLine("Erreur SMTP lors de l'envoi de l'email d'annulation: " + smtpEx.Message);
+                System.Diagnostics.Debug.WriteLine("Code d'erreur: " + smtpEx.StatusCode);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Erreur lors de l'envoi de l'email d'annulation: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack trace: " + ex.StackTrace);
+                return false;
+            }
+        }
+
+        private static string GenerateCancellationEmailBody(string clientName, string orderNumber, Commande commande, string raisonAnnulation)
+        {
+            int currentYear = DateTime.Now.Year;
+            StringBuilder body = new StringBuilder();
+            
+            body.Append("<!DOCTYPE html>");
+            body.Append("<html>");
+            body.Append("<head>");
+            body.Append("<meta charset='utf-8'>");
+            body.Append("<style>");
+            body.Append("body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }");
+            body.Append(".container { max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }");
+            body.Append(".header { background-color: #dc3545; color: white; padding: 20px; text-align: center; }");
+            body.Append(".content { padding: 30px; background-color: #ffffff; }");
+            body.Append(".alert-box { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }");
+            body.Append(".reason-box { background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px; margin: 20px 0; }");
+            body.Append(".reason-title { font-weight: bold; color: #305C7D; margin-bottom: 10px; }");
+            body.Append(".reason-text { color: #495057; line-height: 1.8; }");
+            body.Append(".order-details { margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee; }");
+            body.Append(".order-item { padding: 10px 0; border-bottom: 1px solid #eee; }");
+            body.Append(".footer { background-color: #f8f9fa; color: #999; padding: 20px; text-align: center; font-size: 0.8rem; }");
+            body.Append("</style>");
+            body.Append("</head>");
+            body.Append("<body>");
+            
+            // Container
+            body.Append("<div class='container'>");
+            
+            // Header
+            body.Append("<div class='header'>");
+            body.Append("<h1 style='margin: 0; font-size: 24px;'>Commande Annulée</h1>");
+            body.Append("</div>");
+            
+            // Content
+            body.Append("<div class='content'>");
+            body.Append($"<p>Bonjour {clientName},</p>");
+            body.Append($"<p>Nous vous informons que votre commande <strong>#{orderNumber}</strong> a été annulée.</p>");
+            
+            
+            // Reason box
+            body.Append("<div class='reason-box'>");
+            body.Append("<div class='reason-title'>Raison de l'annulation :</div>");
+            body.Append($"<div class='reason-text'>{System.Web.HttpUtility.HtmlEncode(raisonAnnulation)}</div>");
+            body.Append("</div>");
+            
+            // Order details
+            body.Append("<div class='order-details'>");
+            body.Append("<h3 style='color: #305C7D; margin-bottom: 15px;'>Détails de la commande annulée</h3>");
+            
+            if (commande.Items != null && commande.Items.Count > 0)
+            {
+                body.Append("<table style='width: 100%; border-collapse: collapse;'>");
+                body.Append("<thead><tr style='background-color: #f8f9fa;'>");
+                body.Append("<th style='text-align: left; padding: 10px; border-bottom: 1px solid #dee2e6;'>Produit</th>");
+                body.Append("<th style='text-align: center; padding: 10px; border-bottom: 1px solid #dee2e6;'>Quantité</th>");
+                body.Append("<th style='text-align: right; padding: 10px; border-bottom: 1px solid #dee2e6;'>Prix</th>");
+                body.Append("</tr></thead><tbody>");
+                
+                foreach (var item in commande.Items)
+                {
+                    decimal lineTotal = item.PrixUnitaireTTC * item.Quantite;
+                    body.Append("<tr>");
+                    body.Append($"<td style='padding: 10px; border-bottom: 1px solid #eee;'>{System.Web.HttpUtility.HtmlEncode(item.Produit != null ? item.Produit.Nom : "Produit")}</td>");
+                    body.Append($"<td style='padding: 10px; text-align: center; border-bottom: 1px solid #eee;'>{item.Quantite}</td>");
+                    body.Append($"<td style='padding: 10px; text-align: right; border-bottom: 1px solid #eee;'>{lineTotal:N2} MAD</td>");
+                    body.Append("</tr>");
+                }
+                
+                body.Append("</tbody></table>");
+                
+                // Total
+                body.Append("<div style='margin-top: 15px; padding-top: 15px; border-top: 2px solid #eee;'>");
+                body.Append("<table style='width: 100%;'>");
+                body.Append("<tr>");
+                body.Append("<td style='padding: 5px 0; font-weight: bold; color: #305C7D;'>Total de la commande :</td>");
+                body.Append($"<td style='padding: 5px 0; text-align: right; font-weight: bold; color: #305C7D;'>{commande.TotalTTC:N2} MAD</td>");
+                body.Append("</tr>");
+                body.Append("</table>");
+                body.Append("</div>");
+            }
+            
+            body.Append("</div>");
+            
+            // Contact information
+            body.Append("<div style='margin-top: 30px; padding: 20px; background-color: #e7f3ff; border-radius: 4px;'>");
+            body.Append("<p style='margin: 0 0 10px 0;'><strong>Besoin d'aide ?</strong></p>");
+            body.Append("<p style='margin: 0;'>Si vous avez des questions concernant cette annulation, n'hésitez pas à nous contacter via notre service client. Nous sommes là pour vous aider.</p>");
+            body.Append("</div>");
+            
+            body.Append("<p style='margin-top: 30px;'>Cordialement,<br><strong>L'équipe CoopShop</strong></p>");
+            body.Append("</div>");
+            
+            // Footer
+            body.Append("<div class='footer'>");
+            body.Append($"<p>© {currentYear} CoopShop. Tous droits réservés.</p>");
+            body.Append("</div>");
+            
+            body.Append("</div>");
+            body.Append("</body>");
+            body.Append("</html>");
             
             return body.ToString();
         }
