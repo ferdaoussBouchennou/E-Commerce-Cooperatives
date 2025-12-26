@@ -30,13 +30,13 @@
     </div>  
 
     <!-- Grid Section -->
-    <div class="coop-card"
-     data-coop-name="@coop.Nom.ToLower()"
-     data-coop-desc="@((coop.Description ?? "").ToLower())"
-     data-coop-ville="@coop.Ville.ToLower()">   
+    <div class="cooperatives-grid">
         @foreach (var coop in Model)
         {
-            <div id="dataCoop" class="coop-card">
+            <div id="dataCoop" class="coop-card"
+                 data-coop-name="@coop.Nom.ToLower()"
+                 data-coop-desc="@((coop.Description ?? "").ToLower())"
+                 data-coop-ville="@coop.Ville.ToLower()">
                 <div class="coop-card-header">
                     @if (!string.IsNullOrEmpty(coop.Logo))
                     {

@@ -10,7 +10,7 @@
 <style>
     /* === STYLES GÉNÉRAUX === */
     .admin-page {
-        background: #F8F9FA;
+        background: #F5F3EF;
         min-height: 100vh;
         padding: 30px;
     }
@@ -538,6 +538,84 @@
     #produitModal label {
         pointer-events: auto !important;
     }
+    /* === VARIANTES SECTION === */
+    .variants-section {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #E1E8ED;
+    }
+
+    .variants-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .variants-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #2C5F7D;
+    }
+
+    .btn-add-variant {
+        padding: 6px 12px;
+        background: #F0F4F7;
+        color: #305C7D;
+        border: 1px solid #305C7D;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-add-variant:hover {
+        background: #305C7D;
+        color: white;
+    }
+
+    .variants-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+
+    .variants-table th {
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: #5A6C7D;
+        padding: 8px;
+        border-bottom: 1px solid #E1E8ED;
+    }
+
+    .variants-table td {
+        padding: 8px;
+        vertical-align: middle;
+    }
+
+    .variant-input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #D09E86;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #2C5F7D;
+    }
+
+    .btn-remove-variant {
+        color: #E74C3C;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 5px;
+    }
+
+    .btn-remove-variant:hover {
+        transform: scale(1.2);
+    }
 </style>
 
 <div class="admin-page">
@@ -742,6 +820,31 @@
                         <input type="hidden" id="ImageUrl" name="ImageUrl" />
                     </div>
 
+                    <!-- Variantes Section -->
+                    <div class="variants-section">
+                        <div class="variants-header">
+                            <h6 class="variants-title"><i class="fas fa-tags"></i> Variantes du produit</h6>
+                            <button type="button" class="btn-add-variant" onclick="addVariantRow()">
+                                <i class="fas fa-plus"></i> Ajouter une variante
+                            </button>
+                        </div>
+                        <table class="variants-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%;">Taille</th>
+                                    <th style="width: 20%;">Couleur</th>
+                                    <th style="width: 15%;">Stock</th>
+                                    <th style="width: 20%;">Prix Sup.</th>
+                                    <th style="width: 20%;">SKU</th>
+                                    <th style="width: 5%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="variantsTableBody">
+                                <!-- Les lignes de variantes seront ajoutées ici -->
+                            </tbody>
+                        </table>
+                    </div>
+
                     <div class="switch-row">
                         <label class="custom-switch">
                             <input type="checkbox" id="EstDisponible" name="EstDisponible" value="true" checked hidden />
@@ -864,10 +967,99 @@
             updatePagination();
         });
 
+        function openAddModal() {
+            $('#produitForm')[0].reset();
+            $('#ProduitId').val(0);
+            $('#modalTitle').text('Ajouter un nouveau produit');
+            $('#ImageUrl').val('');
+            $('#variantsTableBody').empty();
+            $('#produitModal').modal('show');
+        }
+
+        function openEditModal(id) {
+            $.get('@Url.Action("GetProduit", "Admin")', { id: id }, function(response) {
+                if (response.success) {
+                    const p = response.produit;
+                    $('#ProduitId').val(p.ProduitId);
+                    $('#Nom').val(p.Nom);
+                    $('#Prix').val(p.Prix);
+                    $('#Description').val(p.Description);
+                    $('#CategorieId').val(p.CategorieId);
+                    $('#CooperativeId').val(p.CooperativeId);
+                    $('#StockTotal').val(p.StockTotal);
+                    $('#SeuilAlerte').val(p.SeuilAlerte);
+                    $('#ImageUrl').val(p.ImageUrl);
+
+                    $('#EstDisponible').prop('checked', p.EstDisponible);
+                    $('#EstEnVedette').prop('checked', p.EstEnVedette);
+                    $('#EstNouveau').prop('checked', p.EstNouveau);
+
+                    $('#modalTitle').text('Modifier le produit');
+                    
+                    $('#variantsTableBody').empty();
+                    if (response.variantes && response.variantes.length > 0) {
+                        response.variantes.forEach(function(v) {
+                            addVariantRow(v);
+                        });
+                    }
+
+                    $('#produitModal').modal('show');
+                } else {
+                    alert(response.message);
+                }
+            });
+        }
+
+        function addVariantRow(data = null) {
+            const id = data ? data.VarianteId : 0;
+            const taille = data ? (data.Taille || '') : '';
+            const couleur = data ? (data.Couleur || '') : '';
+            const stock = data ? data.Stock : 0;
+            const prixSup = data ? data.PrixSupplementaire : 0;
+            const sku = data ? (data.SKU || '') : '';
+
+            const row = `
+                <tr class="variant-row" data-id="${id}">
+                    <td><input type="text" class="variant-input var-taille" value="${taille}" placeholder="Ex: XL" /></td>
+                    <td><input type="text" class="variant-input var-couleur" value="${couleur}" placeholder="Ex: Rouge" /></td>
+                    <td><input type="number" class="variant-input var-stock" value="${stock}" /></td>
+                    <td><input type="number" class="variant-input var-prix" value="${prixSup}" step="0.01" /></td>
+                    <td><input type="text" class="variant-input var-sku" value="${sku}" placeholder="Ex: SKU-001" /></td>
+                    <td>
+                        <button type="button" class="btn-remove-variant" onclick="removeVariantRow(this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            $('#variantsTableBody').append(row);
+        }
+
+        function removeVariantRow(btn) {
+            $(btn).closest('tr').remove();
+        }
+
         function submitForm() {
             const formData = new FormData($('#produitForm')[0]);
+            
+            // Collecter les variantes
+            const variantes = [];
+            $('.variant-row').each(function() {
+                const row = $(this);
+                variantes.push({
+                    VarianteId: row.data('id'),
+                    Taille: row.find('.var-taille').val(),
+                    Couleur: row.find('.var-couleur').val(),
+                    Stock: parseInt(row.find('.var-stock').val()) || 0,
+                    PrixSupplementaire: parseFloat(row.find('.var-prix').val()) || 0,
+                    SKU: row.find('.var-sku').val(),
+                    EstDisponible: true
+                });
+            });
+            formData.append('variantesJson', JSON.stringify(variantes));
+
             const id = $('#ProduitId').val();
-            const url = id == "0" ? '@Url.Action("AjouterProduit", "Admin")' : '@Url.Action("ModifierProduit", "Admin")';
+            const url = id == 0 ? '@Url.Action("AjouterProduit", "Admin")' : '@Url.Action("ModifierProduit", "Admin")';
 
             $.ajax({
                 url: url,
@@ -888,42 +1080,6 @@
                 }
             });
         }
-
-        function openAddModal() {
-            $('#produitForm')[0].reset();
-            $('#ProduitId').val("0");
-            $('#modalTitle').text("Ajouter un nouveau produit");
-
-            // Move modal to body to avoid z-index issues
-            $('#produitModal').appendTo('body').modal('show');
-        }
-
-
-function openEditModal(id) {
-    $.get('@Url.Action("GetProduit", "Admin")', { id: id }, function(response) {
-        if (response.success) {
-            const p = response.produit;
-            $('#ProduitId').val(p.ProduitId);
-            $('#Nom').val(p.Nom);
-            $('#CategorieId').val(p.CategorieId);
-            $('#Description').val(p.Description);
-            $('#Prix').val(p.Prix);
-            $('#StockTotal').val(p.StockTotal);
-            $('#SeuilAlerte').val(p.SeuilAlerte);
-            $('#CooperativeId').val(p.CooperativeId);
-            $('#ImageUrl').val(p.ImageUrl);
-
-            $('#EstDisponible').prop('checked', p.EstDisponible);
-            $('#EstEnVedette').prop('checked', p.EstEnVedette);
-            $('#EstNouveau').prop('checked', p.EstNouveau);
-
-            $('#modalTitle').text("Modifier le produit");
-
-            // Move modal to body
-            $('#produitModal').appendTo('body').modal('show');
-        }
-    });
-}
 
         function closeModal() {
             $('#produitModal').modal('hide');

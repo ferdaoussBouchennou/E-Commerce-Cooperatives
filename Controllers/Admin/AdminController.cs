@@ -7,6 +7,7 @@ using E_Commerce_Cooperatives.Models.ViewModels;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Data;
+using System.Web.Script.Serialization;
 
 namespace E_Commerce_Cooperatives.Controllers
 {
@@ -446,8 +447,10 @@ namespace E_Commerce_Cooperatives.Controllers
         {
             try
             {
-                var p = db.ProduitsSet.Find(id);
+                var p = db.FindProduit(id);
                 if (p == null) return Json(new { success = false, message = "Produit non trouvé" }, JsonRequestBehavior.AllowGet);
+
+                var variantes = db.GetVariantesProduit(id);
 
                 return Json(new
                 {
@@ -466,7 +469,16 @@ namespace E_Commerce_Cooperatives.Controllers
                         p.EstEnVedette,
                         p.EstNouveau,
                         p.ImageUrl
-                    }
+                    },
+                    variantes = variantes.Select(v => new {
+                        v.VarianteId,
+                        v.Taille,
+                        v.Couleur,
+                        v.Stock,
+                        v.PrixSupplementaire,
+                        v.SKU,
+                        v.EstDisponible
+                    }).ToList()
                 }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -499,7 +511,7 @@ namespace E_Commerce_Cooperatives.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult AjouterProduit(Produit produit, System.Web.HttpPostedFileBase imageFile)
+        public ActionResult AjouterProduit(Produit produit, System.Web.HttpPostedFileBase imageFile, string variantesJson)
         {
             try
             {
@@ -526,6 +538,21 @@ namespace E_Commerce_Cooperatives.Controllers
 
                     if (Request.IsAjaxRequest())
                     {
+                        // Gestion des variantes
+                        if (!string.IsNullOrEmpty(variantesJson))
+                        {
+                            var serializer = new JavaScriptSerializer();
+                            var variantes = serializer.Deserialize<List<Variante>>(variantesJson);
+                            if (variantes != null)
+                            {
+                                foreach (var v in variantes)
+                                {
+                                    v.ProduitId = produit.ProduitId;
+                                    db.AddVariante(v);
+                                }
+                            }
+                        }
+
                         return Json(new { success = true, message = "Produit ajouté avec succès" });
                     }
 
@@ -620,7 +647,7 @@ namespace E_Commerce_Cooperatives.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ModifierProduit(Produit produit, System.Web.HttpPostedFileBase imageFile)
+        public ActionResult ModifierProduit(Produit produit, System.Web.HttpPostedFileBase imageFile, string variantesJson)
         {
             try
             {
@@ -675,6 +702,48 @@ namespace E_Commerce_Cooperatives.Controllers
 
                     if (Request.IsAjaxRequest())
                     {
+                        // Gestion des variantes
+                        if (variantesJson != null)
+                        {
+                            var serializer = new JavaScriptSerializer();
+                            var variantes = serializer.Deserialize<List<Variante>>(variantesJson);
+                            
+                            // Récupérer les variantes existantes
+                            var variantesExistantes = db.GetVariantesProduit(produit.ProduitId);
+                            
+                            if (variantes != null)
+                            {
+                                foreach (var v in variantes)
+                                {
+                                    v.ProduitId = produit.ProduitId;
+                                    if (v.VarianteId > 0)
+                                    {
+                                        db.UpdateVariante(v);
+                                    }
+                                    else
+                                    {
+                                        db.AddVariante(v);
+                                    }
+                                }
+                                
+                                // Supprimer les variantes qui ne sont plus dans la liste
+                                var idsIdsRestants = variantes.Where(v => v.VarianteId > 0).Select(v => v.VarianteId).ToList();
+                                foreach (var ve in variantesExistantes)
+                                {
+                                    if (!idsIdsRestants.Contains(ve.VarianteId))
+                                    {
+                                        db.DeleteVariante(ve.VarianteId);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Si la liste est vide/nulle, supprimer toutes les variantes? 
+                                // On va dire que si c'est null on touche à rien, mais si c'est "[]" on supprime tout.
+                                // Le désérialiseur donnera une liste vide pour "[]".
+                            }
+                        }
+
                         return Json(new { success = true, message = "Produit modifié avec succès" });
                     }
 

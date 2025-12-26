@@ -667,7 +667,7 @@ namespace E_Commerce_Cooperatives.Models
             return avis;
         }
 
-        private List<Variante> GetVariantesProduit(int produitId)
+        public List<Variante> GetVariantesProduit(int produitId)
         {
             var variantes = new List<Variante>();
             using (var connection = new SqlConnection(connectionString))
@@ -1810,6 +1810,83 @@ namespace E_Commerce_Cooperatives.Models
         public void Dispose()
         {
             // Nothing to dispose in this implementation
+        }
+
+        // ============================================
+        // GESTION DES VARIANTES
+        // ============================================
+
+        public void AddVariante(Variante v)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"INSERT INTO Variantes (ProduitId, Taille, Couleur, Stock, PrixSupplementaire, SKU, EstDisponible, DateCreation)
+                              VALUES (@ProduitId, @Taille, @Couleur, @Stock, @PrixSupplementaire, @SKU, @EstDisponible, GETDATE())";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProduitId", v.ProduitId);
+                    command.Parameters.AddWithValue("@Taille", (object)v.Taille ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Couleur", (object)v.Couleur ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Stock", v.Stock);
+                    command.Parameters.AddWithValue("@PrixSupplementaire", v.PrixSupplementaire);
+                    command.Parameters.AddWithValue("@SKU", (object)v.SKU ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstDisponible", v.EstDisponible);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateVariante(Variante v)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"UPDATE Variantes 
+                              SET Taille = @Taille, Couleur = @Couleur, Stock = @Stock, 
+                                  PrixSupplementaire = @PrixSupplementaire, SKU = @SKU, 
+                                  EstDisponible = @EstDisponible
+                              WHERE VarianteId = @VarianteId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@VarianteId", v.VarianteId);
+                    command.Parameters.AddWithValue("@Taille", (object)v.Taille ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Couleur", (object)v.Couleur ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Stock", v.Stock);
+                    command.Parameters.AddWithValue("@PrixSupplementaire", v.PrixSupplementaire);
+                    command.Parameters.AddWithValue("@SKU", (object)v.SKU ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstDisponible", v.EstDisponible);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteVariante(int id)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Variantes WHERE VarianteId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteVariantesByProduit(int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Variantes WHERE ProduitId = @ProduitId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    command.ExecuteNonQuery();
+                }
+            }
         }
 
         // ============================================
