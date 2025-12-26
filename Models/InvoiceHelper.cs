@@ -141,14 +141,15 @@ namespace E_Commerce_Cooperatives.Helpers
                 AddHeaderCell(itemsTable, "Total", tableHeaderFont, primaryColor, Element.ALIGN_RIGHT);
 
                 // Rows
+                // IMPORTANT: Les prix stockés sont HT, on affiche les prix TTC dans la facture
                 bool alternate = false;
                 foreach (var item in commande.Items)
                 {
                     BaseColor rowColor = alternate ? lightGray : BaseColor.WHITE;
                     AddRowCell(itemsTable, item.Produit != null ? item.Produit.Nom : "Produit", tableRowFont, rowColor, borderColor);
                     AddRowCell(itemsTable, item.Quantite.ToString(), tableRowFont, rowColor, borderColor, Element.ALIGN_CENTER);
-                    AddRowCell(itemsTable, $"{item.PrixUnitaire:N2} MAD", tableRowFont, rowColor, borderColor, Element.ALIGN_RIGHT);
-                    AddRowCell(itemsTable, $"{item.TotalLigne:N2} MAD", new Font(baseFont, 10, Font.BOLD, textColor), rowColor, borderColor, Element.ALIGN_RIGHT);
+                    AddRowCell(itemsTable, $"{item.PrixUnitaireTTC:N2} MAD", tableRowFont, rowColor, borderColor, Element.ALIGN_RIGHT);
+                    AddRowCell(itemsTable, $"{item.TotalLigneTTC:N2} MAD", new Font(baseFont, 10, Font.BOLD, textColor), rowColor, borderColor, Element.ALIGN_RIGHT);
                     alternate = !alternate;
                 }
 
@@ -160,7 +161,9 @@ namespace E_Commerce_Cooperatives.Helpers
                 totalsTable.WidthPercentage = 50;
                 totalsTable.HorizontalAlignment = Element.ALIGN_RIGHT;
 
-                AddTotalRow(totalsTable, "Sous-total:", $"{commande.TotalHT:N2} MAD", totalLabelFont, totalValueFont);
+                // Sous-total = TotalHT + MontantTVA (prix TTC des produits, sans frais de livraison)
+                decimal sousTotalTTC = Math.Round(commande.TotalHT + commande.MontantTVA, 2);
+                AddTotalRow(totalsTable, "Sous-total:", $"{sousTotalTTC:N2} MAD", totalLabelFont, totalValueFont);
                 AddTotalRow(totalsTable, "Frais de livraison:", $"{commande.FraisLivraison:N2} MAD", totalLabelFont, totalValueFont);
                 
                 // Spacer

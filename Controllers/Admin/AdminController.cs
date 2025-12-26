@@ -101,8 +101,8 @@ namespace E_Commerce_Cooperatives.Controllers
                             Nom = item.Produit?.Nom
                         },
                         Quantite = item.Quantite,
-                        PrixUnitaire = item.PrixUnitaire,
-                        TotalLigne = item.TotalLigne
+                        PrixUnitaire = item.PrixUnitaireTTC, // Prix TTC pour l'affichage
+                        TotalLigne = item.TotalLigneTTC // Total TTC pour l'affichage
                     }).ToList()
                 };
                 
@@ -166,6 +166,91 @@ namespace E_Commerce_Cooperatives.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+            }
+        }
+
+        // POST: Admin/Commandes/Cancel
+        [HttpPost]
+        public ActionResult Cancel(int commandeId, string raisonAnnulation)
+        {
+            try
+            {
+                // Validation des paramètres
+                if (commandeId <= 0)
+                {
+                    return Json(new { success = false, message = "ID de commande invalide" });
+                }
+
+                if (string.IsNullOrWhiteSpace(raisonAnnulation))
+                {
+                    return Json(new { success = false, message = "La raison d'annulation est obligatoire" });
+                }
+
+                if (raisonAnnulation.Trim().Length < 10)
+                {
+                    return Json(new { success = false, message = "La raison d'annulation doit contenir au moins 10 caractères" });
+                }
+
+                using (var db = new ECommerceDbContext())
+                {
+                    // Vérifier que la commande existe
+                    var commande = db.GetCommandeDetails(commandeId);
+                    if (commande == null)
+                    {
+                        return Json(new { success = false, message = "La commande n'a pas été trouvée." });
+                    }
+
+                    // Vérifier que la commande n'est pas déjà annulée
+                    if (commande.Statut == "Annulée")
+                    {
+                        return Json(new { success = false, message = "Cette commande est déjà annulée" });
+                    }
+
+                    // Vérifier que la commande n'est pas déjà livrée
+                    if (commande.Statut == "Livrée")
+                    {
+                        return Json(new { success = false, message = "Impossible d'annuler une commande déjà livrée" });
+                    }
+
+                    // Annuler la commande
+                    var success = db.AnnulerCommande(commandeId, raisonAnnulation);
+                    if (success)
+                    {
+                        // Recharger la commande pour avoir les données à jour (statut, date d'annulation, etc.)
+                        var commandeAnnulee = db.GetCommandeDetails(commandeId);
+                        
+                        // Envoyer l'email d'annulation au client
+                        try
+                        {
+                            if (commandeAnnulee != null && commandeAnnulee.Client != null && !string.IsNullOrEmpty(commandeAnnulee.Client.Email))
+                            {
+                                EmailHelper.SendOrderCancellationEmail(commandeAnnulee, raisonAnnulation);
+                            }
+                        }
+                        catch (Exception emailEx)
+                        {
+                            // Ne pas faire échouer l'annulation si l'email échoue, mais logger l'erreur
+                            System.Diagnostics.Debug.WriteLine("Erreur lors de l'envoi de l'email d'annulation : " + emailEx.Message);
+                        }
+                        
+                        return Json(new { success = true, message = "Commande annulée avec succès" });
+                    }
+                    else
+                    {
+                        return Json(new { success = false, message = "La commande n'a pas été trouvée." });
+                    }
+                }
+            }
+            catch (System.Data.SqlClient.SqlException sqlEx)
+            {
+                System.Diagnostics.Debug.WriteLine("SQL Error in Cancel: " + sqlEx.Message);
+                return Json(new { success = false, message = "Erreur de base de données : " + sqlEx.Message });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error in Cancel: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack trace: " + ex.StackTrace);
+                return Json(new { success = false, message = "Erreur lors de l'annulation : " + ex.Message });
             }
         }
         // GET: Admin/Cooperatives

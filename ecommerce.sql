@@ -43,7 +43,7 @@ CREATE TABLE Cooperatives (
     CooperativeId INT PRIMARY KEY IDENTITY(1,1),
     Nom NVARCHAR(200) NOT NULL UNIQUE,  -- Nom unique
     Description NVARCHAR(MAX),  -- Description pour affichage client
-    Adresse NVARCHAR(500),  -- Adresse complete de la coopÈrative
+    Adresse NVARCHAR(500),  -- Adresse complete de la coop√©rative
     Ville NVARCHAR(100),  -- Ville
     Telephone NVARCHAR(20),  -- Telephone (optionnel)
     Logo NVARCHAR(500),  -- Logo de la cooperative (URL/chemin)
@@ -95,7 +95,7 @@ CREATE TABLE Variantes (
     Taille NVARCHAR(50),  -- Ex: S, M, L, XL ou 100g, 500g, 1kg
     Couleur NVARCHAR(50),  -- Ex: Rouge, Bleu, Vert
     Stock INT NOT NULL DEFAULT 0,
-    PrixSupplementaire DECIMAL(18,2) DEFAULT 0,  -- Si prix diffÈrent
+    PrixSupplementaire DECIMAL(18,2) DEFAULT 0,  -- Si prix diff√©rent
     SKU NVARCHAR(100),  -- Code unique de la variante
     EstDisponible BIT DEFAULT 1,
     DateCreation DATETIME DEFAULT GETDATE()
@@ -151,8 +151,8 @@ CREATE TABLE Commandes (
     TotalHT DECIMAL(18,2) NOT NULL,
     MontantTVA DECIMAL(18,2) DEFAULT 0,
     TotalTTC DECIMAL(18,2) NOT NULL,
-    Statut NVARCHAR(50) DEFAULT 'ValidÈe'
-        CHECK (Statut IN ( 'ValidÈe', 'PrÈparation', 'ExpÈdiÈe', 'LivrÈe')),
+    Statut NVARCHAR(50) DEFAULT 'Valid√©e'
+        CHECK (Statut IN ( 'Valid√©e', 'Pr√©paration', 'Exp√©di√©e', 'Livr√©e')),
     Commentaire NVARCHAR(500),
     DateAnnulation DATETIME,
     RaisonAnnulation NVARCHAR(500)
@@ -195,7 +195,7 @@ CREATE TABLE AvisProduits (
 );
 
 -- ============================================
--- DONN…ES DE TEST - INSERTION COMPL»TE
+-- DONN√âES DE TEST - INSERTION COMPL√àTE
 -- ============================================
 
 -- ============================================
@@ -225,19 +225,19 @@ INSERT INTO Clients (UtilisateurId, Nom, Prenom, Telephone, DateNaissance, EstAc
 INSERT INTO Adresses (ClientId, AdresseComplete, Ville, CodePostal, Pays, EstParDefaut) VALUES
 (1, 'Appartement 12, Immeuble Yasmine, Rue Hassan II', 'Casablanca', '20000', 'Maroc', 1),
 (1, 'Villa 45, Quartier Anfa', 'Casablanca', '20100', 'Maroc', 0),
-(2, 'RÈsidence Nejma, Bloc B, Appt 5', 'Rabat', '10000', 'Maroc', 1),
-(3, 'Rue Abdelkrim El Khattabi, N∞78', 'FËs', '30000', 'Maroc', 1),
-(4, 'Avenue Mohammed V, Imm. Al Amal, 3Ëme Ètage', 'Marrakech', '40000', 'Maroc', 1),
-(5, 'Quartier Administratif, Rue 12, N∞34', 'TÈtouan', '93000', 'Maroc', 1);
+(2, 'R√©sidence Nejma, Bloc B, Appt 5', 'Rabat', '10000', 'Maroc', 1),
+(3, 'Rue Abdelkrim El Khattabi, N¬∞78', 'F√®s', '30000', 'Maroc', 1),
+(4, 'Avenue Mohammed V, Imm. Al Amal, 3√®me √©tage', 'Marrakech', '40000', 'Maroc', 1),
+(5, 'Quartier Administratif, Rue 12, N¬∞34', 'T√©touan', '93000', 'Maroc', 1);
 
 -- ============================================
--- 2. COOP…RATIVES
+-- 2. COOP√âRATIVES
 -- ============================================
 
 INSERT INTO Cooperatives (Nom, Description, Adresse, Ville, Telephone, Logo, EstActive, DateCreation) VALUES
 (
-    'CoopÈrative ArganiËre Taroudant',
-    'Depuis 1998, notre coopÈrative de femmes produit l''huile d''argan la plus pure du Maroc. Nous travaillons avec plus de 60 femmes berbËres qui perpÈtuent les mÈthodes traditionnelles de production. Nos produits sont certifiÈs biologiques et Èquitables.',
+    'Coop√©rative Argani√®re Taroudant',
+    'Depuis 1998, notre coop√©rative de femmes produit l''huile d''argan la plus pure du Maroc. Nous travaillons avec plus de 60 femmes berb√®res qui perp√©tuent les m√©thodes traditionnelles de production. Nos produits sont certifi√©s biologiques et √©quitables.',
     'Douar Ait Baamrane, Route de Taroudant',
     'Taroudant',
     '+212 528 123 456',
@@ -246,18 +246,18 @@ INSERT INTO Cooperatives (Nom, Description, Adresse, Ville, Telephone, Logo, Est
     '1998-03-15'
 ),
 (
-    'Potiers de FËs',
-    'Artisans potiers perpÈtuant les traditions sÈculaires de la cÈramique fassi. Notre atelier familial existe depuis 5 gÈnÈrations. Nous crÈons des piËces uniques en cÈramique ÈmaillÈe selon les techniques ancestrales.',
+    'Potiers de F√®s',
+    'Artisans potiers perp√©tuant les traditions s√©culaires de la c√©ramique fassi. Notre atelier familial existe depuis 5 g√©n√©rations. Nous cr√©ons des pi√®ces uniques en c√©ramique √©maill√©e selon les techniques ancestrales.',
     'Quartier des Potiers, Bab Ftouh',
-    'FËs',
+    'F√®s',
     '+212 535 789 012',
     '/images/cooperatives/potiers-fes.jpg',
     1,
     '1965-07-20'
 ),
 (
-    'CoopÈrative Apicole Atlas',
-    'Miel pur des montagnes de l''Atlas, rÈcoltÈ de maniËre traditionnelle. Nos ruches sont situÈes ‡ plus de 2000m d''altitude dans des zones prÈservÈes. Production 100% naturelle sans additifs ni traitement.',
+    'Coop√©rative Apicole Atlas',
+    'Miel pur des montagnes de l''Atlas, r√©colt√© de mani√®re traditionnelle. Nos ruches sont situ√©es √† plus de 2000m d''altitude dans des zones pr√©serv√©es. Production 100% naturelle sans additifs ni traitement.',
     'Village d''Imlil, Haut Atlas',
     'Imlil',
     '+212 524 456 789',
@@ -266,8 +266,8 @@ INSERT INTO Cooperatives (Nom, Description, Adresse, Ville, Telephone, Logo, Est
     '2005-04-10'
 ),
 (
-    'CoopÈrative Safran Taliouine',
-    'Production de safran de qualitÈ premium dans la rÈgion de Taliouine. Notre safran est reconnu internationalement pour sa couleur intense et son arÙme exceptionnel. RÈcolte et tri manuel pour garantir la meilleure qualitÈ.',
+    'Coop√©rative Safran Taliouine',
+    'Production de safran de qualit√© premium dans la r√©gion de Taliouine. Notre safran est reconnu internationalement pour sa couleur intense et son ar√¥me exceptionnel. R√©colte et tri manuel pour garantir la meilleure qualit√©.',
     'Centre de Taliouine, Route d''Agadir',
     'Taliouine',
     '+212 528 345 678',
@@ -277,7 +277,7 @@ INSERT INTO Cooperatives (Nom, Description, Adresse, Ville, Telephone, Logo, Est
 ),
 (
     'Tisseuses du Rif',
-    'CoopÈrative fÈminine spÈcialisÈe dans le tissage traditionnel berbËre. Nous crÈons des tapis, couvertures et textiles selon les motifs ancestraux du Rif. Chaque piËce est unique et faite ‡ la main.',
+    'Coop√©rative f√©minine sp√©cialis√©e dans le tissage traditionnel berb√®re. Nous cr√©ons des tapis, couvertures et textiles selon les motifs ancestraux du Rif. Chaque pi√®ce est unique et faite √† la main.',
     'Village Chefchaouen, Quartier Andalous',
     'Chefchaouen',
     '+212 539 876 543',
@@ -286,8 +286,8 @@ INSERT INTO Cooperatives (Nom, Description, Adresse, Ville, Telephone, Logo, Est
     '2010-11-08'
 ),
 (
-    'CoopÈrative Amlou Essaouira',
-    'SpÈcialisÈe dans la production d''amlou, p‚te traditionnelle ‡ base d''amandes, huile d''argan et miel. Nos produits sont 100% naturels et prÈparÈs selon les recettes traditionnelles essaouiriennes.',
+    'Coop√©rative Amlou Essaouira',
+    'Sp√©cialis√©e dans la production d''amlou, p√¢te traditionnelle √† base d''amandes, huile d''argan et miel. Nos produits sont 100% naturels et pr√©par√©s selon les recettes traditionnelles essaouiriennes.',
     'Medina d''Essaouira, Rue Sidi Mohammed Ben Abdellah',
     'Essaouira',
     '+212 524 123 987',
@@ -297,38 +297,38 @@ INSERT INTO Cooperatives (Nom, Description, Adresse, Ville, Telephone, Logo, Est
 );
 
 -- ============================================
--- 3. CAT…GORIES
+-- 3. CAT√âGORIES
 -- ============================================
 
 INSERT INTO Categories (Nom, Description, ImageUrl, EstActive) VALUES
-('CosmÈtiques', 'Huiles naturelles, savons et soins pour le corps', '/Content/images/categories/cosmetics.jpg', 1),
-('Alimentaire', 'Miel, Èpices, confitures et produits du terroir', '/Content/images/categories/food.jpg', 1),
-('Poterie & CÈramique', 'Tagines, plats et dÈcoration en cÈramique artisanale', '/Content/images/categories/pottery.jpg', 1),
-('Textiles & Vannerie', 'Tapis, paniers et accessoires tissÈs ‡ la main', '/Content/images/categories/textiles.jpg', 1);
+('Cosm√©tiques', 'Huiles naturelles, savons et soins pour le corps', '/Content/images/categories/cosmetics.jpg', 1),
+('Alimentaire', 'Miel, √©pices, confitures et produits du terroir', '/Content/images/categories/food.jpg', 1),
+('Poterie & C√©ramique', 'Tagines, plats et d√©coration en c√©ramique artisanale', '/Content/images/categories/pottery.jpg', 1),
+('Textiles & Vannerie', 'Tapis, paniers et accessoires tiss√©s √† la main', '/Content/images/categories/textiles.jpg', 1);
 -- ============================================
 -- 4. PRODUITS
 -- ============================================
 INSERT INTO Produits (Nom, Description, Prix, ImageUrl, CategorieId, CooperativeId, StockTotal, SeuilAlerte, EstDisponible, EstEnVedette, EstNouveau) VALUES
--- Produits CosmÈtiques
-('Savon Noir Beldi', 'Savon noir traditionnel 100% naturel ‡ base d''huile d''olive. IdÈal pour le hammam, exfoliant et purifiant. Format 250g.', 65.00, '/Content/images/produits/soap.jpg', 1, 1, 200, 20, 1, 1, 0),
-('Huile d''Argan Pure Bio', 'Huile d''argan vierge pressÈe ‡ froid, certifiÈe biologique. Riche en vitamine E et acides gras essentiels. Flacon 100ml.', 180.00, '/Content/images/produits/argan-oil.jpg', 1, 1, 150, 15, 1, 1, 1),
-('Savon d''Argan Artisanal', 'Savon artisanal enrichi ‡ l''huile d''argan. Hydratant et nourrissant pour tous types de peaux. 100g.', 45.00, '/Content/images/produits/soap.jpg', 1, 1, 180, 20, 1, 0, 0),
+-- Produits Cosm√©tiques
+('Savon Noir Beldi', 'Savon noir traditionnel 100% naturel √† base d''huile d''olive. Id√©al pour le hammam, exfoliant et purifiant. Format 250g.', 65.00, '/Content/images/produits/soap.jpg', 1, 1, 200, 20, 1, 1, 0),
+('Huile d''Argan Pure Bio', 'Huile d''argan vierge press√©e √† froid, certifi√©e biologique. Riche en vitamine E et acides gras essentiels. Flacon 100ml.', 180.00, '/Content/images/produits/argan-oil.jpg', 1, 1, 150, 15, 1, 1, 1),
+('Savon d''Argan Artisanal', 'Savon artisanal enrichi √† l''huile d''argan. Hydratant et nourrissant pour tous types de peaux. 100g.', 45.00, '/Content/images/produits/soap.jpg', 1, 1, 180, 20, 1, 0, 0),
 
 -- Produits Alimentaires
-('Miel de Thym Atlas', 'Miel pur de thym rÈcoltÈ dans le Haut Atlas. Go˚t intense et aromatique. Pot de 500g.', 120.00, '/Content/images/produits/honey.jpg', 2, 3, 80, 10, 1, 1, 1),
-('Safran Pur Taliouine', 'Safran de qualitÈ premium, cultivÈ ‡ Taliouine. IdÈal pour vos plats et p‚tisseries. 1 gramme.', 95.00, '/Content/images/produits/saffron.jpg', 2, 4, 60, 5, 1, 1, 0),
-('Amlou Traditionnel', 'P‚te d''amandes grillÈes, miel et huile d''argan. Recette traditionnelle. Pot 250g.', 85.00, '/Content/images/produits/honey.jpg', 2, 6, 100, 15, 1, 0, 0),
-('Miel d''Eucalyptus', 'Miel d''eucalyptus aux propriÈtÈs apaisantes. Parfait pour les tisanes. Pot 500g.', 110.00, '/Content/images/produits/honey.jpg', 2, 3, 75, 10, 1, 0, 0),
+('Miel de Thym Atlas', 'Miel pur de thym r√©colt√© dans le Haut Atlas. Go√ªt intense et aromatique. Pot de 500g.', 120.00, '/Content/images/produits/honey.jpg', 2, 3, 80, 10, 1, 1, 1),
+('Safran Pur Taliouine', 'Safran de qualit√© premium, cultiv√© √† Taliouine. Id√©al pour vos plats et p√¢tisseries. 1 gramme.', 95.00, '/Content/images/produits/saffron.jpg', 2, 4, 60, 5, 1, 1, 0),
+('Amlou Traditionnel', 'P√¢te d''amandes grill√©es, miel et huile d''argan. Recette traditionnelle. Pot 250g.', 85.00, '/Content/images/produits/honey.jpg', 2, 6, 100, 15, 1, 0, 0),
+('Miel d''Eucalyptus', 'Miel d''eucalyptus aux propri√©t√©s apaisantes. Parfait pour les tisanes. Pot 500g.', 110.00, '/Content/images/produits/honey.jpg', 2, 3, 75, 10, 1, 0, 0),
 
 -- Produits Poterie
-('Tagine DÈcorÈ Traditionnel', 'Tagine en terre cuite dÈcorÈ ‡ la main, motifs berbËres authentiques. DiamËtre 30cm.', 350.00, '/Content/images/produits/tagine.jpg', 3, 2, 45, 5, 1, 1, 1),
-('Plat ‡ Couscous Fassi', 'Grand plat ‡ couscous en cÈramique ÈmaillÈe, dÈcoration traditionnelle de FËs. DiamËtre 35cm.', 280.00, '/Content/images/produits/tagine.jpg', 3, 2, 38, 5, 1, 0, 0),
-('Set de Bols CÈramique', 'Set de 6 bols en cÈramique artisanale, motifs gÈomÈtriques. Parfait pour le thÈ ou les desserts.', 195.00, '/Content/images/produits/tagine.jpg', 3, 2, 52, 8, 1, 0, 0),
+('Tagine D√©cor√© Traditionnel', 'Tagine en terre cuite d√©cor√© √† la main, motifs berb√®res authentiques. Diam√®tre 30cm.', 350.00, '/Content/images/produits/tagine.jpg', 3, 2, 45, 5, 1, 1, 1),
+('Plat √† Couscous Fassi', 'Grand plat √† couscous en c√©ramique √©maill√©e, d√©coration traditionnelle de F√®s. Diam√®tre 35cm.', 280.00, '/Content/images/produits/tagine.jpg', 3, 2, 38, 5, 1, 0, 0),
+('Set de Bols C√©ramique', 'Set de 6 bols en c√©ramique artisanale, motifs g√©om√©triques. Parfait pour le th√© ou les desserts.', 195.00, '/Content/images/produits/tagine.jpg', 3, 2, 52, 8, 1, 0, 0),
 
 -- Produits Textiles
-('Panier BerbËre TissÈ', 'Panier artisanal tissÈ ‡ la main en raphia naturel. Motifs traditionnels berbËres. Taille moyenne.', 220.00, '/Content/images/produits/basket.jpg', 4, 5, 35, 5, 1, 0, 1),
-('Tapis BerbËre Fait Main', 'Tapis 100% laine, tissÈ ‡ la main selon la tradition rifaine. Motifs gÈomÈtriques uniques. 120x180cm.', 1200.00, '/Content/images/produits/basket.jpg', 4, 5, 12, 2, 1, 1, 0),
-('Coussin TissÈ Traditionnel', 'Housse de coussin en tissage berbËre traditionnel. Coloris naturels. 40x40cm.', 145.00, '/Content/images/produits/basket.jpg', 4, 5, 48, 10, 1, 0, 0);
+('Panier Berb√®re Tiss√©', 'Panier artisanal tiss√© √† la main en raphia naturel. Motifs traditionnels berb√®res. Taille moyenne.', 220.00, '/Content/images/produits/basket.jpg', 4, 5, 35, 5, 1, 0, 1),
+('Tapis Berb√®re Fait Main', 'Tapis 100% laine, tiss√© √† la main selon la tradition rifaine. Motifs g√©om√©triques uniques. 120x180cm.', 1200.00, '/Content/images/produits/basket.jpg', 4, 5, 12, 2, 1, 1, 0),
+('Coussin Tiss√© Traditionnel', 'Housse de coussin en tissage berb√®re traditionnel. Coloris naturels. 40x40cm.', 145.00, '/Content/images/produits/basket.jpg', 4, 5, 48, 10, 1, 0, 0);
 
 -- ============================================
 -- 5. IMAGES DES PRODUITS
@@ -382,9 +382,9 @@ INSERT INTO Variantes (ProduitId, Taille, Couleur, Stock, PrixSupplementaire, SK
 -- ============================================
 
 INSERT INTO ModesLivraison (Nom, Description, Tarif, DelaiEstime, EstActif) VALUES
-('Livraison Standard', 'Livraison ‡ domicile dans toutes les villes du Maroc', 30.00, '3-5 jours ouvrables', 1),
+('Livraison Standard', 'Livraison √† domicile dans toutes les villes du Maroc', 30.00, '3-5 jours ouvrables', 1),
 ('Livraison Express', 'Livraison rapide dans les grandes villes', 60.00, '24-48 heures', 1),
-('Retrait en magasin', 'Retrait gratuit dans nos points de vente partenaires', 0.00, 'Sous 24h aprËs confirmation', 1);
+('Retrait en magasin', 'Retrait gratuit dans nos points de vente partenaires', 0.00, 'Sous 24h apr√®s confirmation', 1);
 
 -- ============================================
 -- 8. PANIERS ET ITEMS
@@ -410,11 +410,11 @@ INSERT INTO PanierItems (PanierId, ProduitId, VarianteId, Quantite, PrixUnitaire
 -- ============================================
 
 INSERT INTO Commandes (NumeroCommande, ClientId, AdresseId, ModeLivraisonId, FraisLivraison, TotalHT, MontantTVA, TotalTTC, Statut) VALUES
-('CMD-2025-00001', 3, 3, 1, 30.00, 545.00, 109.00, 684.00, 'LivrÈe'),
-('CMD-2025-00002', 1, 1, 2, 60.00, 305.00, 61.00, 426.00, 'ExpÈdiÈe'),
-('CMD-2025-00003', 4, 4, 1, 30.00, 1200.00, 240.00, 1470.00, 'PrÈparation'),
-('CMD-2025-00004', 2, 2, 3, 0.00, 280.00, 56.00, 336.00, 'ValidÈe'),
-('CMD-2025-00005', 5, 5, 1, 30.00, 415.00, 83.00, 528.00, 'ExpÈdiÈe');
+('CMD-2025-00001', 3, 3, 1, 30.00, 545.00, 109.00, 684.00, 'Livr√©e'),
+('CMD-2025-00002', 1, 1, 2, 60.00, 305.00, 61.00, 426.00, 'Exp√©di√©e'),
+('CMD-2025-00003', 4, 4, 1, 30.00, 1200.00, 240.00, 1470.00, 'Pr√©paration'),
+('CMD-2025-00004', 2, 2, 3, 0.00, 280.00, 56.00, 336.00, 'Valid√©e'),
+('CMD-2025-00005', 5, 5, 1, 30.00, 415.00, 83.00, 528.00, 'Exp√©di√©e');
 
 INSERT INTO CommandeItems (CommandeId, ProduitId, VarianteId, Quantite, PrixUnitaire, TotalLigne) VALUES
 -- Commande 1
@@ -441,45 +441,125 @@ INSERT INTO CommandeItems (CommandeId, ProduitId, VarianteId, Quantite, PrixUnit
 -- ============================================
 
 INSERT INTO LivraisonSuivi (CommandeId, Statut, Description, NumeroSuivi) VALUES
--- Commande 1 (LivrÈe)
-(1, 'ValidÈe', 'Commande validÈe et en cours de prÈparation', 'TRK2025001'),
-(1, 'PrÈparation', 'Commande en cours de prÈparation dans nos locaux', 'TRK2025001'),
-(1, 'ExpÈdiÈe', 'Colis expÈdiÈ vers FËs', 'TRK2025001'),
-(1, 'LivrÈe', 'Commande livrÈe avec succËs', 'TRK2025001'),
+-- Commande 1 (Livr√©e)
+(1, 'Valid√©e', 'Commande valid√©e et en cours de pr√©paration', 'TRK2025001'),
+(1, 'Pr√©paration', 'Commande en cours de pr√©paration dans nos locaux', 'TRK2025001'),
+(1, 'Exp√©di√©e', 'Colis exp√©di√© vers F√®s', 'TRK2025001'),
+(1, 'Livr√©e', 'Commande livr√©e avec succ√®s', 'TRK2025001'),
 
--- Commande 2 (ExpÈdiÈe)
-(2, 'ValidÈe', 'Commande validÈe', 'TRK2025002'),
-(2, 'PrÈparation', 'Produits emballÈs', 'TRK2025002'),
-(2, 'ExpÈdiÈe', 'En cours de livraison vers Casablanca', 'TRK2025002'),
+-- Commande 2 (Exp√©di√©e)
+(2, 'Valid√©e', 'Commande valid√©e', 'TRK2025002'),
+(2, 'Pr√©paration', 'Produits emball√©s', 'TRK2025002'),
+(2, 'Exp√©di√©e', 'En cours de livraison vers Casablanca', 'TRK2025002'),
 
--- Commande 3 (En prÈparation)
-(3, 'ValidÈe', 'Commande validÈe', 'TRK2025003'),
-(3, 'PrÈparation', 'Commande en cours de prÈparation', 'TRK2025003'),
+-- Commande 3 (En pr√©paration)
+(3, 'Valid√©e', 'Commande valid√©e', 'TRK2025003'),
+(3, 'Pr√©paration', 'Commande en cours de pr√©paration', 'TRK2025003'),
 
--- Commande 4 (ValidÈe)
-(4, 'ValidÈe', 'Commande validÈe - En attente de retrait', NULL),
+-- Commande 4 (Valid√©e)
+(4, 'Valid√©e', 'Commande valid√©e - En attente de retrait', NULL),
 
--- Commande 5 (ExpÈdiÈe)
-(5, 'ValidÈe', 'Commande validÈe', 'TRK2025005'),
-(5, 'PrÈparation', 'Emballage en cours', 'TRK2025005'),
-(5, 'ExpÈdiÈe', 'ExpÈdiÈ vers TÈtouan', 'TRK2025005');
+-- Commande 5 (Exp√©di√©e)
+(5, 'Valid√©e', 'Commande valid√©e', 'TRK2025005'),
+(5, 'Pr√©paration', 'Emballage en cours', 'TRK2025005'),
+(5, 'Exp√©di√©e', 'Exp√©di√© vers T√©touan', 'TRK2025005');
 
 -- ============================================
 -- 11. AVIS PRODUITS
 -- ============================================
 
 INSERT INTO AvisProduits (ClientId, ProduitId, Note, Commentaire) VALUES
-(3, 2, 5, 'Excellente huile d''argan ! Texture parfaite et odeur agrÈable. Je l''utilise tous les jours pour mes cheveux.'),
-(3, 1, 4, 'TrËs bon savon noir, efficace pour le gommage. Texture un peu Èpaisse mais rÈsultat impeccable.'),
-(1, 8, 5, 'Magnifique tagine, les dÈcors sont superbes ! TrËs bonne qualitÈ, je recommande vivement.'),
-(4, 12, 5, 'Superbe tapis berbËre authentique ! Les motifs sont magnifiques et la qualitÈ exceptionnelle. Livraison soignÈe.'),
-(2, 9, 4, 'Beau plat ‡ couscous traditionnel, parfait pour les repas en famille. La cÈramique est de qualitÈ.'),
-(5, 6, 5, 'L''amlou est dÈlicieux ! Go˚t authentique, parfait au petit-dÈjeuner avec du pain frais.'),
-(5, 3, 4, 'Bon savon, hydrate bien la peau. Parfum d''argan naturel trËs agrÈable.'),
-(1, 4, 5, 'Miel de thym excellent ! Go˚t intense et naturel, parfait pour les tisanes. Je rachËterai !'),
-(3, 4, 5, 'Le meilleur miel que j''ai go˚tÈ ! QualitÈ exceptionnelle du Haut Atlas.'),
-(2, 2, 5, 'Huile d''argan pure et de qualitÈ supÈrieure. TrËs satisfaite de mon achat.'),
-(2, 5, 5, 'Safran de qualitÈ supÈrieure. TrËs satisfaite de mon achat.');
+(3, 2, 5, 'Excellente huile d''argan ! Texture parfaite et odeur agr√©able. Je l''utilise tous les jours pour mes cheveux.'),
+(3, 1, 4, 'Tr√®s bon savon noir, efficace pour le gommage. Texture un peu √©paisse mais r√©sultat impeccable.'),
+(1, 8, 5, 'Magnifique tagine, les d√©cors sont superbes ! Tr√®s bonne qualit√©, je recommande vivement.'),
+(4, 12, 5, 'Superbe tapis berb√®re authentique ! Les motifs sont magnifiques et la qualit√© exceptionnelle. Livraison soign√©e.'),
+(2, 9, 4, 'Beau plat √† couscous traditionnel, parfait pour les repas en famille. La c√©ramique est de qualit√©.'),
+(5, 6, 5, 'L''amlou est d√©licieux ! Go√ªt authentique, parfait au petit-d√©jeuner avec du pain frais.'),
+(5, 3, 4, 'Bon savon, hydrate bien la peau. Parfum d''argan naturel tr√®s agr√©able.'),
+(1, 4, 5, 'Miel de thym excellent ! Go√ªt intense et naturel, parfait pour les tisanes. Je rach√®terai !'),
+(3, 4, 5, 'Le meilleur miel que j''ai go√ªt√© ! Qualit√© exceptionnelle du Haut Atlas.'),
+(2, 2, 5, 'Huile d''argan pure et de qualit√© sup√©rieure. Tr√®s satisfaite de mon achat.'),
+(2, 5, 5, 'Safran de qualit√© sup√©rieure. Tr√®s satisfaite de mon achat.');
  
 select * from Produits
 select * from AvisProduits
+
+
+
+CREATE TABLE ZonesLivraison (
+    ZoneLivraisonId INT PRIMARY KEY IDENTITY(1,1),
+    ZoneVille NVARCHAR(100) NOT NULL,  -- Ex: Casablanca, Rabat, Marrakech
+    Supplement DECIMAL(18,2) DEFAULT 0,  -- Suppl√©ment de livraison (0 = Gratuit)
+    DelaiEstime NVARCHAR(100) NOT NULL,  -- Ex: "1-2 jours", "2-3 jours"
+    EstActif BIT DEFAULT 1,
+    DateCreation DATETIME DEFAULT GETDATE()
+);
+
+-- ============================================
+-- SCRIPT D'INSERTION DES ZONES DE LIVRAISON
+-- ============================================
+-- Ce script ins√®re des donn√©es de test pour la table ZonesLivraison
+-- Vous pouvez ex√©cuter ce script directement dans SQL Server Management Studio
+
+-- Supprimer les donn√©es existantes (optionnel - d√©commentez si n√©cessaire)
+-- DELETE FROM ZonesLivraison;
+
+-- Ins√©rer les zones de livraison principales du Maroc
+INSERT INTO ZonesLivraison (ZoneVille, Supplement, DelaiEstime, EstActif) VALUES
+-- Grandes villes principales (livraison rapide)
+('Casablanca', 0.00, '1-2 jours', 1),
+('Rabat', 15.00, '2-3 jours', 1),
+('Marrakech', 25.00, '2-4 jours', 1),
+('F√®s', 30.00, '3-4 jours', 1),
+('Tanger', 35.00, '3-5 jours', 1),
+('Agadir', 40.00, '4-5 jours', 1),
+
+-- Autres villes importantes
+('Mekn√®s', 30.00, '3-4 jours', 1),
+('Oujda', 45.00, '4-6 jours', 1),
+('T√©touan', 35.00, '3-5 jours', 1),
+('Safi', 35.00, '3-5 jours', 1),
+('K√©nitra', 25.00, '2-4 jours', 1),
+('El Jadida', 30.00, '3-4 jours', 1),
+('Nador', 45.00, '4-6 jours', 1),
+('Beni Mellal', 40.00, '4-5 jours', 1),
+('Taza', 40.00, '4-5 jours', 1),
+('Essaouira', 35.00, '3-5 jours', 1),
+('Larache', 35.00, '3-5 jours', 1),
+('Kh√©misset', 30.00, '3-4 jours', 1),
+('Taourirt', 45.00, '4-6 jours', 1),
+('Errachidia', 50.00, '5-7 jours', 1),
+('Ouarzazate', 50.00, '5-7 jours', 1),
+('Dakhla', 80.00, '7-10 jours', 1),
+('La√¢youne', 70.00, '6-9 jours', 1),
+
+-- Zone g√©n√©rique pour toutes les autres villes
+('Autres villes', 50.00, '5-7 jours', 1);
+
+-- V√©rification des donn√©es ins√©r√©es
+SELECT 
+    ZoneLivraisonId,
+    ZoneVille,
+    Supplement,
+    DelaiEstime,
+    CASE WHEN EstActif = 1 THEN 'Active' ELSE 'Inactive' END AS Statut,
+    DateCreation
+FROM ZonesLivraison
+ORDER BY 
+    CASE 
+        WHEN Supplement = 0 THEN 1
+        ELSE 2
+    END,
+    Supplement ASC,
+    ZoneVille ASC;
+
+
+CREATE TABLE Favoris (
+    FavoriId INT PRIMARY KEY IDENTITY(1,1),
+    ClientId INT NOT NULL,
+    ProduitId INT NOT NULL,
+    DateAjout DATETIME NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY (ClientId) REFERENCES Clients(ClientId) ON DELETE CASCADE,
+    FOREIGN KEY (ProduitId) REFERENCES Produits(ProduitId) ON DELETE CASCADE,
+    UNIQUE (ClientId, ProduitId)
+);

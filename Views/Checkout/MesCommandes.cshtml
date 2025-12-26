@@ -2,6 +2,11 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.Title = "Mes Commandes";
+    
+    // Fonction helper pour convertir "Validée" en "Confirmée" dans l'affichage client
+    Func<string, string> GetDisplayStatus = (status) => {
+        return status == "Validée" ? "Confirmée" : status;
+    };
 }
 
 <style>
@@ -80,7 +85,7 @@
                                 Facture
                             </a>
                             <span class="badge d-flex align-items-center" style="font-size: 0.85rem; padding: 0.6rem 1.2rem; background-color: #305C7D; color: white; border-radius: 20px; font-weight: 500;">
-                                @Model.CommandeDetail.Statut
+                                @GetDisplayStatus(Model.CommandeDetail.Statut)
                             </span>
                         </div>
                     </div>
@@ -88,28 +93,30 @@
                     <!-- Tracking -->
                     <div class="mb-4 p-4 rounded-4" style="background-color: #F8F6F2;">
                         <h3 class="fw-bold mb-4" style="color: #305C7D; font-size: 1.1rem;">Suivi de livraison</h3>
+                        @{
+                            var statutDisplay = Model.CommandeDetail.Statut;
+                            var progressWidth = statutDisplay == "Livrée" ? "100%" :
+                                               statutDisplay == "Expédiée" || statutDisplay == "En cours de livraison" ? "66%" :
+                                               statutDisplay == "Préparation" ? "33%" : 
+                                               statutDisplay == "Validée" ? "0%" : "0%";
+                            
+                            var trackingSteps = new[]
+                            {
+                                new { Icon = "check-circle", Label = "Confirmée" },
+                                new { Icon = "box", Label = "Préparation" },
+                                new { Icon = "truck", Label = "Expédition" },
+                                new { Icon = "check-circle", Label = "Livrée" }
+                            };
+                            
+                            var currentStep = statutDisplay == "Livrée" ? 3 :
+                                             statutDisplay == "Expédiée" || statutDisplay == "En cours de livraison" ? 2 :
+                                             statutDisplay == "Préparation" ? 1 : 
+                                             statutDisplay == "Validée" ? 0 : 0;
+                        }
                         <div class="d-flex justify-content-between align-items-center position-relative mb-2">
                             <div class="position-absolute top-50 start-0 end-0" style="height: 3px; background-color: #e0e0e0; z-index: 0; margin: 0 40px; transform: translateY(-50%);">
-                                @{
-                                    var progressWidth = Model.CommandeDetail.Statut == "Livrée" ? "100%" :
-                                                       Model.CommandeDetail.Statut == "Expédiée" || Model.CommandeDetail.Statut == "En cours de livraison" ? "66%" :
-                                                       Model.CommandeDetail.Statut == "Préparation" ? "33%" : "0%";
-                                }
                                 <div class="h-100 rounded" style="width: @progressWidth; background-color: #C06C50;"></div>
                             </div>
-
-                            @{
-                                var trackingSteps = new[]
-                                {
-                                    new { Icon = "check-circle", Label = "Confirmée" },
-                                    new { Icon = "box", Label = "Préparation" },
-                                    new { Icon = "truck", Label = "Expédition" },
-                                    new { Icon = "check-circle", Label = "Livrée" }
-                                };
-                                var currentStep = Model.CommandeDetail.Statut == "Livrée" ? 3 :
-                                                 Model.CommandeDetail.Statut == "Expédiée" || Model.CommandeDetail.Statut == "En cours de livraison" ? 2 :
-                                                 Model.CommandeDetail.Statut == "Préparation" ? 1 : 0;
-                            }
 
                             @for (int i = 0; i < trackingSteps.Length; i++)
                             {
@@ -163,7 +170,7 @@
                                         <h4 class="fw-bold mb-1" style="color: #305C7D; font-size: 1rem;">@(item.Produit != null ? item.Produit.Nom : "Produit")</h4>
                                         <p class="small text-muted mb-0">Quantité: @item.Quantite</p>
                                     </div>
-                                    <p class="fw-bold mb-0 text-nowrap" style="color: #305C7D; font-size: 1.1rem;">@((item.PrixUnitaire * item.Quantite).ToString("F0")) MAD</p>
+                                    <p class="fw-bold mb-0 text-nowrap" style="color: #305C7D; font-size: 1.1rem;">@item.TotalLigneTTC.ToString("F2") MAD</p>
                                 </div>
                             }
                         </div>
@@ -220,13 +227,15 @@
                     {
                         var statusInfo = new
                         {
-                            Label = commande.Statut,
+                            Label = GetDisplayStatus(commande.Statut),
                             Color = commande.Statut == "Livrée" ? "text-success" :
                                    commande.Statut == "Expédiée" || commande.Statut == "En cours de livraison" ? "text-primary" :
-                                   commande.Statut == "Préparation" ? "text-warning" : "text-muted",
+                                   commande.Statut == "Préparation" ? "text-warning" : 
+                                   commande.Statut == "Validée" ? "text-info" : "text-muted",
                             Icon = commande.Statut == "Livrée" ? "check-circle" :
                                   commande.Statut == "Expédiée" || commande.Statut == "En cours de livraison" ? "truck" :
-                                  commande.Statut == "clock" ? "clock" : "clock" // Default to clock for preparation
+                                  commande.Statut == "Préparation" ? "box" :
+                                  commande.Statut == "Validée" ? "check-circle" : "clock"
                         };
 
                         // Specific icons for status based on image
@@ -235,6 +244,10 @@
                             iconSvg = "<path d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z'/><path d='M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z'/>";
                         } else if (commande.Statut == "Expédiée" || commande.Statut == "En cours de livraison") {
                             iconSvg = "<path d='M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-1h11V3.5zM3 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM2 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5V7H2V5.5z'/>";
+                        } else if (commande.Statut == "Préparation") {
+                            iconSvg = "<path d='M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6z'/>";
+                        } else if (commande.Statut == "Validée") {
+                            iconSvg = "<path d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z'/>";
                         } else {
                             iconSvg = "<path d='M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z'/><path d='M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z'/>";
                         }
@@ -267,7 +280,7 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                                 @Html.Raw(iconSvg)
                                             </svg>
-                                            <span>@commande.Statut</span>
+                                            <span>@GetDisplayStatus(commande.Statut)</span>
                                         </div>
                                     </div>
                                 </div>
