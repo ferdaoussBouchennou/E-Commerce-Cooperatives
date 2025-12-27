@@ -18,129 +18,161 @@
         z-index: 1055 !important;
     }
     
-    /* Styles du modal */
-    .modal-content {
-        border-radius: 15px;
+    /* Styles du modal harmonisés avec Produit */
+    #categorieModal .modal-content {
+        background-color: #F5F3EF;
+        border-radius: 12px;
         border: none;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        box-shadow: 0 15px 50px rgba(0,0,0,0.1);
     }
     
-    .modal-header {
-        background: linear-gradient(135deg, #305C7D 0%, #3D7BA8 100%);
-        color: white;
-        border-radius: 15px 15px 0 0;
-        padding: 20px 25px;
-        border-bottom: none;
+    #categorieModal .modal-header {
+        background: transparent;
+        padding: 25px 35px 10px 35px;
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
     
-    .modal-title {
+    #categorieModal .modal-title {
         font-family: 'Georgia', serif;
-        font-size: 22px;
+        color: #2C5F7D;
+        font-size: 24px;
         font-weight: 700;
     }
     
-    .btn-close {
-        filter: brightness(0) invert(1);
-        opacity: 0.8;
+    #categorieModal .close {
+        background: none !important;
+        border: none !important;
+        font-size: 32px;
+        color: #305C7D !important;
+        opacity: 0.6;
+        cursor: pointer;
+        padding: 0 !important;
+        margin: 0 !important;
+        line-height: 1;
+        font-weight: 300;
     }
     
-    .btn-close:hover {
+    #categorieModal .close:hover {
         opacity: 1;
     }
     
-    .modal-body {
-        padding: 30px 25px;
+    #categorieModal .modal-body {
+        padding: 10px 35px 25px 35px;
     }
     
     .form-label {
+        color: #2C5F7D;
         font-weight: 600;
-        color: #305C7D;
-        margin-bottom: 8px;
         font-size: 14px;
+        margin-bottom: 8px;
+        display: block;
     }
     
     .form-input {
-        width: 100%;
-        padding: 12px 15px;
+        background-color: white;
         border: 1px solid #D09E86;
-        border-radius: 8px;
-        font-size: 14px;
-        transition: all 0.3s ease;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 15px;
+        color: #2C5F7D;
+        width: 100%;
+        transition: all 0.3s;
     }
     
     .form-input:focus {
         outline: none;
         border-color: #305C7D;
-        box-shadow: 0 0 0 3px rgba(48, 92, 125, 0.1);
-    }
-    
-    .form-check {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 15px;
-        background: #F5F3EF;
-        border-radius: 8px;
-    }
-    
-    .form-check-input {
-        width: 20px;
-        height: 20px;
-        border: 2px solid #305C7D;
-        cursor: pointer;
-    }
-    
-    .form-check-input:checked {
-        background-color: #7D8453;
-        border-color: #7D8453;
-    }
-    
-    .form-check-label {
-        font-weight: 500;
-        color: #2C3E50;
-        cursor: pointer;
-        margin: 0;
+        box-shadow: 0 0 0 4px rgba(48, 92, 125, 0.05);
     }
     
     .form-footer {
+        padding: 15px 0 10px 0;
+        border: none;
         display: flex;
-        gap: 15px;
         justify-content: flex-end;
-        padding-top: 20px;
-        border-top: 1px solid #E8E8E8;
+        gap: 15px;
+        background: transparent;
     }
     
     .btn-cancel {
-        padding: 12px 25px;
-        background: #95A5A6;
-        color: white;
-        border: none;
-        border-radius: 8px;
+        padding: 12px 30px;
+        background: white;
+        border: 2px solid #305C7D;
+        color: #305C7D;
+        border-radius: 10px;
         font-weight: 600;
+        font-size: 16px;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s;
     }
     
     .btn-cancel:hover {
-        background: #7F8C8D;
-        transform: translateY(-2px);
+        background: #F0F4F7;
     }
     
     .btn-save {
-        padding: 12px 30px;
-        background: linear-gradient(135deg, #7D8453 0%, #9BA36C 100%);
-        color: white;
+        padding: 12px 35px;
+        background: #305C7D;
         border: none;
-        border-radius: 8px;
+        color: white;
+        border-radius: 10px;
         font-weight: 600;
+        font-size: 16px;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s;
     }
     
     .btn-save:hover {
-        background: linear-gradient(135deg, #6B7145 0%, #8A9158 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(125, 132, 83, 0.3);
+        background: #244660;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(48, 92, 125, 0.2);
+    }
+
+    /* === TOGGLE SWITCHES === */
+    .custom-switch {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .switch-track {
+        position: relative;
+        width: 48px;
+        height: 24px;
+        background-color: #D1D9E0;
+        border-radius: 12px;
+        transition: all 0.3s;
+    }
+
+    .switch-thumb {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background-color: white;
+        border-radius: 50%;
+        transition: all 0.3s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    input[type="checkbox"]:checked + .switch-track {
+        background-color: #305C7D;
+    }
+
+    input[type="checkbox"]:checked + .switch-track .switch-thumb {
+        left: 26px;
+    }
+
+    .switch-label {
+        font-size: 15px;
+        font-weight: 600;
+        color: #2C5F7D;
     }
     
     .btn-primary-action {
@@ -210,22 +242,8 @@
 </style>
 
 <div class="admin-page">
-    <!-- Header with Search -->
-    <div class="admin-page-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <div class="search-form" style="flex: 1; max-width: 400px;">
-            <div class="search-input-wrapper" style="position: relative;">
-                <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #95A5A6;"></i>
-                <input type="text" id="catSearchInput" placeholder="Rechercher une catégorie..." class="form-input" style="padding-left: 40px; border-radius: 8px; border: 1px solid #D09E86;" autocomplete="off" />
-            </div>
-        </div>
-        <div class="header-notifications" style="display: flex; gap: 20px; align-items: center;">
-            <i class="far fa-bell" style="font-size: 20px; color: #305C7D; position: relative;">
-                <span style="position: absolute; top: -8px; right: -8px; background: #C06C50; color: white; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">3</span>
-            </i>
-            <div style="width: 35px; height: 35px; background: #305C7D; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">A</div>
-        </div>
-    </div>
 
+    
     <!-- Title Section -->
     <div class="page-title-section" style="margin-bottom: 25px;">
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -233,6 +251,12 @@
                 <h1 class="admin-page-title" style="margin-bottom: 5px; font-family: 'Georgia', serif; color: #305C7D; font-size: 32px; font-weight: 700;">Gestion des Catégories</h1>
                 <p class="admin-page-subtitle" style="color: #5D6D7E; font-size: 14px;">Organisez vos produits par secteurs</p>
             </div>
+            <div class="search-form" style="flex: 1; max-width: 400px;">
+            <div class="search-input-wrapper" style="position: relative;">
+                <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #95A5A6;"></i>
+                <input type="text" id="catSearchInput" placeholder="Rechercher une catégorie..." class="form-input" style="padding-left: 40px; border-radius: 8px; border: 1px solid #D09E86;" autocomplete="off" />
+            </div>
+        </div>
             <button class="btn-primary-action" onclick="openAddModal()">
                 <i class="fas fa-plus"></i> Nouvelle Catégorie
             </button>
@@ -351,22 +375,24 @@
                         </small>
                     </div>
 
-                    <div class="form-check mb-4">
-                        <input type="checkbox" class="form-check-input" id="EstActive" name="EstActive" value="true" checked />
-                        <label class="form-check-label" for="EstActive">
-                            <i class="fas fa-check-circle" style="color: #7D8453; margin-right: 5px;"></i>
-                            Catégorie active et visible
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label class="custom-switch">
+                            <input type="checkbox" id="EstActive" name="EstActive" value="true" checked hidden />
+                            <div class="switch-track">
+                                <span class="switch-thumb"></span>
+                            </div>
+                            <span class="switch-label">Catégorie active et visible</span>
                         </label>
                     </div>
-
-                    <div class="form-footer">
-                        <button type="button" class="btn-cancel" onclick="closeModal()">
-                            <i class="fas fa-times"></i> Annuler
-                        </button>
-                        <button type="submit" class="btn-save">
-                            <i class="fas fa-save"></i> Enregistrer
-                        </button>
-                    </div>
+ 
+                     <div class="form-footer">
+                         <button type="button" class="btn-cancel" onclick="closeModal()">
+                            Annuler
+                         </button>
+                         <button type="submit" class="btn-save">
+                            Enregistrer
+                         </button>
+                     </div>
                 </form>
             </div>
         </div>
