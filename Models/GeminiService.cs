@@ -17,12 +17,18 @@ namespace E_Commerce_Cooperatives.Models
             _apiKey = ConfigurationManager.AppSettings["GeminiApiKey"];
             _apiUrl = ConfigurationManager.AppSettings["GeminiApiUrl"];
             _httpClient = new HttpClient();
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
+            _httpClient.Timeout = TimeSpan.FromSeconds(60);
         }
         public async Task<string> GetChatbotResponse(string userMessage, string context = "")
         {
             try
             {
+                // Vérifier la clé API
+                if (string.IsNullOrEmpty(_apiKey))
+                {
+                    return "Erreur: Clé API Gemini non configurée dans Web.config";
+                }
+
                 // Construire le prompt avec le contexte de votre site
                 string systemPrompt = @"Tu es un assistant virtuel pour CoopShop, une plateforme e-commerce de coopératives.
                 
@@ -68,7 +74,9 @@ Question de l'utilisateur: " + userMessage;
                 var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
                 // Appeler l'API Gemini
                 string url = $"{_apiUrl}?key={_apiKey}";
+                
                 HttpResponseMessage response = await _httpClient.PostAsync(url, content);
+                
                 if (response.IsSuccessStatusCode)
                 {
                     string jsonResponse = await response.Content.ReadAsStringAsync();
@@ -76,17 +84,30 @@ Question de l'utilisateur: " + userMessage;
                     
                     string botResponse = result["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
                     
-                    return botResponse ?? "Désolé, je n'ai pas pu générer une réponse.";
+                    if (string.IsNullOrEmpty(botResponse))
+                    {
+                        return "Erreur: Réponse vide de l'API Gemini. JSON: " + jsonResponse.Substring(0, Math.Min(200, jsonResponse.Length));
+                    }
+                    
+                    return botResponse;
                 }
                 else
                 {
                     string errorContent = await response.Content.ReadAsStringAsync();
-                    return $"Erreur: {response.StatusCode}. Veuillez réessayer.";
+                    return $"Erreur API {response.StatusCode}: {errorContent.Substring(0, Math.Min(200, errorContent.Length))}";
                 }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                return "Erreur réseau: " + httpEx.Message + " - Vérifiez votre connexion internet";
+            }
+            catch (TaskCanceledException)
+            {
+                return "Erreur: Timeout - L'API Gemini ne répond pas";
             }
             catch (Exception ex)
             {
-                return "Désolé, une erreur s'est produite. Veuillez réessayer plus tard.";
+                return "Erreur: " + ex.GetType().Name + " - " + ex.Message;
             }
         }
     }

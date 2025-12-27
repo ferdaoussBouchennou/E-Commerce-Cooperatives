@@ -30,9 +30,15 @@ namespace E_Commerce_Cooperatives.Controllers
                     context = "L'utilisateur est connecté.";
                 }
 
+                // Appel asynchrone à l'API Gemini
                 string response = await _geminiService.GetChatbotResponse(message, context);
 
                 return Json(new { success = true, response = response }, JsonRequestBehavior.AllowGet);
+            }
+            catch (System.AggregateException aex)
+            {
+                var innerEx = aex.InnerException ?? aex;
+                return Json(new { success = false, error = "Erreur API: " + innerEx.Message }, JsonRequestBehavior.AllowGet);
             }
             catch (System.Exception ex)
             {
