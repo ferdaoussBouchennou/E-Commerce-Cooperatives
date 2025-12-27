@@ -282,6 +282,7 @@
     <Compile Include="Controllers\ChatbotController.cs" />
     <Compile Include="Controllers\ChatbotTestController.cs" />
     <Compile Include="Controllers\FavorisController.cs" />
+    <Compile Include="Controllers\GeminiTestController.cs" />
     <Compile Include="Controllers\CatalogueController.cs" />
     <Compile Include="Controllers\UserSpaceController.cs" />
     <Compile Include="Controllers\CategoriesController.cs" />
