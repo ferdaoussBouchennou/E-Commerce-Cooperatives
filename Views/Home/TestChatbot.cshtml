@@ -1,0 +1,46 @@
+@{
+    ViewBag.Title = "Test Chatbot";
+}
+
+<h2>Test du Contrôleur Chatbot</h2>
+
+<div style="padding: 20px;">
+    <h3>Test Direct de l'API</h3>
+    <p>URL de l'action: <strong>@Url.Action("SendMessage", "Chatbot")</strong></p>
+    
+    <form id="testForm">
+        <input type="text" name="message" id="testMessage" value="Bonjour" style="padding: 10px; width: 300px;" />
+        <button type="submit" style="padding: 10px 20px;">Envoyer Test</button>
+    </form>
+    
+    <div id="result" style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px;">
+        <h4>Résultat:</h4>
+        <pre id="resultContent">En attente...</pre>
+    </div>
+</div>
+
+<script src="~/Scripts/jquery-3.7.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#testForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            var message = $('#testMessage').val();
+            var url = '@Url.Action("SendMessage", "Chatbot")';
+            
+            $('#resultContent').text('Envoi en cours vers: ' + url + '\nMessage: ' + message);
+            
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: { message: message },
+                success: function(response) {
+                    $('#resultContent').text(JSON.stringify(response, null, 2));
+                },
+                error: function(xhr, status, error) {
+                    $('#resultContent').text('ERREUR!\nStatus: ' + xhr.status + '\nError: ' + error + '\nResponse: ' + xhr.responseText);
+                }
+            });
+        });
+    });
+</script>

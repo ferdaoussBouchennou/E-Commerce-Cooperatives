@@ -48,5 +48,10 @@ namespace E_Commerce_Cooperatives.Controllers
 
             return View();
         }
+
+        public ActionResult TestChatbot()
+        {
+            return View();
+        }
     }
 }
