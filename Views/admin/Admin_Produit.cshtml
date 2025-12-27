@@ -341,7 +341,7 @@
     }
 
     #produitModal .modal-dialog {
-        max-width: 750px;
+        max-width: 950px;
     }
 
     #produitModal .modal-content {
@@ -597,11 +597,19 @@
 
     .variant-input {
         width: 100%;
-        padding: 8px 10px;
+        padding: 10px 12px;
         border: 1px solid #D09E86;
-        border-radius: 6px;
-        font-size: 13px;
+        border-radius: 8px;
+        font-size: 14px;
         color: #2C5F7D;
+        background-color: white;
+        transition: border-color 0.2s;
+    }
+
+    .variant-input:focus {
+        border-color: #305C7D;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(48, 92, 125, 0.05);
     }
 
     .btn-remove-variant {
