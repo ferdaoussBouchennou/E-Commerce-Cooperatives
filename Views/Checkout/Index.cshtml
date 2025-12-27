@@ -91,7 +91,16 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="Ville" class="form-label">Ville <span class="text-danger">*</span></label>
-                                    @Html.TextBoxFor(m => m.Ville, new { @class = "form-control", placeholder = "Votre ville", required = "required", id = "Ville" })
+                                    @{
+                                        var zones = ViewBag.ZonesLivraison as List<E_Commerce_Cooperatives.Models.ZoneLivraison> ?? new List<E_Commerce_Cooperatives.Models.ZoneLivraison>();
+                                    }
+                                    <select id="Ville" name="Ville" class="form-control" required>
+                                        <option value="">-- Sélectionnez votre ville --</option>
+                                        @foreach (var zone in zones)
+                                        {
+                                            <option value="@zone.ZoneVille">@zone.ZoneVille</option>
+                                        }
+                                    </select>
                                     @Html.ValidationMessageFor(m => m.Ville, "", new { @class = "text-danger small" })
                                 </div>
                                 <div class="col-md-6">
@@ -123,8 +132,7 @@
                                         <div class="delivery-option mb-3 p-3 rounded-3 border-2" 
                                              style="border: 2px solid #dee2e6; cursor: pointer; transition: all 0.3s;"
                                              data-mode-id="@mode.ModeLivraisonId"
-                                             data-price="@mode.Tarif"
-                                             data-delai="@mode.DelaiEstime">
+                                             data-mode-name="@mode.Nom">
                                             <div class="form-check d-flex align-items-center justify-content-between">
                                                 <div class="d-flex align-items-center gap-3">
                                                     <input class="form-check-input" type="radio" name="ModeLivraisonId" 
@@ -134,14 +142,22 @@
                                                         <label class="form-check-label fw-medium" for="mode_@mode.ModeLivraisonId" style="cursor: pointer; color: #305C7D;">
                                                             @mode.Nom
                                                         </label>
-                                                        <p class="small text-muted mb-0">@mode.DelaiEstime</p>
+                                                        <p class="small text-muted mb-0 delivery-delay-text" data-mode-id="@mode.ModeLivraisonId" style="display: none;">
+                                                            <em>Livraison estimée : <span class="delivery-delay-value"></span></em>
+                                                        </p>
                                                     </div>
                                                 </div>
-                                                <span class="fw-bold" style="color: #305C7D;">@mode.Tarif.ToString("F2") MAD</span>
+                                                <div class="text-end">
+                                                    <span class="fw-bold delivery-price" style="color: #305C7D; display: none;" data-mode-id="@mode.ModeLivraisonId">-- MAD</span>
+                                                    <span class="text-muted small delivery-price-placeholder" data-mode-id="@mode.ModeLivraisonId">Sélectionnez une ville</span>
+                                                </div>
                                             </div>
                                         </div>
                                     }
                                 </div>
+                                <p class="small text-muted mt-2" id="delivery-price-info">
+                                    <em>Le prix de livraison et le délai seront calculés automatiquement après sélection de votre ville</em>
+                                </p>
                                 @Html.ValidationMessageFor(m => m.ModeLivraisonId, "", new { @class = "text-danger small" })
                             </div>
 
@@ -285,4 +301,5 @@
 }
 
 @Html.Partial("_Footer")
+
 
