@@ -1737,7 +1737,8 @@ namespace E_Commerce_Cooperatives.Models
                     var query = @"INSERT INTO Produits (Nom, Description, Prix, ImageUrl, CategorieId, CooperativeId, 
                                                         StockTotal, SeuilAlerte, EstDisponible, EstEnVedette, EstNouveau, DateCreation)
                                   VALUES (@Nom, @Description, @Prix, @ImageUrl, @CategorieId, @CooperativeId, 
-                                          @StockTotal, @SeuilAlerte, @EstDisponible, @EstEnVedette, @EstNouveau, @DateCreation)";
+                                          @StockTotal, @SeuilAlerte, @EstDisponible, @EstEnVedette, @EstNouveau, @DateCreation);
+                                  SELECT CAST(SCOPE_IDENTITY() as int);";
                     using (var command = new SqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Nom", produit.Nom);
@@ -1752,7 +1753,12 @@ namespace E_Commerce_Cooperatives.Models
                         command.Parameters.AddWithValue("@EstEnVedette", produit.EstEnVedette);
                         command.Parameters.AddWithValue("@EstNouveau", produit.EstNouveau);
                         command.Parameters.AddWithValue("@DateCreation", produit.DateCreation);
-                        command.ExecuteNonQuery();
+                        
+                        var result = command.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            produit.ProduitId = (int)result;
+                        }
                     }
                 }
 

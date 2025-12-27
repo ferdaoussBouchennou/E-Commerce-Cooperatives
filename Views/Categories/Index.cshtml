@@ -93,7 +93,7 @@
                 <div class="col-sm-6 col-lg-3 category-item" data-index="@i" data-name="@category.Nom.ToLower()">
                     <a href="@Url.Action("Index", "Catalogue", new { categorie = category.CategorieId })" class="text-decoration-none">
                         <div class="category-card-modern rounded-3 overflow-hidden position-relative" style="aspect-ratio: 4/3;">
-                            <img src="@(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
+                            <img src="@Url.Content(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
                                  alt="@category.Nom" 
                                  class="category-image w-100 h-100 object-fit-cover"
                                  onerror="this.src='/Content/images/default-category.jpg';">
@@ -125,7 +125,7 @@
                     <a href="@Url.Action("Index", "Catalogue", new { categorie = category.CategorieId })" class="text-decoration-none">
                         <div class="category-list-card bg-white rounded-3 p-4 shadow-sm d-flex align-items-center gap-4">
                             <div class="category-list-image-container" style="width: 100px; height: 100px; flex-shrink: 0;">
-                                <img src="@(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
+                                <img src="@Url.Content(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
                                      alt="@category.Nom" 
                                      class="rounded-3 w-100 h-100 object-fit-cover"
                                      onerror="this.src='/Content/images/default-category.jpg';">
@@ -184,7 +184,7 @@
                                 {
                                     <a href="@Url.Action("Details", "Produit", new { id = product.ProduitId })" class="popular-product-item d-flex align-items-center gap-3 p-3 rounded-2 text-decoration-none">
                                         <div class="popular-product-image-container" style="width: 60px; height: 60px; flex-shrink: 0; background-color: var(--arena-suave); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                            <img src="@(product.ImageUrl ?? "/Content/images/default-product.jpg")" 
+                                            <img src="@Url.Content(product.ImageUrl ?? "/Content/images/default-product.jpg")" 
                                                  alt="@product.Nom" 
                                                  class="rounded-2"
                                                  style="width: 100%; height: 100%; object-fit: cover;"

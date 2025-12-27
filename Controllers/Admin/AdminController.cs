@@ -658,6 +658,12 @@ namespace E_Commerce_Cooperatives.Controllers
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterProduit POST: {ex.Message}");
+                
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(new { success = false, message = "Erreur lors de l'ajout du produit: " + ex.Message });
+                }
+
                 TempData["ErrorMessage"] = "Erreur lors de l'ajout du produit";
                 ViewBag.Categories = db.Categories.ToList();
                 ViewBag.Cooperatives = db.Cooperatives.ToList();
@@ -850,6 +856,12 @@ namespace E_Commerce_Cooperatives.Controllers
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Erreur dans ModifierProduit POST: {ex.Message}");
+
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(new { success = false, message = "Erreur lors de la modification du produit: " + ex.Message });
+                }
+
                 TempData["ErrorMessage"] = "Erreur lors de la modification du produit";
 
                 ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();

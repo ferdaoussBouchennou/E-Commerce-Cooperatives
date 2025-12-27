@@ -1068,15 +1068,24 @@
                 processData: false,
                 contentType: false,
                 success: function(response) {
-                    if (response.success) {
+                    if (response && response.success) {
                         $('#produitModal').modal('hide');
                         location.reload();
                     } else {
-                        alert('Erreur: ' + (response.errors ? response.errors.join("\n") : response.message));
+                        let errorMsg = 'Une erreur est survenue lors de l\'enregistrement.';
+                        if (response) {
+                            if (response.errors && response.errors.length > 0) {
+                                errorMsg = response.errors.join("\n");
+                            } else if (response.message) {
+                                errorMsg = response.message;
+                            }
+                        }
+                        alert('Erreur: ' + errorMsg);
                     }
                 },
-                error: function() {
-                    alert('Une erreur est survenue.');
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", status, error, xhr.responseText);
+                    alert('Une erreur serveur est survenue. Veuillez consulter la console pour plus de détails.');
                 }
             });
         }

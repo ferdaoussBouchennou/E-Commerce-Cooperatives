@@ -125,7 +125,7 @@
                         <div class="col-md-6 col-lg-3">
                             <a href="@Url.Action("Index", "Catalogue", new { categorie = category.CategorieId })" class="category-card text-decoration-none">
                                 <div class="position-relative overflow-hidden rounded-3" style="aspect-ratio: 3/2;">
-                                    <img src="@(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
+                                    <img src="@Url.Content(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
                                          alt="@category.Nom" 
                                          class="w-100 h-100 object-fit-cover category-image"
                                          onerror="this.src='/Content/images/default-category.jpg';">

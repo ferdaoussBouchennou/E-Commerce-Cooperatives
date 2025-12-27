@@ -12,7 +12,7 @@
                                 ?? Model.Images?.FirstOrDefault()?.UrlImage 
                                 ?? "/Content/images/default-product.jpg";
             }
-            <img src="@mainImage" alt="@Model.Nom" 
+            <img src="@Url.Content(mainImage)" alt="@Model.Nom" 
                  class="w-100 h-100 object-fit-cover product-image"
                  onerror="this.src='/Content/images/default-product.jpg';">
             
