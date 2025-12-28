@@ -958,7 +958,7 @@ namespace E_Commerce_Cooperatives.Controllers
             using (var db = new ECommerceDbContext())
             {
                 var modes = db.GetModesLivraison();
-                var zonesPaged = db.GetZonesLivraisonPaged(page, 5);
+                var zonesPaged = db.GetZonesLivraisonPaged(page, 10);
                 var stats = db.GetLivraisonStats();
 
                 ViewBag.Stats = stats;
