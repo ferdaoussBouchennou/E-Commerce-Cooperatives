@@ -29,6 +29,9 @@ namespace E_Commerce_Cooperatives.Controllers
             {
                 viewModel.ModesLivraison = db.GetModesLivraison().Where(m => m.EstActif).ToList();
                 
+                // Charger les zones de livraison pour le select de ville
+                ViewBag.ZonesLivraison = db.GetZonesLivraison().Where(z => z.EstActif).OrderBy(z => z.ZoneVille).ToList();
+                
                 // Pré-remplir avec les données du client si disponibles
                 if (Session["Prenom"] != null) viewModel.Prenom = Session["Prenom"].ToString();
                 if (Session["Nom"] != null) viewModel.Nom = Session["Nom"].ToString();
@@ -131,10 +134,9 @@ namespace E_Commerce_Cooperatives.Controllers
                         return Json(new { success = false, message = "Erreur lors de la création de la commande : " + ex.Message + (ex.InnerException != null ? " | Inner: " + ex.InnerException.Message : "") });
                     }
 
-                    // Calculer le total pour l'email
+                    // Calculer le total pour l'email avec le calcul dynamique
                     decimal subtotal = cartItems.Sum(i => i.PrixUnitaire * i.Quantite);
-                    var deliveryMode = db.GetModesLivraison().FirstOrDefault(m => m.ModeLivraisonId == model.ModeLivraisonId);
-                    decimal deliveryFee = deliveryMode?.Tarif ?? 0;
+                    decimal deliveryFee = db.CalculateDeliveryPrice(model.ModeLivraisonId, model.Ville);
                     decimal total = subtotal + deliveryFee;
 
                     // Envoyer l'email de confirmation avec facture
@@ -149,6 +151,7 @@ namespace E_Commerce_Cooperatives.Controllers
                         {
                             // Fallback (ne devrait pas arriver)
                             string clientFullName = $"{model.Prenom} {model.Nom}";
+                            var deliveryMode = db.GetModesLivraison().FirstOrDefault(m => m.ModeLivraisonId == model.ModeLivraisonId);
                             string deliveryMethodName = deliveryMode?.Nom ?? "Standard";
                             EmailHelper.SendOrderConfirmationEmail(model.Email, clientFullName, numeroCommande, cartItems, subtotal, deliveryMethodName, deliveryFee, total);
                         }
@@ -491,6 +494,49 @@ namespace E_Commerce_Cooperatives.Controllers
                     // Log error
                     return new HttpStatusCodeResult(500, "Erreur lors de la génération de la facture: " + ex.Message);
                 }
+            }
+        }
+
+        // GET: Checkout/CalculateDeliveryPrice
+        [HttpGet]
+        public JsonResult CalculateDeliveryPrice(int modeLivraisonId, string ville)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(ville))
+                {
+                    return Json(new { success = false, message = "La ville est requise" }, JsonRequestBehavior.AllowGet);
+                }
+
+                if (modeLivraisonId <= 0)
+                {
+                    return Json(new { success = false, message = "Le mode de livraison est requis" }, JsonRequestBehavior.AllowGet);
+                }
+
+                using (var db = new ECommerceDbContext())
+                {
+                    decimal prixLivraison = db.CalculateDeliveryPrice(modeLivraisonId, ville);
+                    var mode = db.GetModeLivraison(modeLivraisonId);
+                    var zone = db.GetZoneLivraisonByVille(ville);
+                    var delay = db.GetDeliveryDelay(modeLivraisonId, ville);
+                    
+                    return Json(new 
+                    { 
+                        success = true, 
+                        prixLivraison = prixLivraison,
+                        prixBase = mode?.Tarif ?? 0,
+                        supplement = zone?.Supplement ?? 0,
+                        ville = ville,
+                        zoneVille = zone?.ZoneVille ?? ville,
+                        delaiMin = ((dynamic)delay).DelaiMin,
+                        delaiMax = ((dynamic)delay).DelaiMax,
+                        delaiText = ((dynamic)delay).DelaiText
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Erreur lors du calcul: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
     }

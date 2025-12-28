@@ -1271,7 +1271,7 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT ModeLivraisonId, Nom, Description, Tarif, DelaiEstime, EstActif, DateCreation FROM ModesLivraison ORDER BY DateCreation DESC";
+                var query = "SELECT ModeLivraisonId, Nom, Description, Tarif, EstActif, DateCreation FROM ModesLivraison ORDER BY DateCreation DESC";
                 using (var command = new SqlCommand(query, connection))
                 {
                     using (var reader = command.ExecuteReader())
@@ -1284,9 +1284,8 @@ namespace E_Commerce_Cooperatives.Models
                                 Nom = reader.GetString(1),
                                 Description = reader.IsDBNull(2) ? null : reader.GetString(2),
                                 Tarif = reader.GetDecimal(3),
-                                DelaiEstime = reader.IsDBNull(4) ? null : reader.GetString(4),
-                                EstActif = reader.GetBoolean(5),
-                                DateCreation = reader.GetDateTime(6)
+                                EstActif = reader.GetBoolean(4),
+                                DateCreation = reader.GetDateTime(5)
                             });
                         }
                     }
@@ -1301,7 +1300,7 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT ModeLivraisonId, Nom, Description, Tarif, DelaiEstime, EstActif, DateCreation FROM ModesLivraison WHERE ModeLivraisonId = @Id";
+                var query = "SELECT ModeLivraisonId, Nom, Description, Tarif, EstActif, DateCreation FROM ModesLivraison WHERE ModeLivraisonId = @Id";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Id", id);
@@ -1315,9 +1314,8 @@ namespace E_Commerce_Cooperatives.Models
                                 Nom = reader.GetString(1),
                                 Description = reader.IsDBNull(2) ? null : reader.GetString(2),
                                 Tarif = reader.GetDecimal(3),
-                                DelaiEstime = reader.IsDBNull(4) ? null : reader.GetString(4),
-                                EstActif = reader.GetBoolean(5),
-                                DateCreation = reader.GetDateTime(6)
+                                EstActif = reader.GetBoolean(4),
+                                DateCreation = reader.GetDateTime(5)
                             };
                         }
                     }
@@ -1331,14 +1329,13 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = @"INSERT INTO ModesLivraison (Nom, Description, Tarif, DelaiEstime, EstActif, DateCreation) 
-                             VALUES (@Nom, @Description, @Tarif, @DelaiEstime, @EstActif, GETDATE())";
+                var query = @"INSERT INTO ModesLivraison (Nom, Description, Tarif, EstActif, DateCreation) 
+                             VALUES (@Nom, @Description, @Tarif, @EstActif, GETDATE())";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Nom", mode.Nom);
                     command.Parameters.AddWithValue("@Description", (object)mode.Description ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Tarif", mode.Tarif);
-                    command.Parameters.AddWithValue("@DelaiEstime", (object)mode.DelaiEstime ?? DBNull.Value);
                     command.Parameters.AddWithValue("@EstActif", mode.EstActif);
                     return command.ExecuteNonQuery() > 0;
                 }
@@ -1351,8 +1348,7 @@ namespace E_Commerce_Cooperatives.Models
             {
                 connection.Open();
                 var query = @"UPDATE ModesLivraison 
-                             SET Nom = @Nom, Description = @Description, Tarif = @Tarif, 
-                                 DelaiEstime = @DelaiEstime, EstActif = @EstActif 
+                             SET Nom = @Nom, Description = @Description, Tarif = @Tarif, EstActif = @EstActif 
                              WHERE ModeLivraisonId = @Id";
                 using (var command = new SqlCommand(query, connection))
                 {
@@ -1360,7 +1356,6 @@ namespace E_Commerce_Cooperatives.Models
                     command.Parameters.AddWithValue("@Nom", mode.Nom);
                     command.Parameters.AddWithValue("@Description", (object)mode.Description ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Tarif", mode.Tarif);
-                    command.Parameters.AddWithValue("@DelaiEstime", (object)mode.DelaiEstime ?? DBNull.Value);
                     command.Parameters.AddWithValue("@EstActif", mode.EstActif);
                     return command.ExecuteNonQuery() > 0;
                 }
@@ -1460,7 +1455,7 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation FROM ZonesLivraison ORDER BY ZoneVille ASC";
+                var query = "SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation FROM ZonesLivraison ORDER BY ZoneVille ASC";
                 using (var command = new SqlCommand(query, connection))
                 using (var reader = command.ExecuteReader())
                 {
@@ -1471,9 +1466,12 @@ namespace E_Commerce_Cooperatives.Models
                             ZoneLivraisonId = reader.GetInt32(0),
                             ZoneVille = reader.GetString(1),
                             Supplement = reader.GetDecimal(2),
-                            DelaiEstime = reader.GetString(3),
-                            EstActif = reader.GetBoolean(4),
-                            DateCreation = reader.GetDateTime(5)
+                            DelaiMinStandard = reader.GetInt32(3),
+                            DelaiMaxStandard = reader.GetInt32(4),
+                            DelaiMinExpress = reader.GetInt32(5),
+                            DelaiMaxExpress = reader.GetInt32(6),
+                            EstActif = reader.GetBoolean(7),
+                            DateCreation = reader.GetDateTime(8)
                         });
                     }
                 }
@@ -1502,7 +1500,7 @@ namespace E_Commerce_Cooperatives.Models
                 }
 
                 // Récupérer les données paginées
-                var query = @"SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation 
+                var query = @"SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation 
                              FROM ZonesLivraison 
                              ORDER BY ZoneVille ASC
                              OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
@@ -1521,9 +1519,12 @@ namespace E_Commerce_Cooperatives.Models
                                 ZoneLivraisonId = reader.GetInt32(0),
                                 ZoneVille = reader.GetString(1),
                                 Supplement = reader.GetDecimal(2),
-                                DelaiEstime = reader.GetString(3),
-                                EstActif = reader.GetBoolean(4),
-                                DateCreation = reader.GetDateTime(5)
+                                DelaiMinStandard = reader.GetInt32(3),
+                                DelaiMaxStandard = reader.GetInt32(4),
+                                DelaiMinExpress = reader.GetInt32(5),
+                                DelaiMaxExpress = reader.GetInt32(6),
+                                EstActif = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
                             });
                         }
                     }
@@ -1538,7 +1539,7 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation FROM ZonesLivraison WHERE ZoneLivraisonId = @Id";
+                var query = "SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation FROM ZonesLivraison WHERE ZoneLivraisonId = @Id";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Id", id);
@@ -1551,9 +1552,12 @@ namespace E_Commerce_Cooperatives.Models
                                 ZoneLivraisonId = reader.GetInt32(0),
                                 ZoneVille = reader.GetString(1),
                                 Supplement = reader.GetDecimal(2),
-                                DelaiEstime = reader.GetString(3),
-                                EstActif = reader.GetBoolean(4),
-                                DateCreation = reader.GetDateTime(5)
+                                DelaiMinStandard = reader.GetInt32(3),
+                                DelaiMaxStandard = reader.GetInt32(4),
+                                DelaiMinExpress = reader.GetInt32(5),
+                                DelaiMaxExpress = reader.GetInt32(6),
+                                EstActif = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
                             };
                         }
                     }
@@ -1567,13 +1571,16 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = @"INSERT INTO ZonesLivraison (ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation)
-                             VALUES (@ZoneVille, @Supplement, @DelaiEstime, @EstActif, GETDATE())";
+                var query = @"INSERT INTO ZonesLivraison (ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation)
+                             VALUES (@ZoneVille, @Supplement, @DelaiMinStandard, @DelaiMaxStandard, @DelaiMinExpress, @DelaiMaxExpress, @EstActif, GETDATE())";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@ZoneVille", zone.ZoneVille);
                     command.Parameters.AddWithValue("@Supplement", zone.Supplement);
-                    command.Parameters.AddWithValue("@DelaiEstime", zone.DelaiEstime);
+                    command.Parameters.AddWithValue("@DelaiMinStandard", zone.DelaiMinStandard);
+                    command.Parameters.AddWithValue("@DelaiMaxStandard", zone.DelaiMaxStandard);
+                    command.Parameters.AddWithValue("@DelaiMinExpress", zone.DelaiMinExpress);
+                    command.Parameters.AddWithValue("@DelaiMaxExpress", zone.DelaiMaxExpress);
                     command.Parameters.AddWithValue("@EstActif", zone.EstActif);
                     return command.ExecuteNonQuery() > 0;
                 }
@@ -1586,14 +1593,19 @@ namespace E_Commerce_Cooperatives.Models
             {
                 connection.Open();
                 var query = @"UPDATE ZonesLivraison
-                             SET ZoneVille = @ZoneVille, Supplement = @Supplement, DelaiEstime = @DelaiEstime, EstActif = @EstActif
+                             SET ZoneVille = @ZoneVille, Supplement = @Supplement, 
+                                 DelaiMinStandard = @DelaiMinStandard, DelaiMaxStandard = @DelaiMaxStandard,
+                                 DelaiMinExpress = @DelaiMinExpress, DelaiMaxExpress = @DelaiMaxExpress, EstActif = @EstActif
                              WHERE ZoneLivraisonId = @Id";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Id", zone.ZoneLivraisonId);
                     command.Parameters.AddWithValue("@ZoneVille", zone.ZoneVille);
                     command.Parameters.AddWithValue("@Supplement", zone.Supplement);
-                    command.Parameters.AddWithValue("@DelaiEstime", zone.DelaiEstime);
+                    command.Parameters.AddWithValue("@DelaiMinStandard", zone.DelaiMinStandard);
+                    command.Parameters.AddWithValue("@DelaiMaxStandard", zone.DelaiMaxStandard);
+                    command.Parameters.AddWithValue("@DelaiMinExpress", zone.DelaiMinExpress);
+                    command.Parameters.AddWithValue("@DelaiMaxExpress", zone.DelaiMaxExpress);
                     command.Parameters.AddWithValue("@EstActif", zone.EstActif);
                     return command.ExecuteNonQuery() > 0;
                 }
@@ -1614,6 +1626,140 @@ namespace E_Commerce_Cooperatives.Models
                     return command.ExecuteNonQuery() > 0;
                 }
             }
+        }
+
+        // ============================================
+        // CALCUL DU PRIX DE LIVRAISON DYNAMIQUE
+        // ============================================
+
+        /// <summary>
+        /// Récupère une zone de livraison par nom de ville
+        /// </summary>
+        public ZoneLivraison GetZoneLivraisonByVille(string ville)
+        {
+            if (string.IsNullOrWhiteSpace(ville))
+                return null;
+
+            ZoneLivraison zone = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                // Recherche exacte d'abord, puis recherche partielle, puis "Autres villes"
+                var query = @"SELECT TOP 1 ZoneLivraisonId, ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation 
+                             FROM ZonesLivraison 
+                             WHERE EstActif = 1 
+                             AND (
+                                 ZoneVille = @Ville 
+                                 OR ZoneVille LIKE @Ville + '%'
+                                 OR @Ville LIKE ZoneVille + '%'
+                             )
+                             ORDER BY 
+                                 CASE WHEN ZoneVille = @Ville THEN 1 ELSE 2 END,
+                                 ZoneVille ASC";
+                
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Ville", ville.Trim());
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            zone = new ZoneLivraison
+                            {
+                                ZoneLivraisonId = reader.GetInt32(0),
+                                ZoneVille = reader.GetString(1),
+                                Supplement = reader.GetDecimal(2),
+                                DelaiMinStandard = reader.GetInt32(3),
+                                DelaiMaxStandard = reader.GetInt32(4),
+                                DelaiMinExpress = reader.GetInt32(5),
+                                DelaiMaxExpress = reader.GetInt32(6),
+                                EstActif = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
+                            };
+                        }
+                    }
+                }
+
+                // Si aucune zone trouvée, utiliser "Autres villes" comme fallback
+                if (zone == null)
+                {
+                    query = "SELECT TOP 1 ZoneLivraisonId, ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation FROM ZonesLivraison WHERE ZoneVille = 'Autres villes' AND EstActif = 1";
+                    using (var command = new SqlCommand(query, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            zone = new ZoneLivraison
+                            {
+                                ZoneLivraisonId = reader.GetInt32(0),
+                                ZoneVille = reader.GetString(1),
+                                Supplement = reader.GetDecimal(2),
+                                DelaiMinStandard = reader.GetInt32(3),
+                                DelaiMaxStandard = reader.GetInt32(4),
+                                DelaiMinExpress = reader.GetInt32(5),
+                                DelaiMaxExpress = reader.GetInt32(6),
+                                EstActif = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
+                            };
+                        }
+                    }
+                }
+            }
+            return zone;
+        }
+
+        /// <summary>
+        /// Calcule le prix de livraison total basé sur le mode et la ville
+        /// Formule: Prix total = Tarif du mode + Supplément ville
+        /// Cas spécial Casablanca: Supplément = 0
+        /// </summary>
+        public decimal CalculateDeliveryPrice(int modeLivraisonId, string ville)
+        {
+            // Récupérer le mode de livraison
+            var mode = GetModeLivraison(modeLivraisonId);
+            if (mode == null || !mode.EstActif)
+                return 0;
+
+            // Récupérer la zone de livraison pour la ville
+            var zone = GetZoneLivraisonByVille(ville);
+            decimal supplement = zone?.Supplement ?? 0;
+
+            // Le tarif du mode contient déjà le prix de base (33 MAD pour Standard, 60 MAD pour Express)
+            decimal prixBase = mode.Tarif;
+
+            // Calcul: Prix total = Prix base + Supplément ville
+            decimal prixTotal = prixBase + supplement;
+
+            return Math.Round(prixTotal, 2);
+        }
+
+        /// <summary>
+        /// Récupère les délais de livraison (min et max) pour un mode et une ville donnés
+        /// Retourne un objet avec DelaiMin et DelaiMax
+        /// </summary>
+        public object GetDeliveryDelay(int modeLivraisonId, string ville)
+        {
+            // Récupérer le mode de livraison
+            var mode = GetModeLivraison(modeLivraisonId);
+            if (mode == null || !mode.EstActif)
+                return new { DelaiMin = 0, DelaiMax = 0, DelaiText = "Non disponible" };
+
+            // Récupérer la zone de livraison pour la ville
+            var zone = GetZoneLivraisonByVille(ville);
+            if (zone == null)
+                return new { DelaiMin = 0, DelaiMax = 0, DelaiText = "Non disponible" };
+
+            // Déterminer si c'est Express ou Standard
+            bool isExpress = mode.Nom != null && (mode.Nom.Contains("Express") || mode.Nom.Contains("express"));
+            
+            int delaiMin = isExpress ? zone.DelaiMinExpress : zone.DelaiMinStandard;
+            int delaiMax = isExpress ? zone.DelaiMaxExpress : zone.DelaiMaxStandard;
+
+            string delaiText = delaiMin == delaiMax 
+                ? $"{delaiMin} jour{(delaiMin > 1 ? "s" : "")}" 
+                : $"{delaiMin} à {delaiMax} jours";
+
+            return new { DelaiMin = delaiMin, DelaiMax = delaiMax, DelaiText = delaiText };
         }
 
         // ============================================
@@ -2062,7 +2208,12 @@ namespace E_Commerce_Cooperatives.Models
                             totalHT += prixHT * item.Quantite;
                         }
                         decimal montantTVA = Math.Round(totalHT * 0.20m, 2); // TVA 20% sur le HT
-                        decimal fraisLivraison = GetModeLivraison(modeLivraisonId)?.Tarif ?? 0;
+                        
+                        // Récupérer la ville depuis l'adresse pour calculer le prix de livraison dynamique
+                        var adresse = GetAdresse(adresseId);
+                        string ville = adresse?.Ville ?? "";
+                        decimal fraisLivraison = CalculateDeliveryPrice(modeLivraisonId, ville);
+                        
                         decimal totalTTC = Math.Round(totalHT + montantTVA + fraisLivraison, 2);
 
                         // Insérer la commande

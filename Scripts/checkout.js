@@ -151,9 +151,10 @@
                 return acc + (price * qty);
             }, 0);
 
-            // No TVA calculation - prices already include VAT
+            // Récupérer le prix de livraison depuis l'élément sélectionné
             const selectedOption = document.querySelector('.delivery-option.selected') || document.querySelector('.delivery-option');
-            const deliveryFee = parseFloat(selectedOption?.dataset.price || '0');
+            const deliveryFeeElement = selectedOption?.querySelector('.delivery-price');
+            const deliveryFee = parseFloat(deliveryFeeElement?.textContent?.replace(' MAD', '').replace(/\s/g, '') || '0');
             const total = subtotal + deliveryFee;
 
             const elements = {
@@ -165,6 +166,85 @@
             Object.keys(elements).forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = elements[id];
+            });
+        }
+
+        function calculateDeliveryPrice() {
+            const villeSelect = document.getElementById('Ville');
+            
+            if (!villeSelect) {
+                return;
+            }
+
+            const ville = villeSelect.value;
+
+            if (!ville) {
+                // Masquer les prix et délais si pas de ville sélectionnée
+                document.querySelectorAll('.delivery-price').forEach(el => {
+                    el.style.display = 'none';
+                });
+                document.querySelectorAll('.delivery-price-placeholder').forEach(el => {
+                    el.style.display = 'inline';
+                });
+                document.querySelectorAll('.delivery-delay-text').forEach(el => {
+                    el.style.display = 'none';
+                });
+                updateTotals(cartItems);
+                return;
+            }
+
+            // Afficher les placeholders de prix et masquer les messages "Sélectionnez une ville"
+            document.querySelectorAll('.delivery-price-placeholder').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('.delivery-price').forEach(el => {
+                el.style.display = 'inline';
+            });
+
+            // Calculer le prix et le délai pour tous les modes de livraison
+            const options = document.querySelectorAll('.delivery-option');
+            let completedRequests = 0;
+            const totalRequests = options.length;
+
+            options.forEach(option => {
+                const modeId = parseInt(option.dataset.modeId);
+                const priceElement = option.querySelector('.delivery-price');
+                const delayElement = option.querySelector('.delivery-delay-text');
+                const delayValueElement = option.querySelector('.delivery-delay-value');
+                
+                if (priceElement && modeId > 0) {
+                    fetch(`/Checkout/CalculateDeliveryPrice?modeLivraisonId=${modeId}&ville=${encodeURIComponent(ville)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Mettre à jour le prix
+                                priceElement.textContent = data.prixLivraison.toFixed(2) + ' MAD';
+                                
+                                // Mettre à jour le délai
+                                if (delayElement && delayValueElement) {
+                                    delayValueElement.textContent = data.delaiText || `${data.delaiMin} à ${data.delaiMax} jours`;
+                                    delayElement.style.display = 'block';
+                                }
+                            }
+                            completedRequests++;
+                            // Mettre à jour les totaux une fois tous les prix calculés
+                            if (completedRequests === totalRequests) {
+                                updateTotals(cartItems);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error calculating delivery price for mode:', error);
+                            completedRequests++;
+                            if (completedRequests === totalRequests) {
+                                updateTotals(cartItems);
+                            }
+                        });
+                } else {
+                    completedRequests++;
+                    if (completedRequests === totalRequests) {
+                        updateTotals(cartItems);
+                    }
+                }
             });
         }
 
@@ -187,12 +267,41 @@
                     const radio = this.querySelector('input[type="radio"]');
                     if (radio) radio.checked = true;
 
+                    // Recalculer le prix de livraison si une ville est sélectionnée
+                    calculateDeliveryPrice();
                     updateTotals(cartItems);
                 });
             });
 
+            // Écouter les changements de ville
+            const villeSelect = document.getElementById('Ville');
+            if (villeSelect) {
+                villeSelect.addEventListener('change', function() {
+                    calculateDeliveryPrice();
+                });
+            }
+
+            // Initialiser avec le premier mode sélectionné
             if (options.length > 0) {
-                options[0].click();
+                const firstOption = options[0];
+                firstOption.classList.add('selected');
+                firstOption.style.borderColor = '#C06C50';
+                firstOption.style.backgroundColor = 'rgba(192, 108, 80, 0.05)';
+                const radio = firstOption.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+                
+                // Masquer les prix et délais au chargement initial (pas de ville sélectionnée)
+                document.querySelectorAll('.delivery-price').forEach(el => {
+                    el.style.display = 'none';
+                });
+                document.querySelectorAll('.delivery-price-placeholder').forEach(el => {
+                    el.style.display = 'inline';
+                });
+                document.querySelectorAll('.delivery-delay-text').forEach(el => {
+                    el.style.display = 'none';
+                });
+                
+                updateTotals(cartItems);
             }
         }
 
