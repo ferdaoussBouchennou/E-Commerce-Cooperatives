@@ -15,9 +15,19 @@
     {
         images.Add(new ImageProduit { UrlImage = produit.ImageUrl, EstPrincipale = true });
     }
+    
+    // Correction des chemins d'images (si seulement le nom de fichier est stocké)
+    foreach (var img in images)
+    {
+        if (!string.IsNullOrEmpty(img.UrlImage) && !img.UrlImage.StartsWith("~") && !img.UrlImage.StartsWith("/"))
+        {
+            img.UrlImage = "~/Content/images/produits/" + img.UrlImage;
+        }
+    }
+
     if (!images.Any())
     {
-        images.Add(new ImageProduit { UrlImage = "/Content/images/default-product.jpg", EstPrincipale = true });
+        images.Add(new ImageProduit { UrlImage = "~/Content/images/default-product.jpg", EstPrincipale = true });
     }
     
     var variantes = produit.Variantes?.ToList() ?? new List<Variante>();
@@ -80,7 +90,7 @@
                                     <img src="@Url.Content(img.UrlImage)" 
                                          alt="@produit.Nom" 
                                          class="w-100 h-100 object-fit-cover"
-                                         onerror="this.src='/Content/images/default-product.jpg';">
+                                         onerror="this.onerror=null;this.src='@Url.Content("~/Content/images/default-product.jpg")';">
                                 </div>
                             }
                         </div>

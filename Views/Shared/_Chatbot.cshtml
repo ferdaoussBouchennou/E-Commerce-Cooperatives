@@ -254,6 +254,19 @@
         0%, 60%, 100% { transform: translateY(0); }
         30% { transform: translateY(-10px); }
     }
+    /* Style des liens dans le chatbot */
+    .chatbot-message a {
+        color: #305C7D;
+        text-decoration: underline;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+    .chatbot-message a:hover {
+        color: #1e3d54;
+    }
+    .user-message a {
+        color: white;
+    }
     @@media (max-width: 480px) {
         .chatbot-window {
             width: calc(100vw - 40px);
@@ -345,7 +358,8 @@
             content.className = 'message-content';
             
             const p = document.createElement('p');
-            p.textContent = text;
+            // Utiliser innerHTML pour permettre le rendu des liens HTML générés par le bot
+            p.innerHTML = text;
             
             content.appendChild(p);
             messageDiv.appendChild(avatar);

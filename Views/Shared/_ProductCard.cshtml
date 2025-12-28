@@ -7,14 +7,27 @@
         <!-- Image Container -->
         <div class="position-relative" style="aspect-ratio: 1/1; overflow: hidden;">
             @{
-                var mainImage = Model.ImageUrl 
+                var rawImage = Model.ImageUrl 
                                 ?? Model.Images?.FirstOrDefault(img => img.EstPrincipale)?.UrlImage 
-                                ?? Model.Images?.FirstOrDefault()?.UrlImage 
-                                ?? "/Content/images/default-product.jpg";
+                                ?? Model.Images?.FirstOrDefault()?.UrlImage;
+                
+                string mainImage;
+                if (string.IsNullOrEmpty(rawImage))
+                {
+                    mainImage = "~/Content/images/default-product.jpg";
+                }
+                else if (!rawImage.StartsWith("~") && !rawImage.StartsWith("/"))
+                {
+                    mainImage = "~/Content/images/produits/" + rawImage;
+                }
+                else
+                {
+                    mainImage = rawImage;
+                }
             }
             <img src="@Url.Content(mainImage)" alt="@Model.Nom" 
                  class="w-100 h-100 object-fit-cover product-image"
-                 onerror="this.src='/Content/images/default-product.jpg';">
+                 onerror="this.onerror=null;this.src='@Url.Content("~/Content/images/default-product.jpg")';">
             
             <!-- Badges -->
             <div class="position-absolute top-0 start-0 p-3 d-flex flex-column gap-2">
