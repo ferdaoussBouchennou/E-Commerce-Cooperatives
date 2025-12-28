@@ -1,4 +1,4 @@
-// CoopShop Custom JavaScript
+// Cooporia Custom JavaScript
 
 (function() {
     'use strict';

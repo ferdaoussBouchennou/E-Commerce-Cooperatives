@@ -50,9 +50,9 @@ namespace E_Commerce_Cooperatives.Models
 
                 // Créer le message email
                 MailMessage message = new MailMessage();
-                message.From = new MailAddress(smtpUsername, "CoopShop");
+                message.From = new MailAddress(smtpUsername, "Cooporia");
                 message.To.Add(new MailAddress(email));
-                message.Subject = "Réinitialisation de votre mot de passe - CoopShop";
+                message.Subject = "Réinitialisation de votre mot de passe - Cooporia";
                 message.IsBodyHtml = true;
                 message.Body = GetPasswordResetEmailBody(userName, resetUrl);
 
@@ -105,7 +105,7 @@ namespace E_Commerce_Cooperatives.Models
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>CoopShop</h1>
+            <h1>Cooporia</h1>
         </div>
         <div class='content'>
             <h2>Réinitialisation de votre mot de passe</h2>
@@ -120,7 +120,7 @@ namespace E_Commerce_Cooperatives.Models
             <p>Si vous n'avez pas demandé cette réinitialisation, ignorez simplement cet email.</p>
         </div>
         <div class='footer'>
-            <p>© {currentYear} CoopShop. Tous droits réservés.</p>
+            <p>© {currentYear} Cooporia. Tous droits réservés.</p>
         </div>
     </div>
 </body>
@@ -159,9 +159,9 @@ namespace E_Commerce_Cooperatives.Models
 
                 // Créer le message email
                 MailMessage message = new MailMessage();
-                message.From = new MailAddress(smtpUsername, "CoopShop");
+                message.From = new MailAddress(smtpUsername, "Cooporia");
                 message.To.Add(new MailAddress(email));
-                message.Subject = "Vérification de votre email - CoopShop";
+                message.Subject = "Vérification de votre email - Cooporia";
                 message.IsBodyHtml = true;
                 message.Body = GetVerificationEmailBody(userName, verificationCode);
 
@@ -215,21 +215,21 @@ namespace E_Commerce_Cooperatives.Models
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>CoopShop</h1>
+            <h1>Cooporia</h1>
         </div>
         <div class='content'>
             <h2>Vérification de votre adresse email</h2>
             <p>Bonjour{greeting},</p>
-            <p>Merci de vous être inscrit sur CoopShop ! Pour finaliser votre inscription, veuillez entrer le code de vérification ci-dessous :</p>
+            <p>Merci de vous être inscrit sur Cooporia ! Pour finaliser votre inscription, veuillez entrer le code de vérification ci-dessous :</p>
             <div class='code-box'>
                 <p style='margin: 0; color: #666; font-size: 14px;'>Votre code de vérification</p>
                 <div class='verification-code'>{verificationCode}</div>
             </div>
             <p>Ce code est valide pendant 15 minutes.</p>
-            <p>Si vous n'avez pas créé de compte sur CoopShop, ignorez simplement cet email.</p>
+            <p>Si vous n'avez pas créé de compte sur Cooporia, ignorez simplement cet email.</p>
         </div>
         <div class='footer'>
-            <p>© {currentYear} CoopShop. Tous droits réservés.</p>
+            <p>© {currentYear} Cooporia. Tous droits réservés.</p>
         </div>
     </div>
 </body>
@@ -246,9 +246,9 @@ namespace E_Commerce_Cooperatives.Models
                 bool enableSsl = bool.Parse(ConfigurationManager.AppSettings["SmtpEnableSsl"] ?? "true");
 
                 var mail = new MailMessage();
-                mail.From = new MailAddress(smtpUsername, "CoopShop");
+                mail.From = new MailAddress(smtpUsername, "Cooporia");
                 mail.To.Add(new MailAddress(toEmail));
-                mail.Subject = $"Confirmation de votre commande #{orderNumber} - CoopShop";
+                mail.Subject = $"Confirmation de votre commande #{orderNumber} - Cooporia";
                 mail.IsBodyHtml = true;
 
                 mail.Body = GenerateOrderEmailBody(clientName, orderNumber, items, subtotal, modeLivraison, fraisLivraison, totalTTC);
@@ -278,9 +278,9 @@ namespace E_Commerce_Cooperatives.Models
                 bool enableSsl = bool.Parse(ConfigurationManager.AppSettings["SmtpEnableSsl"] ?? "true");
 
                 var mail = new MailMessage();
-                mail.From = new MailAddress(smtpUsername, "CoopShop");
+                mail.From = new MailAddress(smtpUsername, "Cooporia");
                 mail.To.Add(new MailAddress(commande.Client.Email));
-                mail.Subject = $"Confirmation de votre commande #{commande.NumeroCommande} - CoopShop";
+                mail.Subject = $"Confirmation de votre commande #{commande.NumeroCommande} - Cooporia";
                 mail.IsBodyHtml = true;
 
                 // Map items
@@ -398,12 +398,12 @@ namespace E_Commerce_Cooperatives.Models
             body.Append("</div>");
             
             body.Append("<p style='margin-top: 30px;'>Si vous avez des questions, n'hésitez pas à répondre à cet email ou à nous contacter via notre service client.</p>");
-            body.Append("<p>Cordialement,<br>L'équipe CoopShop</p>");
+            body.Append("<p>Cordialement,<br>L'équipe Cooporia</p>");
             body.Append("</div>");
             
             // Footer
             body.Append("<div style='background-color: #f8f9fa; color: #999; padding: 10px; text-align: center; font-size: 0.8rem;'>");
-            body.Append("<p>&copy; 2025 CoopShop. Tous droits réservés.</p>");
+            body.Append("<p>&copy; 2025 Cooporia. Tous droits réservés.</p>");
             body.Append("</div>");
             
             body.Append("</div>");
@@ -439,9 +439,9 @@ namespace E_Commerce_Cooperatives.Models
                 }
 
                 var mail = new MailMessage();
-                mail.From = new MailAddress(smtpUsername, "CoopShop");
+                mail.From = new MailAddress(smtpUsername, "Cooporia");
                 mail.To.Add(new MailAddress(commande.Client.Email));
-                mail.Subject = $"Annulation de votre commande #{commande.NumeroCommande} - CoopShop";
+                mail.Subject = $"Annulation de votre commande #{commande.NumeroCommande} - Cooporia";
                 mail.IsBodyHtml = true;
 
                 string clientName = $"{commande.Client.Prenom} {commande.Client.Nom}";
@@ -560,12 +560,12 @@ namespace E_Commerce_Cooperatives.Models
             body.Append("<p style='margin: 0;'>Si vous avez des questions concernant cette annulation, n'hésitez pas à nous contacter via notre service client. Nous sommes là pour vous aider.</p>");
             body.Append("</div>");
             
-            body.Append("<p style='margin-top: 30px;'>Cordialement,<br><strong>L'équipe CoopShop</strong></p>");
+            body.Append("<p style='margin-top: 30px;'>Cordialement,<br><strong>L'équipe Cooporia</strong></p>");
             body.Append("</div>");
             
             // Footer
             body.Append("<div class='footer'>");
-            body.Append($"<p>© {currentYear} CoopShop. Tous droits réservés.</p>");
+            body.Append($"<p>© {currentYear} Cooporia. Tous droits réservés.</p>");
             body.Append("</div>");
             
             body.Append("</div>");
