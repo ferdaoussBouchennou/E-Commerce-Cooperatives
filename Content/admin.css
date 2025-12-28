@@ -2832,6 +2832,7 @@ body.modal-open {
         transform: translateX(120%);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -2852,6 +2853,7 @@ body.modal-open {
         transform: translateX(0);
         opacity: 1;
     }
+
     to {
         transform: translateX(120%);
         opacity: 0;
@@ -2999,6 +3001,7 @@ body.modal-open {
     from {
         transform: scaleX(1);
     }
+
     to {
         transform: scaleX(0);
     }
@@ -3016,4 +3019,45 @@ body.modal-open {
         min-width: auto;
         max-width: none;
     }
+}
+
+/* === PRODUCT MODAL AND VARIANT ENLARGEMENT === */
+#produitModal .modal-dialog {
+    max-width: 1100px !important;
+    width: 95% !important;
+}
+
+#produitModal .form-input,
+#produitModal .form-select {
+    padding: 12px 16px !important;
+    font-size: 16px !important;
+    border: 2px solid #D09E86 !important;
+}
+
+#produitModal .form-label {
+    font-size: 16px !important;
+    margin-bottom: 10px !important;
+}
+
+.variant-input {
+    width: 100% !important;
+    padding: 10px 8px !important;
+    border: 2px solid #D09E86 !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    min-height: 45px !important;
+    min-width: 90px !important;
+    background-color: white !important;
+}
+
+.variants-title {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+}
+
+.variants-table th {
+    font-size: 14px !important;
+    padding: 12px !important;
 }

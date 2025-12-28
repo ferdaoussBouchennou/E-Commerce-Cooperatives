@@ -172,3 +172,22 @@
 .modal-backdrop {
     z-index: 1050 !important;
 }
+
+/* === PRODUCT MODAL AND VARIANT ENLARGEMENT === */
+#produitModal .modal-dialog {
+    max-width: 1100px !important;
+    width: 95% !important;
+}
+
+.variant-input {
+    width: 100% !important;
+    padding: 10px 8px !important;
+    border: 2px solid #D09E86 !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    min-height: 45px !important;
+    min-width: 90px !important;
+    background-color: white !important;
+}
