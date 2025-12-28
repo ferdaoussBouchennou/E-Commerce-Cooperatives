@@ -37,7 +37,8 @@
         });
 
         function fetchSuggestions(term, container, input) {
-            fetch('/Catalogue/Suggestions?term=' + encodeURIComponent(term))
+            const timestamp = new Date().getTime();
+            fetch('/Catalogue/Suggestions?term=' + encodeURIComponent(term) + '&t=' + timestamp)
                 .then(response => response.json())
                 .then(data => {
                     renderSuggestions(data, container, input);

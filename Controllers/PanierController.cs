@@ -39,6 +39,20 @@ namespace E_Commerce_Cooperatives.Controllers
                                             ?? produit.Images?.FirstOrDefault()?.UrlImage 
                                             ?? "/Content/images/default-product.jpg";
 
+                            // Normalisation stricte du chemin d'image pour le frontend
+                            if (!string.IsNullOrEmpty(mainImage))
+                            {
+                                mainImage = mainImage.Replace("\\", "/");
+                                if (mainImage.StartsWith("~"))
+                                {
+                                    mainImage = mainImage.Substring(1);
+                                }
+                                if (!mainImage.StartsWith("/") && !mainImage.StartsWith("http"))
+                                {
+                                    mainImage = "/" + mainImage;
+                                }
+                            }
+
                             var variante = item.VarianteId.HasValue 
                                 ? produit.Variantes?.FirstOrDefault(v => v.VarianteId == item.VarianteId.Value)
                                 : null;

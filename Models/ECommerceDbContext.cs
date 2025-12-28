@@ -594,12 +594,31 @@ namespace E_Commerce_Cooperatives.Models
                             decimal prixHT = reader.GetDecimal(2);
                             decimal prixTTC = prixHT * 1.20m; // Ajouter 20% de TVA
                             
+                            string imageUrl = reader.IsDBNull(3) ? null : reader.GetString(3);
+                            if (!string.IsNullOrEmpty(imageUrl))
+                            {
+                                // Normaliser les slashes (remplacer \ par /)
+                                imageUrl = imageUrl.Replace("\\", "/");
+                                
+                                // Enlever le ~ du début si présent
+                                if (imageUrl.StartsWith("~"))
+                                {
+                                    imageUrl = imageUrl.Substring(1); 
+                                }
+                                
+                                // S'assurer que le chemin commence par / si ce n'est pas une URL externe
+                                if (!imageUrl.StartsWith("/") && !imageUrl.StartsWith("http"))
+                                {
+                                    imageUrl = "/" + imageUrl;
+                                }
+                            }
+
                             suggestions.Add(new
                             {
                                 ProduitId = reader.GetInt32(0),
                                 Nom = reader.GetString(1),
                                 Prix = prixTTC, // Prix TTC au lieu de HT
-                                ImageUrl = reader.IsDBNull(3) ? null : reader.GetString(3)
+                                ImageUrl = imageUrl
                             });
                         }
                     }
