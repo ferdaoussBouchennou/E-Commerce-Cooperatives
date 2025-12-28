@@ -591,11 +591,14 @@ namespace E_Commerce_Cooperatives.Models
                     {
                         while (reader.Read())
                         {
+                            decimal prixHT = reader.GetDecimal(2);
+                            decimal prixTTC = prixHT * 1.20m; // Ajouter 20% de TVA
+                            
                             suggestions.Add(new
                             {
                                 ProduitId = reader.GetInt32(0),
                                 Nom = reader.GetString(1),
-                                Prix = reader.GetDecimal(2),
+                                Prix = prixTTC, // Prix TTC au lieu de HT
                                 ImageUrl = reader.IsDBNull(3) ? null : reader.GetString(3)
                             });
                         }
