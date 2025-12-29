@@ -2300,6 +2300,7 @@ namespace E_Commerce_Cooperatives.Controllers
                          LEFT JOIN Commandes c ON ci.CommandeId = c.CommandeId
                          WHERE (c.Statut != 'Annulée' OR c.Statut IS NULL)
                          GROUP BY p.ProduitId, p.Nom, p.Prix
+                         HAVING ISNULL(SUM(ci.Quantite), 0) >= 3
                          ORDER BY SalesCount DESC";
             
             using (var command = new SqlCommand(query, connection))

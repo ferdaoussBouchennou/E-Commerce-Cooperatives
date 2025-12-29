@@ -123,16 +123,7 @@
                                 @Html.ValidationMessageFor(m => m.ConfirmerMotDePasse, "", new { @class = "text-danger small" })
                             </div>
 
-                            <!-- Terms and Conditions -->
-                            <div class="mb-4">
-                                <div class="form-check">
-                                    @Html.CheckBoxFor(m => m.AccepteConditions, new { @class = "form-check-input", id = "acceptConditions" })
-                                    <label class="form-check-label small" for="acceptConditions" style="color: #6c757d;">
-                                        J'accepte les <a href="#" style="color: #C06C50; text-decoration: none;">conditions générales de vente</a> et la <a href="#" style="color: #C06C50; text-decoration: none;">politique de confidentialité</a>
-                                    </label>
-                                </div>
-                                @Html.ValidationMessageFor(m => m.AccepteConditions, "", new { @class = "text-danger small d-block" })
-                            </div>
+
 
                             <!-- Submit Button -->
                             <button type="submit" class="btn w-100 py-2 fw-semibold mb-3" style="background-color: #C06C50; color: white; border: none; border-radius: 8px;">

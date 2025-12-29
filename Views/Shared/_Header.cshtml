@@ -102,3 +102,25 @@
     </div>
 </header>
 
+<style>
+    /* Remove blue outline on the user dropdown button */
+    #userDropdown, #userDropdownNotLogged {
+        box-shadow: none !important;
+        outline: none !important;
+        border: none !important;
+    }
+
+    /* Remove blue background on Connexion/Inscription when clicked */
+    .dropdown-item:active, 
+    .dropdown-item:focus {
+        background-color: #F8F9FA !important; /* Neutral light background */
+        color: #305C7D !important; /* Keep brand text color */
+    }
+
+    /* Additional refinement for the dropdown animation/look */
+    .dropdown-menu {
+        border: none !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    }
+</style>
+

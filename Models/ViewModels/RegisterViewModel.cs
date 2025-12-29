@@ -35,9 +35,7 @@ namespace E_Commerce_Cooperatives.Models.ViewModels
         [Compare("MotDePasse", ErrorMessage = "Les mots de passe ne correspondent pas")]
         public string ConfirmerMotDePasse { get; set; }
 
-        [Required(ErrorMessage = "Vous devez accepter les conditions générales")]
-        [Display(Name = "J'accepte les conditions générales de vente et la politique de confidentialité")]
-        public bool AccepteConditions { get; set; }
+
     }
 }
 

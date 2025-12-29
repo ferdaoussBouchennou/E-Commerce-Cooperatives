@@ -75,13 +75,7 @@
                                 @Html.ValidationMessageFor(m => m.MotDePasse, "", new { @class = "text-danger small" })
                             </div>
 
-                            <!-- Remember Me -->
-                            <div class="mb-4">
-                                <div class="form-check">
-                                    @Html.CheckBoxFor(m => m.SeSouvenirDeMoi, new { @class = "form-check-input" })
-                                    @Html.LabelFor(m => m.SeSouvenirDeMoi, new { @class = "form-check-label small", style = "color: #6c757d;" })
-                                </div>
-                            </div>
+
 
                             <!-- Submit Button -->
                             <button type="submit" class="btn w-100 py-2 fw-semibold mb-3" style="background-color: #C06C50; color: white; border: none; border-radius: 8px;">

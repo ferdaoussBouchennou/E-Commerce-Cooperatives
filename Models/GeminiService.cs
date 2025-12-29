@@ -14,8 +14,8 @@ namespace E_Commerce_Cooperatives.Models
         private readonly HttpClient _httpClient;
         public GeminiService()
         {
-            _apiKey = ConfigurationManager.AppSettings["GeminiApiKey"];
-            _apiUrl = ConfigurationManager.AppSettings["GeminiApiUrl"];
+            _apiKey = Environment.GetEnvironmentVariable("GeminiApiKey") ?? ConfigurationManager.AppSettings["GeminiApiKey"];
+            _apiUrl = Environment.GetEnvironmentVariable("GeminiApiUrl") ?? ConfigurationManager.AppSettings["GeminiApiUrl"];
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromSeconds(60);
         }

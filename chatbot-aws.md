@@ -581,6 +581,8 @@ Clic droit sur le projet dans l'Explorateur de solutions
 Ajouter > Classe existante
 Sélectionnez GeminiService.cs et ChatbotController.cs
 Pour la vue, clic droit sur Views/Shared > Ajouter > Vue existante
+
+
 🚀 PARTIE 2: Déploiement sur AWS Elastic Beanstalk
 Prérequis
 Compte AWS (niveau gratuit disponible)
