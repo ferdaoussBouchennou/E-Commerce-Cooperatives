@@ -275,20 +275,6 @@ namespace E_Commerce_Cooperatives.Controllers
                     }
                 }
 
-                // Créer la session de connexion
-                Session["UserId"] = pendingUserId;
-                Session["ClientId"] = pendingClientId;
-                Session["Email"] = pendingEmail;
-                Session["Nom"] = Session["PendingNom"];
-                Session["Prenom"] = Session["PendingPrenom"];
-                Session["ClientNom"] = Session["PendingPrenom"] + " " + Session["PendingNom"];
-                Session["TypeUtilisateur"] = "Client";
-                // Ajouter le téléphone à la session
-                if (Session["PendingTelephone"] != null)
-                {
-                    Session["Telephone"] = Session["PendingTelephone"];
-                }
-
                 // Nettoyer la session de vérification
                 Session.Remove("PendingUserId");
                 Session.Remove("PendingClientId");
@@ -299,8 +285,8 @@ namespace E_Commerce_Cooperatives.Controllers
                 Session.Remove("VerificationCode");
                 Session.Remove("CodeExpiration");
 
-                TempData["SuccessMessage"] = "Votre email a été vérifié avec succès ! Votre compte est maintenant actif.";
-                return RedirectToAction("Index", "Home");
+                TempData["SuccessMessage"] = "Votre email a été vérifié avec succès ! Votre compte est maintenant actif. Veuillez vous connecter pour continuer.";
+                return RedirectToAction("Login", "Account");
             }
             catch (SqlException sqlEx)
             {

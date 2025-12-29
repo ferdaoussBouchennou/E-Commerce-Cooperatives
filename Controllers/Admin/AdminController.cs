@@ -1591,7 +1591,7 @@ namespace E_Commerce_Cooperatives.Controllers
         }
 
         // GET: Admin/Utilisateurs
-        public ActionResult Utilisateurs(string searchTerm = "", string statusFilter = "all", int page = 1, int pageSize = 20)
+        public ActionResult Utilisateurs(string searchTerm = "", string statusFilter = "all", int page = 1, int pageSize = 6)
         {
             if (Session["TypeUtilisateur"]?.ToString() != "Admin")
             {
