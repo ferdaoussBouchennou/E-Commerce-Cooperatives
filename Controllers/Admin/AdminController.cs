@@ -1673,18 +1673,62 @@ namespace E_Commerce_Cooperatives.Controllers
                 {
                     connection.Open();
 
-                    var updateQuery = @"UPDATE Clients 
-                                       SET EstActif = @EstActif 
-                                       WHERE ClientId = @ClientId";
-                    
-                    using (var command = new SqlCommand(updateQuery, connection))
+                    using (var transaction = connection.BeginTransaction())
                     {
-                        command.Parameters.AddWithValue("@EstActif", isActive);
-                        command.Parameters.AddWithValue("@ClientId", userId);
-                        command.ExecuteNonQuery();
-                    }
+                        try
+                        {
+                            // 1. Mettre à jour le statut du client
+                            var updateQuery = @"UPDATE Clients 
+                                              SET EstActif = @EstActif 
+                                              WHERE ClientId = @ClientId";
+                            
+                            using (var command = new SqlCommand(updateQuery, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@EstActif", isActive);
+                                command.Parameters.AddWithValue("@ClientId", userId);
+                                command.ExecuteNonQuery();
+                            }
 
-                    return Json(new { success = true, message = isActive ? "Compte activé avec succès" : "Compte désactivé avec succès" });
+                            string message = isActive ? "Compte activé avec succès" : "Compte désactivé avec succès";
+
+                            // 2. Si on DÉSACTIVE, on annule TOUTES les commandes qui ne sont pas déjà annulées ou livrées
+                            // On exclut explicitement 'Livrée' pour ne pas fausser l'historique des ventes réussies
+                            if (!isActive)
+                            {
+                                var updateOrdersQuery = @"UPDATE Commandes 
+                                                        SET Statut = 'Annulée', 
+                                                            DateAnnulation = GETDATE(), 
+                                                            RaisonAnnulation = 'Compte client désactivé par l''administrateur' 
+                                                        WHERE ClientId = @ClientId 
+                                                        AND Statut NOT IN ('Annulée', 'Livrée')"; 
+
+                                int ordersAffected = 0;
+                                using (var cmdOrders = new SqlCommand(updateOrdersQuery, connection, transaction))
+                                {
+                                    cmdOrders.Parameters.AddWithValue("@ClientId", userId);
+                                    ordersAffected = cmdOrders.ExecuteNonQuery();
+                                }
+
+                                if (ordersAffected > 0)
+                                {
+                                    message += $" et {ordersAffected} commande(s) ont été annulée(s).";
+                                }
+                                else 
+                                {
+                                     // Pour le debug : si 0 commandes touchées, c'est peut-être qu'elles sont toutes déjà annulées ou livrées
+                                     message += " (Aucune commande en cours à annuler).";
+                                }
+                            }
+
+                            transaction.Commit();
+                            return Json(new { success = true, message = message });
+                        }
+                        catch (Exception)
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
                 }
             }
             catch (Exception ex)

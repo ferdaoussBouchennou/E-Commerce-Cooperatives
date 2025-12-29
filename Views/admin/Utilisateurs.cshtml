@@ -327,7 +327,11 @@
                 const isActive = this.checked;
                 const label = this.closest('.toggle-switch').querySelector('.toggle-label');
                 
-                if (confirm('Êtes-vous sûr de vouloir ' + (isActive ? 'activer' : 'désactiver') + ' ce compte ?')) {
+                let confirmMessage = isActive 
+                    ? 'Êtes-vous sûr de vouloir activer ce compte ?' 
+                    : 'Êtes-vous sûr de vouloir désactiver ce compte ? \n\nATTENTION : Cela annulera également toutes les commandes en cours de cet utilisateur.';
+
+                if (confirm(confirmMessage)) {
                     const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
                     const formData = new FormData();
                     formData.append('userId', userId);
@@ -342,6 +346,10 @@
                     .then(data => {
                         if (data.success) {
                             label.textContent = isActive ? 'Actif' : 'Inactif';
+                            if (data.message && data.message.includes('annulée')) {
+                                alert(data.message); // Show cancellation details
+                                location.reload(); // Refresh to update order counts/stats if needed
+                            }
                         } else {
                             this.checked = !isActive;
                             alert('Erreur: ' + data.message);
