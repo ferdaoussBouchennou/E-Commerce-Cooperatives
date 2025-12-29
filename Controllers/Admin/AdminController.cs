@@ -949,9 +949,11 @@ namespace E_Commerce_Cooperatives.Controllers
                 var p = db.ProduitsSet.Find(id);
                 if (p == null) return Json(new { success = false, message = "Produit non trouvé" });
 
-                db.ProduitsSet.Remove(p);
+                // Soft delete: désactiver le produit au lieu de le supprimer
+                p.EstDisponible = false;
                 db.SaveChanges();
-                return Json(new { success = true });
+                
+                return Json(new { success = true, message = "Produit désactivé avec succès" });
             }
             catch (Exception ex)
             {
