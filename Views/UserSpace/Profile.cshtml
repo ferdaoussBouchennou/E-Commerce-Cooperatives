@@ -87,27 +87,6 @@
                                         <div style="color: #305C7D; font-size: 16px; font-weight: 600;">@(string.IsNullOrEmpty(Model.Telephone) ? "Non renseigné" : Model.Telephone)</div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="info-card p-4" style="background: #f8f9fa; border-radius: 12px; border: 1px solid #e9ecef;">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#305C7D" viewBox="0 0 16 16" style="margin-right: 10px;">
-                                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
-                                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
-                                            </svg>
-                                            <small class="text-muted" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Date de naissance</small>
-                                        </div>
-                                        <div style="color: #305C7D; font-size: 16px; font-weight: 600;">
-                                            @if (Model.DateNaissance.HasValue)
-                                            {
-                                                @Model.DateNaissance.Value.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"))
-                                            }
-                                            else
-                                            {
-                                                <text>Non renseignée</text>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -145,13 +124,6 @@
                                             @Html.LabelFor(m => m.Telephone, new { @class = "form-label fw-bold", style = "color: #305C7D;" })
                                             @Html.TextBoxFor(m => m.Telephone, new { @class = "form-control", type = "tel", style = "border-radius: 8px; padding: 0.75rem;" })
                                             @Html.ValidationMessageFor(m => m.Telephone, "", new { @class = "text-danger" })
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            @Html.LabelFor(m => m.DateNaissance, new { @class = "form-label fw-bold", style = "color: #305C7D;" })
-                                            @Html.TextBoxFor(m => m.DateNaissance, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", style = "border-radius: 8px; padding: 0.75rem;" })
-                                            @Html.ValidationMessageFor(m => m.DateNaissance, "", new { @class = "text-danger" })
                                         </div>
                                     </div>
                                 </div>

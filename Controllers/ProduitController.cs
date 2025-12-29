@@ -14,7 +14,6 @@ namespace E_Commerce_Cooperatives.Controllers
             using (var db = new ECommerceDbContext())
             {
                 var produit = db.GetProduitDetails(id);
-                
                 if (produit == null)
                 {
                     return HttpNotFound("Produit non trouvé");
