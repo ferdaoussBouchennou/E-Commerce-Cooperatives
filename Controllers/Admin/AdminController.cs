@@ -497,6 +497,9 @@ namespace E_Commerce_Cooperatives.Controllers
                     }
                 }
 
+                // Trier par date d'ajout (plus récent au début)
+                produits = produits.OrderByDescending(p => p.DateCreation).ToList();
+
                 // Calculer les statistiques
                 var stats = new Dictionary<string, int>
                 {
@@ -1416,7 +1419,7 @@ namespace E_Commerce_Cooperatives.Controllers
                 dashboard.LowStockProducts = GetLowStockProducts(connection);
                 
                 // Best Selling Products
-                dashboard.BestSellingProducts = GetBestSellingProducts(connection, 5);
+                dashboard.BestSellingProducts = GetBestSellingProducts(connection, 24);
                 
                 // Cooperatives
                 dashboard.Cooperatives = GetCooperatives(connection);
@@ -2156,6 +2159,57 @@ namespace E_Commerce_Cooperatives.Controllers
             using (var command = new SqlCommand(totalOrdersQuery, connection))
             {
                 dashboard.TotalOrders = (int)command.ExecuteScalar();
+            }
+
+            // Graphs Data - Sales last 7 days
+            dashboard.SaleDates = new List<string>();
+            dashboard.SaleValues = new List<decimal>();
+            dashboard.OrderStatusCounts = new Dictionary<string, int>();
+
+            var salesGraphQuery = @"SELECT 
+                                        CAST(DateCommande AS DATE) as SaleDate, 
+                                        SUM(TotalTTC) as DailyTotal
+                                    FROM Commandes
+                                    WHERE DateCommande >= DATEADD(DAY, -6, CAST(GETDATE() AS DATE))
+                                    AND Statut != 'Annulée'
+                                    GROUP BY CAST(DateCommande AS DATE)
+                                    ORDER BY SaleDate";
+
+            using (var command = new SqlCommand(salesGraphQuery, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    var salesDict = new Dictionary<DateTime, decimal>();
+                    while (reader.Read())
+                    {
+                        salesDict.Add(reader.GetDateTime(0), reader.GetDecimal(1));
+                    }
+
+                    // Fill last 7 days including empty ones
+                    for (int i = 6; i >= 0; i--)
+                    {
+                        var date = DateTime.Today.AddDays(-i);
+                        dashboard.SaleDates.Add(date.ToString("dd/MM"));
+                        dashboard.SaleValues.Add(salesDict.ContainsKey(date) ? salesDict[date] : 0);
+                    }
+                }
+            }
+
+            // Graphs Data - Order Status distribution
+            var statusQuery = @"SELECT Statut, COUNT(*) 
+                                FROM Commandes 
+                                GROUP BY Statut";
+            
+            using (var command = new SqlCommand(statusQuery, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string status = reader.GetString(0);
+                        dashboard.OrderStatusCounts[status] = reader.GetInt32(1);
+                    }
+                }
             }
 
             return dashboard;

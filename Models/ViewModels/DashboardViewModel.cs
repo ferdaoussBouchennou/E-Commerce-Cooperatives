@@ -26,6 +26,11 @@ namespace E_Commerce_Cooperatives.Models.ViewModels
         
         // Cooperatives
         public List<CooperativeViewModel> Cooperatives { get; set; }
+
+        // Graphs Data
+        public List<string> SaleDates { get; set; }
+        public List<decimal> SaleValues { get; set; }
+        public Dictionary<string, int> OrderStatusCounts { get; set; }
     }
 
     public class RecentOrderViewModel

@@ -21,12 +21,7 @@
                     </svg>
                 </div>
                 <div class="stat-content-wrapper">
-                    <div class="stat-trend positive">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5A.5.5 0 0 0 8 12z"/>
-                        </svg>
-                        <span>+@Model.SalesChangePercent%</span>
-                    </div>
+
                     <h3 class="stat-value">@Model.TotalSales.ToString("N0") MAD</h3>
                     <p class="stat-label">Ventes totales</p>
                 </div>
@@ -40,12 +35,7 @@
                     </svg>
                 </div>
                 <div class="stat-content-wrapper">
-                    <div class="stat-trend positive">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5A.5.5 0 0 0 8 12z"/>
-                        </svg>
-                        <span>+@Model.OrdersTodayChange</span>
-                    </div>
+
                     <h3 class="stat-value">@Model.OrdersToday</h3>
                     <p class="stat-label">Commandes aujourd'hui</p>
                 </div>
@@ -73,12 +63,7 @@
                     </svg>
                 </div>
                 <div class="stat-content-wrapper">
-                    <div class="stat-trend positive">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5A.5.5 0 0 0 8 12z"/>
-                        </svg>
-                        <span>+@Model.UsersChange</span>
-                    </div>
+
                     <h3 class="stat-value">@Model.TotalUsers</h3>
                     <p class="stat-label">Utilisateurs</p>
                 </div>
@@ -106,6 +91,35 @@
             </div>
         </div>
     }
+
+    <!-- Graphs Row -->
+    <div class="row mb-4">
+        <!-- Sales Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="dashboard-content-card h-100">
+                <div class="card-header">
+                    <h3 class="card-title">Évolution des ventes (7 derniers jours)</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" style="display: block; width: 100%; height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Chart -->
+        <div class="col-lg-4 mb-4">
+            <div class="dashboard-content-card h-100">
+                <div class="card-header">
+                    <h3 class="card-title">État des commandes</h3>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div style="height: 250px; width: 100%; position: relative;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Content Cards -->
     <div class="row">
@@ -181,18 +195,29 @@
                 <div class="card-body">
                     @if (Model.BestSellingProducts != null && Model.BestSellingProducts.Any())
                     {
-                        int rank = 1;
-                        foreach (var product in Model.BestSellingProducts)
-                        {
-                            <div class="product-item">
-                                <div class="product-rank">@rank</div>
-                                <div class="product-info">
-                                    <div class="product-name">@product.ProductName</div>
-                                    <div class="product-sales">@product.SalesCount ventes</div>
+                        <div id="best-selling-list">
+                            @{ int rank = 1; }
+                            @foreach (var product in Model.BestSellingProducts)
+                            {
+                                <div class="product-item" style="@(rank > 6 ? "display:none;" : "display:flex;")">
+                                    <div class="product-rank">@rank</div>
+                                    <div class="product-info">
+                                        <div class="product-name">@product.ProductName</div>
+                                        <div class="product-sales">@product.SalesCount ventes</div>
+                                    </div>
+                                    <div class="product-price">@product.Price.ToString("N0") MAD</div>
                                 </div>
-                                <div class="product-price">@product.Price.ToString("N0") MAD</div>
+                                rank++;
+                            }
+                        </div>
+
+                        if (Model.BestSellingProducts.Count > 6)
+                        {
+                            <div class="pagination-controls mt-3 d-flex justify-content-between align-items-center">
+                                <button id="prev-prod" class="btn btn-sm btn-outline-secondary" disabled style="font-size: 12px; padding: 2px 8px;">&lt;</button>
+                                <span id="page-info" class="small text-muted">Page 1 / @Math.Ceiling((double)Model.BestSellingProducts.Count / 6)</span>
+                                <button id="next-prod" class="btn btn-sm btn-outline-secondary" style="font-size: 12px; padding: 2px 8px;">&gt;</button>
                             </div>
-                            rank++;
                         }
                     }
                     else
@@ -208,6 +233,7 @@
             <div class="dashboard-content-card">
                 <div class="card-header">
                     <h3 class="card-title">Nos coopératives</h3>
+                    <a href="@Url.Action("Cooperatives", "Admin")" class="card-link">Voir tout</a>
                 </div>
                 <div class="card-body">
                     @if (Model.Cooperatives != null && Model.Cooperatives.Any())
@@ -216,9 +242,8 @@
                         {
                             <div class="cooperative-item">
                                 <div class="cooperative-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M4 4a1 1 0 0 1 1-1h6a1 1 0 0 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4Zm1 3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7Zm4 0a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V7Z"/>
-                                        <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2Z"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bag" viewBox="0 0 16 16">
+                                        <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"/>
                                     </svg>
                                 </div>
                                 <div class="cooperative-info">
@@ -245,12 +270,13 @@
     .dashboard-stat-card {
         background: white;
         border-radius: 12px;
-        padding: 24px;
+        padding: 20px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         display: flex;
         align-items: center;
         gap: 16px;
         transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
     }
 
     .dashboard-stat-card:hover {
@@ -259,48 +285,65 @@
     }
 
     .stat-icon-wrapper {
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
     }
+    
+    .stat-icon-wrapper svg {
+        width: 24px;
+        height: 24px;
+    }
 
     .stat-content-wrapper {
         flex: 1;
         position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .stat-trend {
+        position: absolute;
+        top: -4px;
+        right: 0;
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
-        margin-bottom: 8px;
+        background: rgba(0,0,0,0.03);
+        padding: 2px 6px;
+        border-radius: 10px;
     }
 
     .stat-trend.positive {
         color: #28a745;
+        background: rgba(40, 167, 69, 0.1);
     }
 
     .stat-trend.negative {
         color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
     }
 
     .stat-value {
-        font-size: 28px;
+        font-size: 24px;
         font-weight: 700;
         color: #305C7D;
-        margin: 0 0 4px 0;
+        margin: 0;
+        line-height: 1.2;
     }
 
     .stat-label {
-        font-size: 14px;
+        font-size: 13px;
         color: #6c757d;
-        margin: 0;
+        margin: 4px 0 0 0;
+        font-weight: 500;
     }
 
     .dashboard-alert-card {
@@ -518,8 +561,8 @@
     .cooperative-icon {
         width: 40px;
         height: 40px;
-        background: #f0f0f0;
-        border-radius: 8px;
+        background: rgba(48, 92, 125, 0.05);
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -554,3 +597,156 @@
         color: #155724;
     }
 </style>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sales Chart
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            const salesChart = new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(Json.Encode(Model.SaleDates)),
+                    datasets: [{
+                        label: 'Ventes (MAD)',
+                        data: @Html.Raw(Json.Encode(Model.SaleValues)),
+                        borderColor: '#305C7D',
+                        backgroundColor: 'rgba(48, 92, 125, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#305C7D',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#305C7D'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toLocaleString('fr-MA') + ' MAD';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { borderDash: [2, 4] },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' MAD';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+
+            // Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            const statusData = @Html.Raw(Json.Encode(Model.OrderStatusCounts));
+            
+            const statusColors = {
+                'En attente': '#ffc107',
+                'Validée': '#17a2b8',
+                'Confirmée': '#17a2b8',
+                'Préparation': '#6610f2',
+                'Expédiée': '#fd7e14',
+                'En livraison': '#20c997',
+                'En transit': '#20c997',
+                'Livrée': '#28a745',
+                'Annulée': '#dc3545'
+            };
+
+            const chartLabels = Object.keys(statusData);
+            const chartValues = Object.values(statusData);
+            const chartColors = chartLabels.map(label => statusColors[label] || '#6c757d');
+
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartValues,
+                        backgroundColor: chartColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { 
+                                boxWidth: 12, 
+                                usePointStyle: true,
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Pagination Best Selling JS
+            const listContainer = document.getElementById('best-selling-list');
+            if (listContainer) {
+                const items = listContainer.querySelectorAll('.product-item');
+                const pageSize = 6;
+                let currentPage = 1;
+                const totalPages = Math.ceil(items.length / pageSize);
+                const prevBtn = document.getElementById('prev-prod');
+                const nextBtn = document.getElementById('next-prod');
+                const pageInfo = document.getElementById('page-info');
+
+                if (prevBtn && nextBtn) {
+                    function showPage(page) {
+                        items.forEach((item, index) => {
+                            if (index >= (page - 1) * pageSize && index < page * pageSize) {
+                                item.style.display = 'flex';
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        });
+                        pageInfo.textContent = `Page ${page} / ${totalPages}`;
+                        prevBtn.disabled = page === 1;
+                        nextBtn.disabled = page === totalPages;
+                    }
+
+                    prevBtn.addEventListener('click', () => {
+                        if (currentPage > 1) {
+                            currentPage--;
+                            showPage(currentPage);
+                        }
+                    });
+
+                    nextBtn.addEventListener('click', () => {
+                        if (currentPage < totalPages) {
+                            currentPage++;
+                            showPage(currentPage);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+}
