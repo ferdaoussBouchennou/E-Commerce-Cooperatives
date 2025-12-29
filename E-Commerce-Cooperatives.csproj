@@ -378,7 +378,7 @@
     <Content Include="Scripts\panier.js" />
     <Content Include="Scripts\checkout.js" />
     <Content Include="Scripts\admin.js" />
-    <Content Include="style\Admin_Produits.css" />
+
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
