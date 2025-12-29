@@ -680,7 +680,11 @@ Exécuter le script sur la base RDS
 Option B: Utiliser le fichier ecommerce.sql existant
 # Depuis votre machine locale
 sqlcmd -S [endpoint-rds].rds.amazonaws.com -U admin -P [password] -i "c:\Users\HP\source\repos\E-Commerce-Cooperatives\ecommerce.sql"
+
+
 Étape 6: Déployer sur Elastic Beanstalk via Visual Studio
+
+
 Clic droit sur le projet dans Visual Studio
 
 Publish to AWS Elastic Beanstalk...
