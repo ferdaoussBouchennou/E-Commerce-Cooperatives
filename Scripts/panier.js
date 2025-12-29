@@ -20,8 +20,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Show layout
-        cartContent.innerHTML = layoutTemplate.innerHTML;
+        // Only render layout if it's not already there (prevents flickering)
+        if (!document.getElementById('cart-items-list')) {
+            cartContent.innerHTML = layoutTemplate.innerHTML;
+        }
         
         // Fetch details from server
         fetchCartDetails(cart);
@@ -31,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cartContent.innerHTML = emptyTemplate.innerHTML;
     }
 
-    function fetchCartDetails(cartData) {
+    function fetchCartDetails(cartData, silent = false) {
         // Map to match C# property names (ProduitId, VarianteId, Quantite)
         const requestData = cartData.map(item => ({
             ProduitId: parseInt(item.produitId),
@@ -49,9 +51,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                renderItems(data.items);
+                if (!silent) {
+                    renderItems(data.items);
+                    attachEventListeners();
+                }
                 updateSummary(data.items);
-                attachEventListeners();
             } else {
                 console.error('Error fetching cart details:', data.message);
                 showErrorMessage();
@@ -68,10 +72,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!listContainer) return;
 
         listContainer.innerHTML = items.map(item => `
-            <div class="bg-white rounded-4 p-4 shadow-soft d-flex gap-4 cart-item-card" data-produit-id="${item.produitId}" data-variante-id="${item.varianteId || ''}">
+            <div class="bg-white rounded-4 p-4 shadow-soft d-flex gap-4 cart-item-card transition-all" 
+                 data-produit-id="${item.produitId}" 
+                 data-variante-id="${item.varianteId || ''}"
+                 data-unit-price="${item.prixUnitaire}">
                 <!-- Image -->
                 <a href="/Produit/Details/${item.produitId}" class="flex-shrink-0">
-                    <img src="${item.imageUrl}" alt="${item.nom}" class="rounded-3 object-cover" style="width: 100px; height: 100px; md-width: 120px; md-height: 120px;">
+                    <img src="${item.imageUrl}" alt="${item.nom}" class="rounded-3 object-cover" style="width: 100px; height: 100px;">
                 </a>
 
                 <!-- Details -->
@@ -80,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <a href="/Produit/Details/${item.produitId}" class="text-decoration-none">
                             <h3 class="h6 fw-bold mb-0 text-dark line-clamp-2 hover-accent transition-colors">${item.nom}</h3>
                         </a>
-                        <button class="btn btn-link text-muted p-0 remove-item-btn" title="Supprimer">
+                        <button type="button" class="btn btn-link text-muted p-0 remove-item-btn" title="Supprimer">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
                                 <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
@@ -94,13 +101,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="d-flex align-items-center justify-content-between mt-3">
                         <!-- Quantity Controls -->
                         <div class="d-flex align-items-center border rounded-3 bg-light overflow-hidden">
-                            <button class="btn btn-sm px-2 py-1 update-qty-btn" data-delta="-1">
+                            <button type="button" class="btn btn-sm px-2 py-1 update-qty-btn" data-delta="-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-minus" viewBox="0 0 16 16">
                                     <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z"/>
                                 </svg>
                             </button>
                             <span class="px-2 fw-semibold small" style="min-width: 30px; text-align: center;">${item.quantite}</span>
-                            <button class="btn btn-sm px-2 py-1 update-qty-btn" data-delta="1">
+                            <button type="button" class="btn btn-sm px-2 py-1 update-qty-btn" data-delta="1">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
                                     <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
                                 </svg>
@@ -121,7 +128,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const total = items.reduce((acc, item) => acc + (item.prixUnitaire * item.quantite), 0);
         const itemCount = items.reduce((acc, item) => acc + item.quantite, 0);
         
-        // Update UI
         const itemsCountElem = document.getElementById('items-count');
         const totalAmountElem = document.getElementById('total-amount');
 
@@ -130,38 +136,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function attachEventListeners() {
-        // Quantity Buttons
-        document.querySelectorAll('.update-qty-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const card = this.closest('.cart-item-card');
+        // Event delegation to avoid re-attaching listeners
+        if (cartContent.getAttribute('data-events-attached')) return;
+        
+        cartContent.addEventListener('click', function(e) {
+            // Quantity buttons
+            const qtyBtn = e.target.closest('.update-qty-btn');
+            if (qtyBtn) {
+                const card = qtyBtn.closest('.cart-item-card');
                 const pId = card.dataset.produitId;
                 const vId = card.dataset.varianteId || null;
-                const delta = parseInt(this.dataset.delta);
+                const delta = parseInt(qtyBtn.dataset.delta);
                 updateCartQuantity(pId, vId, delta);
-            });
-        });
+                return;
+            }
 
-        // Remove Buttons
-        document.querySelectorAll('.remove-item-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const card = this.closest('.cart-item-card');
+            // Remove buttons
+            const removeBtn = e.target.closest('.remove-item-btn');
+            if (removeBtn) {
+                const card = removeBtn.closest('.cart-item-card');
                 const pId = card.dataset.produitId;
                 const vId = card.dataset.varianteId || null;
                 removeFromCart(pId, vId);
-            });
-        });
+                return;
+            }
 
-        // Clear Cart
-        const clearBtn = document.getElementById('clear-cart-btn');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function() {
+            // Clear cart
+            const clearBtn = e.target.closest('#clear-cart-btn');
+            if (clearBtn) {
                 if (confirm('Voulez-vous vraiment vider votre panier ?')) {
                     localStorage.removeItem('cart');
                     renderCart();
                     if (window.updateCartBadge) window.updateCartBadge();
                 }
-            });
-        }
+            }
+        });
+
+        cartContent.setAttribute('data-events-attached', 'true');
     }
 
     function updateCartQuantity(produitId, varianteId, delta) {
@@ -169,16 +180,54 @@ document.addEventListener('DOMContentLoaded', function() {
         const index = cart.findIndex(item => item.produitId == produitId && (varianteId ? item.varianteId == varianteId : !item.varianteId));
         
         if (index !== -1) {
-            cart[index].quantite += delta;
+            const newQty = cart[index].quantite + delta;
             
-            if (cart[index].quantite <= 0) {
+            if (newQty <= 0) {
                 cart.splice(index, 1);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderCart();
+            } else {
+                cart[index].quantite = newQty;
+                localStorage.setItem('cart', JSON.stringify(cart));
+                
+                // 1. Immediate DOM update for the item
+                const card = document.querySelector(`.cart-item-card[data-produit-id="${produitId}"][data-variante-id="${varianteId || ''}"]`);
+                if (card) {
+                    const qtySpan = card.querySelector('.update-qty-btn').parentElement.querySelector('span');
+                    if (qtySpan) qtySpan.textContent = newQty;
+                    
+                    const unitPrice = parseFloat(card.dataset.unitPrice);
+                    const priceSpan = card.querySelector('.text-end span');
+                    if (priceSpan && !isNaN(unitPrice)) {
+                        priceSpan.textContent = (unitPrice * newQty).toFixed(2) + ' MAD';
+                    }
+                }
+                
+                // 2. Local summary update (Avoids server re-fetch flickering)
+                updateSummaryLocally();
             }
-            
-            localStorage.setItem('cart', JSON.stringify(cart));
-            renderCart();
             if (window.updateCartBadge) window.updateCartBadge();
         }
+    }
+
+    function updateSummaryLocally() {
+        let total = 0;
+        let count = 0;
+        
+        document.querySelectorAll('.cart-item-card').forEach(card => {
+            const qty = parseInt(card.querySelector('.update-qty-btn').parentElement.querySelector('span').textContent);
+            const unitPrice = parseFloat(card.dataset.unitPrice);
+            if (!isNaN(qty) && !isNaN(unitPrice)) {
+                total += (qty * unitPrice);
+                count += qty;
+            }
+        });
+
+        const itemsCountElem = document.getElementById('items-count');
+        const totalAmountElem = document.getElementById('total-amount');
+
+        if (itemsCountElem) itemsCountElem.textContent = count + (count > 1 ? ' articles' : ' article');
+        if (totalAmountElem) totalAmountElem.textContent = total.toFixed(2) + ' MAD';
     }
 
     function removeFromCart(produitId, varianteId) {
