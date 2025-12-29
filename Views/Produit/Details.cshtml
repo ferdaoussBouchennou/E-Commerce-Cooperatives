@@ -10,13 +10,32 @@
         return;
     }
 
-    var images = produit.Images?.ToList() ?? new List<ImageProduit>();
-    if (!images.Any() && !string.IsNullOrEmpty(produit.ImageUrl))
+    var images = new List<ImageProduit>();
+    // Image principale de la table Produits
+    if (!string.IsNullOrEmpty(produit.ImageUrl))
     {
         images.Add(new ImageProduit { UrlImage = produit.ImageUrl, EstPrincipale = true });
     }
+    
+    // Images secondaires de la table ImagesProduits
+    if (produit.Images != null)
+    {
+        foreach (var img in produit.Images)
+        {
+            if (!string.IsNullOrEmpty(img.UrlImage) && img.UrlImage != produit.ImageUrl)
+            {
+                images.Add(img);
+            }
+        }
+    }
 
-    // Correction des chemins d'images (si seulement le nom de fichier est stocké)
+    // Par défaut si aucune image
+    if (!images.Any())
+    {
+        images.Add(new ImageProduit { UrlImage = "~/Content/images/default-product.jpg", EstPrincipale = true });
+    }
+
+    // Normalisation des chemins
     foreach (var img in images)
     {
         if (!string.IsNullOrEmpty(img.UrlImage) && !img.UrlImage.StartsWith("~") && !img.UrlImage.StartsWith("/"))
@@ -25,14 +44,17 @@
         }
     }
 
-    if (!images.Any())
-    {
-        images.Add(new ImageProduit { UrlImage = "~/Content/images/default-product.jpg", EstPrincipale = true });
-    }
-
-    var variantes = produit.Variantes?.ToList() ?? new List<Variante>();
+    var variantes = produit.Variantes?.Where(v => v.EstDisponible).ToList() ?? new List<Variante>();
     var avis = produit.Avis?.ToList() ?? new List<AvisProduit>();
     var baseVariant = variantes.FirstOrDefault(v => v.PrixSupplementaire == 0) ?? variantes.FirstOrDefault();
+
+    // Determiner le label des variantes
+    bool hasTaille = variantes.Any(v => !string.IsNullOrWhiteSpace(v.Taille));
+    bool hasCouleur = variantes.Any(v => !string.IsNullOrWhiteSpace(v.Couleur));
+    string variantLabel = "Variante";
+    if (hasTaille && hasCouleur) { variantLabel = "Taille & Couleur"; }
+    else if (hasTaille) { variantLabel = "Taille"; }
+    else if (hasCouleur) { variantLabel = "Couleur"; }
 }
 
 @Html.Partial("_Header")
@@ -63,8 +85,10 @@
                     <!-- Main Image -->
                     <div class="position-relative mb-3 rounded-3 overflow-hidden"
                         style="aspect-ratio: 1/1; background-color: white;">
-                        <img id="main-product-image" src="@Url.Content(images[0].UrlImage)" alt="@produit.Nom"
-                            class="w-100 h-100 object-fit-cover cursor-pointer" style="cursor: zoom-in;"
+                        <img id="main-product-image" src="@Url.Content(images[0].UrlImage)" alt="@produit.Nom" 
+                            class="w-100 h-100 object-fit-contain transition-transform"
+                            style="cursor: zoom-in;"
+                            onerror="this.onerror=null;this.src='@Url.Content("~/Content/images/default-product.jpg")';"
                             onclick="openImageModal(this.src)">
                         @if (produit.EstNouveau)
                         {
@@ -88,10 +112,11 @@
                         <div class="d-flex gap-2 flex-wrap">
                             @foreach (var img in images)
                             {
-                                <div class="thumbnail-image position-relative rounded overflow-hidden"
-                                    style="width: 80px; height: 80px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s;"
-                                    onclick="changeMainImage('@img.UrlImage', this)">
-                                    <img src="@Url.Content(img.UrlImage)" alt="@produit.Nom"
+                                var resolvedUrl = Url.Content(img.UrlImage);
+                                <div class="thumbnail-item rounded overflow-hidden"
+                                    style="width: 80px; height: 80px; cursor: pointer; border: 2px solid @(img == images[0] ? "#C06C50" : "#e0e0e0"); transition: all 0.3s;"
+                                    onclick="changeMainImage('@resolvedUrl', this)">
+                                    <img src="@resolvedUrl" alt="@produit.Nom"
                                         class="w-100 h-100 object-fit-cover"
                                         onerror="this.onerror=null;this.src='@Url.Content("~/Content/images/default-product.jpg")';">
                                 </div>
@@ -229,7 +254,7 @@
                 {
                     <div class="mb-4">
                         <h3 class="h6 fw-semibold mb-3" style="color: #2d3748;">
-                            @(variantes.First().Taille != null ? "Taille" : "Variante")
+                            @variantLabel
                         </h3>
                         <div class="d-flex flex-wrap gap-2" id="variants-container">
                             @foreach (var variant in variantes)
@@ -240,7 +265,9 @@
                                     data-variant-stock="@variant.Stock"
                                     style="border: 2px solid @(variant == baseVariant ? "#C06C50" : "#e0e0e0"); background-color: @(variant == baseVariant ? "#F5F3EF" : "white"); color: #2d3748; transition: all 0.3s;"
                                     onclick="selectVariant(this, @variant.VarianteId, '@variantPriceTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)', @variant.Stock)">
-                                    @(variant.Taille ?? variant.Couleur ?? "Standard")
+                                    @( (!string.IsNullOrWhiteSpace(variant.Taille) && !string.IsNullOrWhiteSpace(variant.Couleur)) 
+                                        ? variant.Taille + " - " + variant.Couleur 
+                                        : (!string.IsNullOrWhiteSpace(variant.Taille) ? variant.Taille : (!string.IsNullOrWhiteSpace(variant.Couleur) ? variant.Couleur : "Standard")) )
                                     @if (variant.PrixSupplementaire > 0)
                                     {
                                         <span class="small ms-1">(+@variant.PrixSupplementaireTTC.ToString("F2") MAD)</span>
@@ -661,13 +688,15 @@
         const productId = @produit.ProduitId;
 
         function changeMainImage(imageSrc, element) {
-            document.getElementById('main-product-image').src = imageSrc;
-            // Update active thumbnail
-            document.querySelectorAll('.thumbnail-image').forEach(thumb => {
-                thumb.style.borderColor = 'transparent';
+            const mainImg = document.getElementById('main-product-image');
+            mainImg.src = imageSrc;
+            
+            // Mise à jour des bordures des miniatures
+            document.querySelectorAll('.thumbnail-item').forEach(item => {
+                item.style.borderColor = '#e0e0e0';
             });
             if (element) {
-                element.style.borderColor = '#305C7D';
+                element.style.borderColor = '#C06C50';
             }
         }
 

@@ -38,16 +38,9 @@
                  data-coop-desc="@((coop.Description ?? "").ToLower())"
                  data-coop-ville="@coop.Ville.ToLower()">
                 <div class="coop-card-header">
-                    @if (!string.IsNullOrEmpty(coop.Logo))
-                    {
-                        <img src="@Url.Content(coop.Logo)" alt="@coop.Nom" class="coop-card-image" />
-                    }
-                    else
-                    {
-                        <div class="coop-card-image d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
-                            <i class="fas fa-university fa-4x" style="color: #305C7D; opacity: 0.3;"></i>
-                        </div>
-                    }
+                    <div class="coop-icon-container">
+                        <i class="fas fa-university"></i>
+                    </div>
                     @if (coop.EstActive)
                     {
                         <span class="coop-badge-active">Active</span>
@@ -57,21 +50,23 @@
                     <h3 class="coop-name">@coop.Nom</h3>
                     <p class="coop-desc">@coop.Description</p>
                     
-                    <div class="coop-info-row">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>@coop.Ville</span>
-                    </div>
-                    <div class="coop-info-row">
-                        <i class="fas fa-phone"></i>
-                        <span>@(string.IsNullOrEmpty(coop.Telephone) ? "Non spécifié" : coop.Telephone)</span>
-                    </div>
-                    <div class="coop-info-row">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span>Depuis @coop.DateCreation.ToString("yyyy-MM-dd")</span>
-                    </div>
-                    <div class="coop-info-row">
-                        <i class="fas fa-box"></i>
-                        <span>@coop.ProductCount produits</span>
+                    <div class="coop-info-grid">
+                        <div class="coop-info-row">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>@coop.Ville</span>
+                        </div>
+                        <div class="coop-info-row">
+                            <i class="fas fa-phone"></i>
+                            <span>@(string.IsNullOrEmpty(coop.Telephone) ? "NC" : coop.Telephone)</span>
+                        </div>
+                        <div class="coop-info-row">
+                            <i class="fas fa-box"></i>
+                            <span>@coop.ProductCount produits</span>
+                        </div>
+                        <div class="coop-info-row">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Depuis @coop.DateCreation.ToString("yyyy")</span>
+                        </div>
                     </div>
                 </div>
                 <div class="coop-card-footer">
@@ -122,20 +117,6 @@
                         <div class="col-md-6 form-group mb-3">
                             <label class="form-label">Téléphone</label>
                             <input type="text" id="Telephone" name="Telephone" class="form-control" style="border-radius: 10px; border: 1px solid #D09E86; padding: 12px;" />
-                        </div>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label">Logo / Image</label>
-                        <input type="file" id="logoFile" name="logoFile" class="form-control" accept="image/*" onchange="previewLogo(this)" style="border-radius: 10px; border: 1px solid #D09E86; padding: 10px; height: auto;" />
-                        <input type="hidden" id="Logo" name="Logo" />
-                        
-                        <div id="logoPreviewZone" style="margin-top: 15px; text-align: center; background: white; padding: 15px; border-radius: 10px; border: 1px dashed #D09E86;">
-                            <img id="logoPreview" src="" style="max-height: 100px; display: none;" />
-                            <div id="previewPlaceholder">
-                                <i class="fas fa-university" style="font-size: 30px; color: #95A5A6; opacity: 0.3;"></i>
-                                <p style="font-size: 12px; color: #95A5A6; margin-top: 5px;">Aperçu du logo</p>
-                            </div>
                         </div>
                     </div>
 
@@ -226,7 +207,6 @@
             $('#CooperativeId').val("0");
             $('#coopModalTitle').text("Nouvelle Coopérative");
             $('#EstActive').prop('checked', true);
-            resetLogoPreview();
             $('#cooperativeModal').appendTo('body').modal('show');
         }
 
@@ -242,15 +222,6 @@
                     $('#Logo').val(c.Logo);
                     $('#EstActive').prop('checked', c.EstActive);
                     $('#coopModalTitle').text("Modifier la Coopérative");
-                    
-                    if (c.Logo) {
-                        var logoUrl = c.Logo.startsWith('~') ? '@Url.Content("~")'.replace(/\/$/, '') + c.Logo.substring(1) : c.Logo;
-                        $('#logoPreview').attr('src', logoUrl).show();
-                        $('#previewPlaceholder').hide();
-                    } else {
-                        resetLogoPreview();
-                    }
-                    
                     $('#cooperativeModal').appendTo('body').modal('show');
                 } else {
                     alert('Erreur: ' + response.message);
@@ -262,21 +233,6 @@
             $('#cooperativeModal').modal('hide');
         }
 
-        function previewLogo(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    $('#logoPreview').attr('src', e.target.result).show();
-                    $('#previewPlaceholder').hide();
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function resetLogoPreview() {
-            $('#logoPreview').attr('src', '').hide();
-            $('#previewPlaceholder').show();
-        }
 
         function deleteCooperative(id, name) {
             if (confirm("Êtes-vous sûr de vouloir supprimer la coopérative '" + name + "' ?")) {

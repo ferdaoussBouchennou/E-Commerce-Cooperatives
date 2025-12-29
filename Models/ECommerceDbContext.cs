@@ -212,7 +212,7 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT CategorieId, Nom, Description, ImageUrl, EstActive, DateCreation FROM Categories WHERE EstActive = 1";
+                var query = "SELECT CategorieId, Nom, Description, ImageUrl, EstActive, DateCreation FROM Categories WHERE EstActive = 1 ORDER BY DateCreation DESC";
                 using (var command = new SqlCommand(query, connection))
                 {
                     using (var reader = command.ExecuteReader())
@@ -627,7 +627,7 @@ namespace E_Commerce_Cooperatives.Models
             return suggestions;
         }
 
-        private List<ImageProduit> GetImagesProduit(int produitId)
+        public List<ImageProduit> GetImagesProduit(int produitId)
         {
             var images = new List<ImageProduit>();
             using (var connection = new SqlConnection(connectionString))
@@ -652,6 +652,51 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
             return images;
+        }
+
+        public void AddImageProduit(ImageProduit image)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "INSERT INTO ImagesProduits (ProduitId, UrlImage, EstPrincipale, DateAjout) VALUES (@ProduitId, @UrlImage, @EstPrincipale, @DateAjout)";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProduitId", image.ProduitId);
+                    command.Parameters.AddWithValue("@UrlImage", image.UrlImage);
+                    command.Parameters.AddWithValue("@EstPrincipale", image.EstPrincipale);
+                    command.Parameters.AddWithValue("@DateAjout", DateTime.Now);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteImageProduit(int imageId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM ImagesProduits WHERE ImageId = @ImageId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ImageId", imageId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteImagesByProduit(int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM ImagesProduits WHERE ProduitId = @ProduitId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    command.ExecuteNonQuery();
+                }
+            }
         }
 
         private List<AvisProduit> GetAvisProduit(int produitId)

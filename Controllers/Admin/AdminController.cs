@@ -260,7 +260,9 @@ namespace E_Commerce_Cooperatives.Controllers
             try
             {
                 var db = new ECommerceDbContext();
-                var cooperatives = db.GetCooperativesWithStats();
+                var cooperatives = db.GetCooperativesWithStats()
+            .OrderByDescending(c => c.DateCreation)
+            .ToList();
 
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
@@ -566,6 +568,11 @@ namespace E_Commerce_Cooperatives.Controllers
                         v.PrixSupplementaire,
                         v.SKU,
                         v.EstDisponible
+                    }).ToList(),
+                    images = db.GetImagesProduit(id).Select(img => new {
+                        img.ImageId,
+                        img.UrlImage,
+                        img.EstPrincipale
                     }).ToList()
                 }, JsonRequestBehavior.AllowGet);
             }
@@ -599,7 +606,7 @@ namespace E_Commerce_Cooperatives.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult AjouterProduit(Produit produit, System.Web.HttpPostedFileBase imageFile, string variantesJson)
+        public ActionResult AjouterProduit(Produit produit, System.Web.HttpPostedFileBase imageFile, IEnumerable<System.Web.HttpPostedFileBase> secondaryImages, string variantesJson)
         {
             try
             {
@@ -623,6 +630,29 @@ namespace E_Commerce_Cooperatives.Controllers
                     produit.DateCreation = DateTime.Now;
                     db.ProduitsSet.Add(produit);
                     db.SaveChanges();
+
+                    // Gestion des images secondaires
+                    if (secondaryImages != null)
+                    {
+                        foreach (var file in secondaryImages)
+                        {
+                            if (file != null && file.ContentLength > 0)
+                            {
+                                string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(file.FileName);
+                                string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/produits/"), fileName);
+                                
+                                file.SaveAs(path);
+                                
+                                var img = new ImageProduit
+                                {
+                                    ProduitId = produit.ProduitId,
+                                    UrlImage = "~/Content/images/produits/" + fileName,
+                                    EstPrincipale = false
+                                };
+                                db.AddImageProduit(img);
+                            }
+                        }
+                    }
 
                     if (Request.IsAjaxRequest())
                     {
@@ -741,7 +771,7 @@ namespace E_Commerce_Cooperatives.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ModifierProduit(Produit produit, System.Web.HttpPostedFileBase imageFile, string variantesJson)
+        public ActionResult ModifierProduit(Produit produit, System.Web.HttpPostedFileBase imageFile, IEnumerable<System.Web.HttpPostedFileBase> secondaryImages, string deletedImageIds, string variantesJson)
         {
             try
             {
@@ -793,6 +823,43 @@ namespace E_Commerce_Cooperatives.Controllers
                     
                     db.UpdateProduit(produitExistant);
                     db.SaveChanges();
+
+                    // Gestion des images secondaires (Granulaire)
+                    
+                    // 1. Suppressions
+                    if (!string.IsNullOrEmpty(deletedImageIds))
+                    {
+                        var idsToDelete = deletedImageIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                                       .Select(id => int.Parse(id))
+                                                       .ToList();
+                        foreach (var id in idsToDelete)
+                        {
+                            db.DeleteImageProduit(id);
+                        }
+                    }
+
+                    // 2. Ajouts
+                    if (secondaryImages != null)
+                    {
+                        foreach (var file in secondaryImages)
+                        {
+                            if (file != null && file.ContentLength > 0)
+                            {
+                                string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(file.FileName);
+                                string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/produits/"), fileName);
+                                
+                                file.SaveAs(path);
+                                
+                                var img = new ImageProduit
+                                {
+                                    ProduitId = produit.ProduitId,
+                                    UrlImage = "~/Content/images/produits/" + fileName,
+                                    EstPrincipale = false
+                                };
+                                db.AddImageProduit(img);
+                            }
+                        }
+                    }
 
                     if (Request.IsAjaxRequest())
                     {
@@ -1164,7 +1231,9 @@ namespace E_Commerce_Cooperatives.Controllers
         {
             try
             {
-                var categories = db.GetCategoriesWithStats();
+                var categories = db.GetCategoriesWithStats()
+                    .OrderByDescending(c => c.DateCreation)
+                    .ToList();
                 
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
