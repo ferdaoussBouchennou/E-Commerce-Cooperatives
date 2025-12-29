@@ -103,24 +103,70 @@
 </header>
 
 <style>
-    /* Remove blue outline on the user dropdown button */
+    /* 1. Stabilize the User Button to prevent moving/shifting */
     #userDropdown, #userDropdownNotLogged {
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        border: none !important;
+        background: transparent !important;
         box-shadow: none !important;
         outline: none !important;
-        border: none !important;
+        position: relative !important;
+        text-decoration: none !important;
     }
 
-    /* Remove blue background on Connexion/Inscription when clicked */
+    /* Target all states to prevent blue color appearing */
+    #userDropdown:focus, #userDropdown:active, #userDropdown.show, 
+    #userDropdownNotLogged:focus, #userDropdownNotLogged:active, #userDropdownNotLogged.show {
+        background-color: rgba(0,0,0,0.05) !important;
+        border-radius: 50% !important; /* Circular highlight looks better */
+        color: #305C7D !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
+    /* REMOVE the caret (arrow) to prevent content-based shifting */
+    #userDropdown::after, #userDropdownNotLogged::after {
+        display: none !important;
+    }
+
+    /* 2. Dropdown menu and items cleanup - Remove Blue States */
     .dropdown-item:active, 
     .dropdown-item:focus {
-        background-color: #F8F9FA !important; /* Neutral light background */
-        color: #305C7D !important; /* Keep brand text color */
+        background-color: #F8F9FA !important; /* Neutral light grey, no blue */
+        color: #305C7D !important;
+        outline: none !important;
     }
 
-    /* Additional refinement for the dropdown animation/look */
     .dropdown-menu {
         border: none !important;
         box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        margin-top: 10px !important;
+        border-radius: 12px !important;
+        padding: 8px 0 !important;
+        /* Center the menu under the 40px button */
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+    }
+
+    /* Ensure it doesn't go off-screen on the right for small screens */
+    @@media (max-width: 576px) {
+        .dropdown-menu {
+            left: auto !important;
+            right: 0 !important;
+            transform: none !important;
+        }
+    }
+
+    /* Global prevention for focus outline on buttons in header */
+    .navbar-expand-lg .btn:focus {
+        box-shadow: none !important;
+        outline: none !important;
     }
 </style>
 
