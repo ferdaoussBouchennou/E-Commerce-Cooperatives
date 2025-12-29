@@ -17,10 +17,10 @@ namespace E_Commerce_Cooperatives.Controllers
                 var categories = db.GetCategories();
                 
                 // Récupérer les produits vedettes
-                var produitsVedettes = db.GetProduits(estEnVedette: true).Take(4).ToList();
+                var produitsVedettes = db.GetProduits(estEnVedette: true, sortOrder: "newest", pageSize: 4);
                 
                 // Récupérer les nouveaux produits
-                var nouveauxProduits = db.GetProduits(estNouveau: true).Take(4).ToList();
+                var nouveauxProduits = db.GetProduits(estNouveau: true, sortOrder: "newest", pageSize: 4);
                 
                 ViewBag.Categories = categories;
                 ViewBag.ProduitsVedettes = produitsVedettes;
