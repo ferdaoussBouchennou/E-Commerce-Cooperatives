@@ -739,6 +739,37 @@ namespace E_Commerce_Cooperatives.Controllers
             TempData["SuccessMessage"] = "Vos préférences ont été enregistrées avec succès.";
             return RedirectToAction("Preferences");
         }
+
+        // GET: UserSpace/MesAvis
+        public ActionResult MesAvis()
+        {
+            if (!IsUserAuthenticated())
+                return RedirectToLogin();
+
+            int clientId = (int)Session["ClientId"];
+            List<AvisProduit> avis = new List<AvisProduit>();
+
+            try
+            {
+                using (var db = new ECommerceDbContext())
+                {
+                    avis = db.GetClientAvis(clientId);
+                }
+                
+                // Store DateCreation in ViewBag for sidebar
+                if (Session["DateCreation"] != null)
+                {
+                    ViewBag.DateCreation = Session["DateCreation"];
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Une erreur est survenue lors du chargement de vos avis.";
+                System.Diagnostics.Debug.WriteLine("Erreur MesAvis GET: " + ex.Message);
+            }
+
+            return View(avis);
+        }
     }
 }
 
