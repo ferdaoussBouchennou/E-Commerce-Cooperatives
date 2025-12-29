@@ -95,6 +95,47 @@ namespace E_Commerce_Cooperatives.Controllers
         }
 
         [HttpPost]
+        public JsonResult AddAvisJson(int produitId, int note, string commentaire)
+        {
+            if (Session["ClientId"] == null)
+            {
+                return Json(new { success = false, message = "Session expirée. Veuillez vous reconnecter." });
+            }
+
+            int clientId = (int)Session["ClientId"];
+            try
+            {
+                using (var db = new ECommerceDbContext())
+                {
+                    if (!db.HasDeliveredProduct(clientId, produitId))
+                    {
+                        return Json(new { success = false, message = "Vous devez avoir reçu ce produit pour laisser un avis." });
+                    }
+
+                    if (db.HasReviewedProduct(clientId, produitId))
+                    {
+                        return Json(new { success = false, message = "Vous avez déjà laissé un avis pour ce produit." });
+                    }
+
+                    var avis = new AvisProduit
+                    {
+                        ClientId = clientId,
+                        ProduitId = produitId,
+                        Note = note,
+                        Commentaire = commentaire,
+                        DateAvis = DateTime.Now
+                    };
+                    db.AddAvis(avis);
+                    return Json(new { success = true, message = "Votre avis a été ajouté avec succès." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Une erreur est survenue : " + ex.Message });
+            }
+        }
+
+        [HttpPost]
         public ActionResult UpdateAvis(int avisId, int produitId, int note, string commentaire)
         {
             if (Session["ClientId"] == null)

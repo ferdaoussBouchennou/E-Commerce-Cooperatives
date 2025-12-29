@@ -8,15 +8,17 @@
 <main class="py-5" style="background-color: #F5F3EF; min-height: 80vh;">
     <div class="container" style="max-width: 800px;">
         <!-- Header -->
-        <div id="tracking-header" class="d-flex align-items-center gap-3 mb-4">
-            <a href="javascript:history.back()" class="text-dark" style="text-decoration: none;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-                </svg>
-            </a>
-            <div>
-                <h1 class="font-display mb-1" style="font-family: 'Playfair Display', serif; font-size: 2.25rem; font-weight: 700; color: #305C7D;">Suivi de Livraison</h1>
-                <p class="text-muted mb-0">Suivez votre colis en temps réel</p>
+        <!-- Header -->
+        <div id="tracking-header" class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <a href="@Url.Action("MesCommandes", "Checkout")" class="text-muted text-decoration-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                </a>
+                <div>
+                     <h1 class="font-display mb-0" style="font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: #305C7D;">Suivi de Livraison</h1>
+                </div>
             </div>
         </div>
 
@@ -257,8 +259,8 @@
         }
 
         function displayResults(res) {
-            // Hide elements as requested
-            document.getElementById('tracking-header')?.style.setProperty('display', 'none', 'important');
+            // Hide elements as requested (but keep header)
+            // document.getElementById('tracking-header')?.style.setProperty('display', 'none', 'important');
             document.getElementById('search-card')?.style.setProperty('display', 'none', 'important');
             document.getElementById('info-card')?.style.setProperty('display', 'none', 'important');
 

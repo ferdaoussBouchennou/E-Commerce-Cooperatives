@@ -267,6 +267,14 @@ namespace E_Commerce_Cooperatives.Controllers
                 {
                     // Pour le détail, on cherche dans toutes les commandes au cas où on vient d'un lien direct
                     viewModel.CommandeDetail = allCommandes.FirstOrDefault(c => c.CommandeId == id.Value);
+                    
+                    if (viewModel.CommandeDetail != null && viewModel.CommandeDetail.Statut == "Livrée")
+                    {
+                        foreach (var item in viewModel.CommandeDetail.Items)
+                        {
+                            item.HasBeenReviewed = db.HasReviewedProduct(clientId, item.ProduitId);
+                        }
+                    }
                 }
 
                 return View("MesCommandes", viewModel);
@@ -319,6 +327,23 @@ namespace E_Commerce_Cooperatives.Controllers
                 if (id.HasValue)
                 {
                     viewModel.CommandeDetail = allCommandes.FirstOrDefault(c => c.CommandeId == id.Value);
+                    
+                    if (viewModel.CommandeDetail != null && viewModel.CommandeDetail.Statut == "Livrée")
+                    {
+                        foreach (var item in viewModel.CommandeDetail.Items)
+                        {
+                            item.HasBeenReviewed = db.HasReviewedProduct(clientId, item.ProduitId);
+                        }
+                    }
+                }
+                
+                // Also check unreviewed items for the list summary if it's history
+                foreach (var cmd in paginatedCommandes.Where(c => c.Statut == "Livrée"))
+                {
+                    foreach (var item in cmd.Items)
+                    {
+                        item.HasBeenReviewed = db.HasReviewedProduct(clientId, item.ProduitId);
+                    }
                 }
 
                 return View("MesCommandes", viewModel);

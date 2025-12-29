@@ -284,15 +284,25 @@
                                         <p class="small text-muted mb-2">
                                             @commande.DateCommande.ToString("dd/MM/yyyy") • @commande.Items.Count article(s)
                                         </p>
-                                        @if (commande.Statut == "Livrée")
+                                        @{
+                                            var unreviewedItems = commande.Items.Where(i => !i.HasBeenReviewed).ToList();
+                                        }
+                                        @if (commande.Statut == "Livrée" && unreviewedItems.Any())
                                         {
-                                            <div class="mt-2">
-                                                <a href="@Url.Action("Details", "Produit", new { id = commande.Items.First().ProduitId })" class="text-decoration-none d-inline-flex align-items-center gap-1 small" style="color: #C06C50; font-weight: 500;">
+                                            <div class="mt-2 review-button-container" data-order-items-count="@unreviewedItems.Count">
+                                                <button type="button" class="btn btn-link text-decoration-none d-inline-flex align-items-center gap-1 small p-0 open-review-modal" 
+                                                        style="color: #C06C50; font-weight: 500; border: none; background: none;"
+                                                        data-commande-id="@commande.CommandeId"
+                                                        data-products='@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(unreviewedItems.Select(i => new { 
+                                                            id = i.ProduitId, 
+                                                            nom = i.Produit != null ? i.Produit.Nom : "Produit", 
+                                                            image = i.Produit != null ? i.Produit.ImageUrl : "/Content/images/default-product.jpg" 
+                                                        })))'>
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-star" viewBox="0 0 16 16">
                                                         <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
                                                     </svg>
                                                     Donner mon avis
-                                                </a>
+                                                </button>
                                             </div>
                                         }
                                         <div class="d-flex align-items-center gap-2 @statusInfo.Color" style="font-weight: 500; font-size: 0.9rem;">
@@ -363,4 +373,239 @@
 </main>
 
 @Html.Partial("_Footer")
+
+<!-- Multi-Product Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <div class="d-flex flex-column">
+                    <h5 class="modal-title font-display fw-bold text-primary h4" id="reviewModalLabel">Donner votre avis</h5>
+                    <span id="review-progress" class="text-muted small fw-medium mt-1">Produit 0 sur 0</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="review-product-container">
+                    <!-- The current product will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 justify-content-between">
+                <button type="button" id="prev-product-btn" class="btn btn-outline-secondary rounded-pill px-4" style="display: none;">Précédent</button>
+                <div class="d-flex gap-2 ms-auto">
+                    <button type="button" id="next-product-btn" class="btn btn-outline-primary rounded-pill px-4" style="display: none;">Suivant</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal" style="background-color: #305C7D;">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 5px;
+    }
+    .star-rating input { display: none; }
+    .star-rating label {
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23ccc' class='bi bi-star-fill' viewBox='0 0 16 16'%3E%3Cpath d='M3.612 15.443c-.387.197-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        transition: all 0.2s ease;
+    }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23ffc107' class='bi bi-star-fill' viewBox='0 0 16 16'%3E%3Cpath d='M3.612 15.443c-.387.197-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z'/%3E%3C/svg%3E");
+    }
+    #review-product-container {
+        min-height: 250px;
+        transition: all 0.3s ease;
+    }
+</style>
+
+@section scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+            const productContainer = document.getElementById('review-product-container');
+            const progressText = document.getElementById('review-progress');
+            const nextBtn = document.getElementById('next-product-btn');
+            const prevBtn = document.getElementById('prev-product-btn');
+            
+            let currentProducts = [];
+            let currentIndex = 0;
+            let currentCommandeId = null;
+            let reviewsData = {}; 
+
+            function showProduct(index) {
+                const p = currentProducts[index];
+                if (!p) return;
+
+                currentIndex = index;
+                progressText.textContent = `Produit ${index + 1} sur ${currentProducts.length}`;
+                
+                prevBtn.style.display = index > 0 ? 'inline-block' : 'none';
+                nextBtn.style.display = index < currentProducts.length - 1 ? 'inline-block' : 'none';
+
+                const existingReview = reviewsData[p.id] || { rating: null, comment: '' };
+
+                productContainer.innerHTML = `
+                    <div class="review-step animate-fade-in" data-product-id="${p.id}">
+                        <div class="d-flex gap-4 align-items-center mb-4">
+                            <img src="${p.image}" class="rounded-4 shadow-sm" style="width: 80px; height: 80px; object-fit: cover; border: 2px solid white;">
+                            <h5 class="fw-bold text-dark mb-0">${p.nom}</h5>
+                        </div>
+                        
+                        <div class="review-form-body">
+                            <div class="mb-4">
+                                <label class="form-label small text-muted fw-bold mb-3 d-block">Votre évaluation</label>
+                                <div class="star-rating big-stars">
+                                    ${[5,4,3,2,1].map(num => `
+                                        <input type="radio" id="star${num}-${p.id}" name="rating-${p.id}" value="${num}" ${existingReview.rating == num ? 'checked' : ''}>
+                                        <label for="star${num}-${p.id}" style="width: 40px; height: 40px;"></label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label small text-muted fw-bold mb-2">Votre commentaire</label>
+                                <textarea class="form-control rounded-4 border-light p-3 bg-light shadow-none" 
+                                          placeholder="Ex: Excellent produit, je recommande !" 
+                                          rows="3" style="font-size: 0.95rem;">${existingReview.comment}</textarea>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-accent rounded-pill py-3 fw-bold submit-review-btn" 
+                                        style="background-color: #C06C50; color: white; border: none;">
+                                    Enregistrer l'avis
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="review-success-message d-none text-center py-4 text-success">
+                            <div class="mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z"/>
+                                </svg>
+                            </div>
+                            <h5 class="fw-bold mb-1">Avis enregistré !</h5>
+                            <p class="text-muted small">Merci pour votre retour.</p>
+                            ${index < currentProducts.length - 1 ? `
+                                <button type="button" class="btn btn-primary rounded-pill mt-3 px-4 next-trigger" style="background-color: #305C7D;">Passer au suivant</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                if (reviewsData[p.id]?.submitted) {
+                    productContainer.querySelector('.review-form-body').classList.add('d-none');
+                    productContainer.querySelector('.review-success-message').classList.remove('d-none');
+                }
+            }
+
+            document.querySelectorAll('.open-review-modal').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentProducts = JSON.parse(this.dataset.products);
+                    currentCommandeId = this.dataset.commandeId;
+                    currentIndex = 0;
+                    reviewsData = {}; 
+                    showProduct(0);
+                    reviewModal.show();
+                });
+            });
+
+            nextBtn.addEventListener('click', () => showProduct(currentIndex + 1));
+            prevBtn.addEventListener('click', () => showProduct(currentIndex - 1));
+
+            productContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('next-trigger')) {
+                    showProduct(currentIndex + 1);
+                    return;
+                }
+
+                if (e.target.classList.contains('submit-review-btn')) {
+                    const btn = e.target;
+                    const card = btn.closest('.review-step');
+                    const productId = card.dataset.productId;
+                    const ratingInput = card.querySelector(`input[name="rating-${productId}"]:checked`);
+                    const comment = card.querySelector('textarea').value;
+
+                    if (!ratingInput) {
+                        alert('Veuillez sélectionner une note.');
+                        return;
+                    }
+
+                    const rating = ratingInput.value;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enregistrement...';
+
+                    const formData = new FormData();
+                    formData.append('produitId', productId);
+                    formData.append('note', rating);
+                    formData.append('commentaire', comment);
+
+                    fetch('@Url.Action("AddAvisJson", "Produit")', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            reviewsData[productId] = { rating, comment, submitted: true };
+                            card.querySelector('.review-form-body').classList.add('d-none');
+                            card.querySelector('.review-success-message').classList.remove('d-none');
+                            
+                            // Update the button's data-products for next time (in case modal is reopened without refresh)
+                            const orderBtn = document.querySelector(`.open-review-modal[data-commande-id="${currentCommandeId}"]`);
+                            if (orderBtn) {
+                                const remainingProducts = currentProducts.filter(p => !reviewsData[p.id]?.submitted);
+                                orderBtn.dataset.products = JSON.stringify(remainingProducts);
+                                
+                                // Update count attribute if used for CSS or other logic
+                                const container = orderBtn.closest('.review-button-container');
+                                if (container) container.dataset.orderItemsCount = remainingProducts.length;
+
+                                if (remainingProducts.length === 0) {
+                                    container.style.display = 'none';
+                                }
+                            }
+
+                            if (currentIndex < currentProducts.length - 1) {
+                                setTimeout(() => {
+                                    if (currentIndex < currentProducts.length - 1) showProduct(currentIndex + 1);
+                                }, 1500);
+                            }
+                        } else {
+                            alert(data.message);
+                            btn.disabled = false;
+                            btn.textContent = 'Enregistrer l\'avis';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Une erreur est survenue.');
+                        btn.disabled = false;
+                        btn.textContent = 'Enregistrer l\'avis';
+                    });
+                }
+            });
+        });
+    </script>
+    <style>
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+    </style>
+}
 
