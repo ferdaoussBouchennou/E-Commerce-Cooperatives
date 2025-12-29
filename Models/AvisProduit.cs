@@ -24,6 +24,10 @@ namespace E_Commerce_Cooperatives.Models
         
         // Propriété calculée pour la vue (non mappée à la base de données)
         public string ClientNom { get; set; }
+        
+        // Propriétés pour afficher les informations du produit dans la liste des avis
+        public string ProduitNom { get; set; }
+        public string ProduitImage { get; set; }
     }
 }
 
