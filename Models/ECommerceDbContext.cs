@@ -594,24 +594,7 @@ namespace E_Commerce_Cooperatives.Models
                             decimal prixHT = reader.GetDecimal(2);
                             decimal prixTTC = prixHT * 1.20m; // Ajouter 20% de TVA
 
-                            string imageUrl = reader.IsDBNull(3) ? null : reader.GetString(3);
-                            if (!string.IsNullOrEmpty(imageUrl))
-                            {
-                                // Normaliser les slashes (remplacer \ par /)
-                                imageUrl = imageUrl.Replace("\\", "/");
-
-                                // Enlever le ~ du début si présent
-                                if (imageUrl.StartsWith("~"))
-                                {
-                                    imageUrl = imageUrl.Substring(1);
-                                }
-
-                                // S'assurer que le chemin commence par / si ce n'est pas une URL externe
-                                if (!imageUrl.StartsWith("/") && !imageUrl.StartsWith("http"))
-                                {
-                                    imageUrl = "/" + imageUrl;
-                                }
-                            }
+                            string imageUrl = NormalizeImagePath(reader.IsDBNull(3) ? null : reader.GetString(3));
 
                             suggestions.Add(new
                             {
@@ -625,6 +608,29 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
             return suggestions;
+        }
+
+        private string NormalizeImagePath(string imageUrl)
+        {
+            if (string.IsNullOrEmpty(imageUrl))
+                return null;
+
+            // Normaliser les slashes (remplacer \ par /)
+            imageUrl = imageUrl.Replace("\\", "/");
+
+            // Enlever le ~ du début si présent
+            if (imageUrl.StartsWith("~"))
+            {
+                imageUrl = imageUrl.Substring(1);
+            }
+
+            // S'assurer que le chemin commence par / si ce n'est pas une URL externe
+            if (!imageUrl.StartsWith("/") && !imageUrl.StartsWith("http"))
+            {
+                imageUrl = "/" + imageUrl;
+            }
+
+            return imageUrl;
         }
 
         public List<ImageProduit> GetImagesProduit(int produitId)
@@ -1189,7 +1195,7 @@ namespace E_Commerce_Cooperatives.Models
                                 {
                                     ProduitId = reader.GetInt32(2),
                                     Nom = reader.GetString(7),
-                                    ImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8),
+                                    ImageUrl = NormalizeImagePath(reader.IsDBNull(8) ? null : reader.GetString(8)),
                                     Prix = reader.GetDecimal(9) // Charger le prix HT du produit pour la détection
                                 }
                             });
@@ -2724,7 +2730,7 @@ namespace E_Commerce_Cooperatives.Models
                                 Commentaire = reader.IsDBNull(4) ? null : reader.GetString(4),
                                 DateAvis = reader.GetDateTime(5),
                                 ProduitNom = reader.IsDBNull(6) ? "Produit" : reader.GetString(6),
-                                ProduitImage = reader.IsDBNull(7) ? null : reader.GetString(7)
+                                ProduitImage = NormalizeImagePath(reader.IsDBNull(7) ? null : reader.GetString(7))
                             });
                         }
                     }
