@@ -47,6 +47,9 @@ namespace E_Commerce_Cooperatives.Models
             } 
         }
 
+        // Propriété calculée pour la vue (non persistée en DB)
+        public bool HasBeenReviewed { get; set; }
+
         // Navigation properties
         public Commande Commande { get; set; }
         public Produit Produit { get; set; }
