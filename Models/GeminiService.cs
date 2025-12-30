@@ -57,8 +57,6 @@ Cooporia est une plateforme qui connecte les consommateurs avec des produits aut
 
 💳 PAIEMENT:
 - Paiement à la livraison (Cash on Delivery)
-- Carte bancaire (sécurisé)
-- Virement bancaire
 
 👤 COMPTE CLIENT:
 - Créer un compte pour suivre les commandes
@@ -80,7 +78,6 @@ Cooporia est une plateforme qui connecte les consommateurs avec des produits aut
 - Horaires: Lun-Ven 9h-18h
 
 🔒 SÉCURITÉ:
-- Paiements sécurisés
 - Protection des données personnelles
 - Transactions cryptées
 
