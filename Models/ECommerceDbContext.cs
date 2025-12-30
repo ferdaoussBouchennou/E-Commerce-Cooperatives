@@ -310,8 +310,8 @@ namespace E_Commerce_Cooperatives.Models
                     }
                 }
             }
-            // Round up to nearest 100
-            return Math.Ceiling(maxPrice / 100) * 100;
+            // Round up to nearest 100 after applying 20% TVA
+            return Math.Ceiling((maxPrice * 1.20m) / 100) * 100;
         }
 
         public decimal GetMinPrice()
@@ -330,8 +330,8 @@ namespace E_Commerce_Cooperatives.Models
                     }
                 }
             }
-            // Round down to nearest 10 (or keep exact floor)
-            return Math.Floor(minPrice / 10) * 10;
+            // Round down to nearest 10 after applying 20% TVA
+            return Math.Floor((minPrice * 1.20m) / 10) * 10;
         }
 
         public List<Produit> GetProduits(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null, int page = 1, int pageSize = 9, string search = null, string sortOrder = "popular", decimal? minPrice = null, decimal? maxPrice = null, List<int> cooperativeIds = null, bool inStockOnly = false, int? minRating = null)
@@ -361,9 +361,9 @@ namespace E_Commerce_Cooperatives.Models
                     query += " AND (p.Nom LIKE @Search OR p.Description LIKE @Search)";
 
                 if (minPrice.HasValue)
-                    query += " AND p.Prix >= @MinPrice";
+                    query += " AND p.Prix * 1.20 >= @MinPrice";
                 if (maxPrice.HasValue)
-                    query += " AND p.Prix <= @MaxPrice";
+                    query += " AND p.Prix * 1.20 <= @MaxPrice";
 
                 if (cooperativeIds != null && cooperativeIds.Any())
                 {
@@ -523,9 +523,9 @@ namespace E_Commerce_Cooperatives.Models
                     query += " AND (p.Nom LIKE @Search OR p.Description LIKE @Search)";
 
                 if (minPrice.HasValue)
-                    query += " AND p.Prix >= @MinPrice";
+                    query += " AND p.Prix * 1.20 >= @MinPrice";
                 if (maxPrice.HasValue)
-                    query += " AND p.Prix <= @MaxPrice";
+                    query += " AND p.Prix * 1.20 <= @MaxPrice";
 
                 if (cooperativeIds != null && cooperativeIds.Any())
                 {

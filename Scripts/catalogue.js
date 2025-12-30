@@ -200,11 +200,29 @@
         .product-item {
             transition: opacity 0.3s ease;
         }
-        .form-range {
-            cursor: pointer;
+        .form-range::-webkit-slider-thumb {
+            background: #C06C50;
         }
-        .form-check-input {
-            cursor: pointer;
+        .form-range::-moz-range-thumb {
+            background: #C06C50;
+        }
+        .form-range::-ms-thumb {
+            background: #C06C50;
+        }
+        .form-range:focus::-webkit-slider-thumb {
+            box-shadow: 0 0 0 1px #fff, 0 0 0 0.25rem rgba(192, 108, 80, 0.25);
+        }
+        .form-range:focus::-moz-range-thumb {
+            box-shadow: 0 0 0 1px #fff, 0 0 0 0.25rem rgba(192, 108, 80, 0.25);
+        }
+        .border-terracotta {
+            border-color: #C06C50 !important;
+        }
+        .text-terracotta {
+            color: #C06C50 !important;
+        }
+        .bg-terracotta {
+            background-color: #C06C50 !important;
         }
     `;
     document.head.appendChild(style);
