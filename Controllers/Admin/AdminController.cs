@@ -378,20 +378,55 @@ namespace E_Commerce_Cooperatives.Controllers
         {
             try
             {
-                var db = new ECommerceDbContext();
-                // Check if there are products associated with this cooperative
-                var hasProducts = db.Produits.Any(p => p.CooperativeId == id);
-                if (hasProducts)
+                using (var connection = new SqlConnection(connectionString))
                 {
-                    return Json(new { success = false, message = "Impossible de supprimer : cette coopérative possède des produits" });
-                }
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            // 1. Rendre tous les produits de cette coopérative indisponibles
+                            var updateProductsQuery = @"UPDATE Produits 
+                                                       SET EstDisponible = 0, 
+                                                           DateModification = GETDATE() 
+                                                       WHERE CooperativeId = @CooperativeId";
+                            
+                            int productsAffected = 0;
+                            using (var cmdProducts = new SqlCommand(updateProductsQuery, connection, transaction))
+                            {
+                                cmdProducts.Parameters.AddWithValue("@CooperativeId", id);
+                                productsAffected = cmdProducts.ExecuteNonQuery();
+                            }
 
-                db.DeleteCooperative(id);
-                return Json(new { success = true });
+                            // 2. Supprimer la coopérative
+                            var deleteCoopQuery = @"DELETE FROM Cooperatives WHERE CooperativeId = @CooperativeId";
+                            using (var cmdDelete = new SqlCommand(deleteCoopQuery, connection, transaction))
+                            {
+                                cmdDelete.Parameters.AddWithValue("@CooperativeId", id);
+                                cmdDelete.ExecuteNonQuery();
+                            }
+
+                            transaction.Commit();
+
+                            string message = "Coopérative supprimée avec succès";
+                            if (productsAffected > 0)
+                            {
+                                message += $" et {productsAffected} produit(s) rendu(s) indisponible(s).";
+                            }
+
+                            return Json(new { success = true, message = message });
+                        }
+                        catch (Exception)
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Erreur lors de la suppression : " + ex.Message });
             }
         }
 
