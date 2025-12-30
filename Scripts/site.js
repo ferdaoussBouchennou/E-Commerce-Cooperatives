@@ -145,8 +145,6 @@
         });
     }
 
-    // ... (rest of the functions)
-
     // Expose functions globally
     window.isUserAuthenticated = isUserAuthenticated;
     window.addProductToCart = addProductToCart;

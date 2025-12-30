@@ -28,8 +28,7 @@ namespace E_Commerce_Cooperatives.Controllers
             }
             
             // Vérifier si l'utilisateur est authentifié
-            // TODO: Remplacer par votre système d'authentification réel
-            // Pour l'instant, on vérifie si une session utilisateur existe
+            // on vérifie si une session utilisateur existe
             ViewBag.IsAuthenticated = Session["UserId"] != null || Session["ClientId"] != null;
             
             return View();

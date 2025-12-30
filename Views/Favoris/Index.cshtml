@@ -11,7 +11,7 @@
             <h1 class="display-5 fw-bold mb-2">Mes Favoris</h1>
             <p class="text-muted">Retrouvez ici tous les produits que vous avez aimés.</p>
         </div>
-        <a href="@Url.Action("Index", "Catalogue")" class="btn btn-outline-primary rounded-pill px-4">
+        <a href="@Url.Action("Index", "Catalogue")" class="btn btn-customer-terracotta btn-outline rounded-pill px-4">
             Retour au catalogue
         </a>
     </div>
@@ -27,7 +27,7 @@
             </div>
             <h3 class="h4 fw-bold">Votre liste est vide</h3>
             <p class="text-muted mb-4">Parcourez notre catalogue et ajoutez vos coups de cœur.</p>
-            <a href="@Url.Action("Index", "Catalogue")" class="btn btn-primary rounded-pill px-5 py-3">
+            <a href="@Url.Action("Index", "Catalogue")" class="btn btn-customer-terracotta rounded-pill px-5 py-3">
                 Découvrir nos produits
             </a>
         </div>
@@ -43,6 +43,29 @@
             }
         </div>
     }
+    <style>
+        .btn-customer-terracotta {
+            background-color: #C06C50;
+            color: white;
+            border: 1.5px solid #C06C50;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-customer-terracotta:hover {
+            background-color: #A5563D;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(192, 108, 80, 0.2);
+        }
+        .btn-customer-terracotta.btn-outline {
+            background-color: transparent;
+            color: #C06C50;
+        }
+        .btn-customer-terracotta.btn-outline:hover {
+            background-color: #C06C50;
+            color: white;
+        }
+    </style>
 </main>
 
 @Html.Partial("_Footer")
