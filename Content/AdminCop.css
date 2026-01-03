@@ -277,3 +277,9 @@
     min-width: 90px !important;
     background-color: white !important;
 }
+
+.pagination-btn:hover {
+    background-color: #305C7D !important;
+    color: white !important;
+    text-decoration: none !important;
+}

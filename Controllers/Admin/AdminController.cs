@@ -255,24 +255,35 @@ namespace E_Commerce_Cooperatives.Controllers
             }
         }
         // GET: Admin/Cooperatives
-        public ActionResult Cooperatives(string searchTerm = "")
+        public ActionResult Cooperatives(string searchTerm = "", int page = 1)
         {
             try
             {
+                int pageSize = 6;
                 var db = new ECommerceDbContext();
-                var cooperatives = db.GetCooperativesWithStats()
-            .OrderByDescending(c => c.DateCreation)
-            .ToList();
+                var allCooperatives = db.GetCooperativesWithStats()
+                    .OrderByDescending(c => c.DateCreation)
+                    .ToList();
 
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
-                    cooperatives = cooperatives.Where(c => 
+                    allCooperatives = allCooperatives.Where(c => 
                         c.Nom.ToLower().Contains(searchTerm.ToLower()) || 
                         c.Ville.ToLower().Contains(searchTerm.ToLower())
                     ).ToList();
                 }
 
+                int totalItems = allCooperatives.Count;
+                var cooperatives = allCooperatives
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
                 ViewBag.SearchTerm = searchTerm;
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+                ViewBag.TotalItems = totalItems;
+
                 return View(cooperatives);
             }
             catch (Exception ex)

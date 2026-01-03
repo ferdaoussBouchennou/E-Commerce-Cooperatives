@@ -84,6 +84,33 @@
             </div>
         }
     </div>
+
+    <!-- Pagination Section -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <div class="pagination-container" style="display: flex; justify-content: center; margin-top: 40px; gap: 10px; padding-bottom: 50px;">
+            @if (ViewBag.CurrentPage > 1)
+            {
+                <a href="@Url.Action("Cooperatives", new { searchTerm = ViewBag.SearchTerm, page = ViewBag.CurrentPage - 1 })" class="pagination-btn" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border-radius: 8px; background-color: white; color: #305C7D; border: 2px solid #305C7D; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
+                    <i class="fas fa-chevron-left" style="margin-right: 8px;"></i> Précédent
+                </a>
+            }
+
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <a href="@Url.Action("Cooperatives", new { searchTerm = ViewBag.SearchTerm, page = i })" class="pagination-btn @(i == ViewBag.CurrentPage ? "active" : "")" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border-radius: 8px; background-color: @(i == ViewBag.CurrentPage ? "#305C7D" : "white"); color: @(i == ViewBag.CurrentPage ? "white" : "#305C7D"); border: 2px solid #305C7D; text-decoration: none; font-weight: 600; transition: all 0.3s ease; min-width: 40px;">
+                    @i
+                </a>
+            }
+
+            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+            {
+                <a href="@Url.Action("Cooperatives", new { searchTerm = ViewBag.SearchTerm, page = ViewBag.CurrentPage + 1 })" class="pagination-btn" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border-radius: 8px; background-color: white; color: #305C7D; border: 2px solid #305C7D; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
+                    Suivant <i class="fas fa-chevron-right" style="margin-left: 8px;"></i>
+                </a>
+            }
+        </div>
+    }
 </div>
 
 <!-- Modal logic would go here, similar to Categories or Products -->
