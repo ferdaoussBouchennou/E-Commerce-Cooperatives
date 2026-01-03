@@ -33,7 +33,7 @@
     <div class="cooperatives-grid">
         @foreach (var coop in Model)
         {
-            <div id="dataCoop" class="coop-card"
+            <div id="dataCoop" class="coop-card @(!coop.EstActive ? "inactive" : "")"
                  data-coop-name="@coop.Nom.ToLower()"
                  data-coop-desc="@((coop.Description ?? "").ToLower())"
                  data-coop-ville="@coop.Ville.ToLower()">
@@ -44,6 +44,10 @@
                     @if (coop.EstActive)
                     {
                         <span class="coop-badge-active">Active</span>
+                    }
+                    else
+                    {
+                        <span class="coop-badge-inactive">Inactive</span>
                     }
                 </div>
                 <div class="coop-card-body">
@@ -73,8 +77,8 @@
                     <button class="btn-modifier" onclick="openEditModal(@coop.CooperativeId)">
                         <i class="fas fa-edit"></i> Modifier
                     </button>
-                    <button class="btn-supprimer" onclick="deleteCooperative(@coop.CooperativeId, '@coop.Nom')">
-                        <i class="fas fa-trash"></i>
+                    <button class="@(coop.EstActive ? "btn-desactiver" : "btn-activer")" onclick="toggleCooperativeStatus(@coop.CooperativeId, '@coop.Nom', @(coop.EstActive ? "true" : "false"))" title="@(coop.EstActive ? "Désactiver" : "Activer")">
+                        <i class="fas @(coop.EstActive ? "fa-toggle-on" : "fa-toggle-off")"></i>
                     </button>
                 </div>
             </div>
@@ -234,9 +238,14 @@
         }
 
 
-        function deleteCooperative(id, name) {
-            if (confirm("Êtes-vous sûr de vouloir supprimer la coopérative '" + name + "' ?")) {
-                $.post('@Url.Action("SupprimerCooperative", "Admin")', { id: id }, function(response) {
+        function toggleCooperativeStatus(id, name, isActive) {
+            const action = isActive ? "désactiver" : "activer";
+            const confirmMsg = isActive 
+                ? "Êtes-vous sûr de vouloir désactiver la coopérative '" + name + "' ? Tous ses produits deviendront indisponibles."
+                : "Êtes-vous sûr de vouloir réactiver la coopérative '" + name + "' ?";
+
+            if (confirm(confirmMsg)) {
+                $.post('@Url.Action("ToggleStatutCooperative", "Admin")', { id: id }, function(response) {
                     if (response.success) {
                         location.reload();
                     } else {

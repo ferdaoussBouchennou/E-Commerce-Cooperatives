@@ -374,7 +374,7 @@ namespace E_Commerce_Cooperatives.Controllers
         }
 
         [HttpPost]
-        public JsonResult SupprimerCooperative(int id)
+        public JsonResult ToggleStatutCooperative(int id)
         {
             try
             {
@@ -385,31 +385,47 @@ namespace E_Commerce_Cooperatives.Controllers
                     {
                         try
                         {
-                            // 1. Rendre tous les produits de cette coopérative indisponibles
-                            var updateProductsQuery = @"UPDATE Produits 
-                                                       SET EstDisponible = 0, 
-                                                           DateModification = GETDATE() 
-                                                       WHERE CooperativeId = @CooperativeId";
-                            
-                            int productsAffected = 0;
-                            using (var cmdProducts = new SqlCommand(updateProductsQuery, connection, transaction))
+                            // 1. Récupérer le statut actuel
+                            bool actuelStatut = false;
+                            using (var cmdStatus = new SqlCommand("SELECT EstActive FROM Cooperatives WHERE CooperativeId = @id", connection, transaction))
                             {
-                                cmdProducts.Parameters.AddWithValue("@CooperativeId", id);
-                                productsAffected = cmdProducts.ExecuteNonQuery();
+                                cmdStatus.Parameters.AddWithValue("@id", id);
+                                var result = cmdStatus.ExecuteScalar();
+                                if (result == null) return Json(new { success = false, message = "Coopérative non trouvée" });
+                                actuelStatut = (bool)result;
                             }
 
-                            // 2. Supprimer la coopérative
-                            var deleteCoopQuery = @"DELETE FROM Cooperatives WHERE CooperativeId = @CooperativeId";
-                            using (var cmdDelete = new SqlCommand(deleteCoopQuery, connection, transaction))
+                            bool nouveauStatut = !actuelStatut;
+
+                            // 2. Mettre à jour le statut de la coopérative
+                            using (var cmdUpdateCoop = new SqlCommand("UPDATE Cooperatives SET EstActive = @nouveauStatut WHERE CooperativeId = @id", connection, transaction))
                             {
-                                cmdDelete.Parameters.AddWithValue("@CooperativeId", id);
-                                cmdDelete.ExecuteNonQuery();
+                                cmdUpdateCoop.Parameters.AddWithValue("@nouveauStatut", nouveauStatut);
+                                cmdUpdateCoop.Parameters.AddWithValue("@id", id);
+                                cmdUpdateCoop.ExecuteNonQuery();
+                            }
+
+                            int productsAffected = 0;
+                            // 3. Si désactivation, désactiver aussi tous les produits
+                            if (!nouveauStatut)
+                            {
+                                var updateProductsQuery = @"UPDATE Produits 
+                                                           SET EstDisponible = 0, 
+                                                               DateModification = GETDATE() 
+                                                           WHERE CooperativeId = @CooperativeId";
+                                
+                                using (var cmdProducts = new SqlCommand(updateProductsQuery, connection, transaction))
+                                {
+                                    cmdProducts.Parameters.AddWithValue("@CooperativeId", id);
+                                    productsAffected = cmdProducts.ExecuteNonQuery();
+                                }
                             }
 
                             transaction.Commit();
 
-                            string message = "Coopérative supprimée avec succès";
-                            if (productsAffected > 0)
+                            string action = nouveauStatut ? "activée" : "désactivée";
+                            string message = $"Coopérative {action} avec succès";
+                            if (!nouveauStatut && productsAffected > 0)
                             {
                                 message += $" et {productsAffected} produit(s) rendu(s) indisponible(s).";
                             }
@@ -426,7 +442,7 @@ namespace E_Commerce_Cooperatives.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Erreur lors de la suppression : " + ex.Message });
+                return Json(new { success = false, message = "Erreur lors du changement de statut : " + ex.Message });
             }
         }
 
