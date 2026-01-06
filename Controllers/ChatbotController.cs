@@ -33,16 +33,21 @@ namespace E_Commerce_Cooperatives.Controllers
                 }
 
                 // --- LOGIQUE RAG (Recherche Intelligente) ---
-                // Mots-clés déclencheurs de recherche
-                string[] searchKeywords = { "cherche", "chercher", "trouve", "trouver", "achat", "acheter", "prix", "coût", "combien", "produit", "article", "huile", "savon", "tapis", "poterie", "miel" };
+                // Mots-clés déclencheurs de recherche (inclut typos et variations)
+                string[] searchKeywords = { 
+                    "cherche", "chercher", "trouve", "trouver", "achat", "acheter", "achteer", "achete", 
+                    "prix", "coût", "combien", "produit", "article", "disponible", "vendre", "vends",
+                    "huile", "savon", "tapis", "poterie", "miel", "argan", "sac", "cabas", "cuir", "vêtement" 
+                };
                 
-                bool isSearchIntent = searchKeywords.Any(k => message.ToLower().Contains(k));
+                // On considère qu'il y a intention de recherche si un mot-clé est présent 
+                // OU si le message est assez long et contient des noms potentiels
+                bool isSearchIntent = searchKeywords.Any(k => message.ToLower().Contains(k)) || message.Split(' ').Length > 3;
 
                 if (isSearchIntent)
                 {
                     // Recherche dans la base de données
-                    // Tokenisation de la requête utilisateur pour améliorer la recherche
-                    var stopWords = new[] { "je", "j'", "tu", "il", "nous", "vous", "le", "la", "les", "un", "une", "des", "de", "du", "d'", "l'", "ce", "cette", "ces", "et", "ou", "mais", "est", "sont", "a", "ont", "cherche", "chercher", "trouver", "voudrais", "veux", "achat", "acheter", "prix", "coût", "combien", "svp", "merci", "bonjour", "pour", "avec" };
+                    var stopWords = new[] { "je", "j'", "tu", "il", "nous", "vous", "le", "la", "les", "un", "une", "des", "de", "du", "d'", "l'", "ce", "cette", "ces", "et", "ou", "mais", "est", "sont", "a", "ont", "svp", "merci", "bonjour", "pour", "avec", "dans", "sur" };
                     
                     var queryTerms = message.ToLower()
                         .Split(new[] { ' ', '\'', ',', '.', '!', '?' }, System.StringSplitOptions.RemoveEmptyEntries)
@@ -53,20 +58,48 @@ namespace E_Commerce_Cooperatives.Controllers
 
                     if (queryTerms.Any())
                     {
-                        // On récupère TOUS les produits en mémoire car linq to entities ne supportera pas queryTerms.Any
-                        // Avec une petite base de données c'est acceptable. Sinon, faire une boucle ou PredicateBuilder.
-                        var allProducts = db.Produits
-                            .Select(p => new { p.ProduitId, p.Nom, p.Description, p.Prix, Stock = p.StockTotal, CategorieNom = p.Categorie != null ? p.Categorie.Nom : "" })
-                            .ToList();
-
-                        foundProducts = allProducts
-                            .Where(p => queryTerms.Any(t => 
-                                (p.Nom != null && p.Nom.ToLower().Contains(t)) || 
-                                (p.Description != null && p.Description.ToLower().Contains(t)) ||
-                                (p.CategorieNom != null && p.CategorieNom.ToLower().Contains(t))))
-                            .Take(5)
-                            .Cast<dynamic>()
-                            .ToList();
+                        // On récupère les produits avec leurs catégories pour une recherche plus riche
+                        // Note: On limite la recherche directement en SQL pour plus d'efficacité
+                        using (var connection = new System.Data.SqlClient.SqlConnection(db.GetConnectionString()))
+                        {
+                            await connection.OpenAsync();
+                            var sql = @"
+                                SELECT TOP 5 p.ProduitId, p.Nom, p.Description, p.Prix, p.StockTotal, c.Nom as CategorieNom
+                                FROM Produits p
+                                LEFT JOIN Categories c ON p.CategorieId = c.CategorieId
+                                WHERE p.EstDisponible = 1 AND (";
+                            
+                            var orConditions = new System.Collections.Generic.List<string>();
+                            var parameters = new System.Collections.Generic.List<System.Data.SqlClient.SqlParameter>();
+                            
+                            for (int i = 0; i < queryTerms.Count; i++)
+                            {
+                                string paramName = "@term" + i;
+                                orConditions.Add($"(p.Nom LIKE {paramName} OR p.Description LIKE {paramName} OR c.Nom LIKE {paramName})");
+                                parameters.Add(new System.Data.SqlClient.SqlParameter(paramName, "%" + queryTerms[i] + "%"));
+                            }
+                            
+                            sql += string.Join(" OR ", orConditions) + ")";
+                            
+                            using (var cmd = new System.Data.SqlClient.SqlCommand(sql, connection))
+                            {
+                                cmd.Parameters.AddRange(parameters.ToArray());
+                                using (var reader = await cmd.ExecuteReaderAsync())
+                                {
+                                    while (await reader.ReadAsync())
+                                    {
+                                        foundProducts.Add(new {
+                                            ProduitId = reader["ProduitId"],
+                                            Nom = reader["Nom"],
+                                            Description = reader["Description"],
+                                            Prix = reader["Prix"],
+                                            Stock = reader["StockTotal"],
+                                            CategorieNom = reader["CategorieNom"]
+                                        });
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     if (foundProducts.Any())
@@ -74,9 +107,9 @@ namespace E_Commerce_Cooperatives.Controllers
                         context += "\n[CONTEXTE PRODUITS TROUVÉS DANS LA BASE DE DONNÉES]:\n";
                         foreach (var p in foundProducts)
                         {
-                            context += $"- Produit: {p.Nom} (ID: {p.ProduitId}), Prix: {p.Prix} DH, Stock: {p.Stock}. Lien: <a href='/Produit/Details/{p.ProduitId}'>{p.Nom}</a>\n";
+                            context += $"- Produit: {p.Nom} (Catégorie: {p.CategorieNom}), Prix: {p.Prix} DH, Stock: {p.Stock}. Lien: <a href='/Produit/Details/{p.ProduitId}'>{p.Nom}</a>\n";
                         }
-                        context += "\nINSTRUCTION: Utilisez ces informations pour répondre. Si vous recommandez un produit, vous DEVEZ utiliser le format de lien HTML fourni EXACTEMENT comme indiqué (<a href=...>...</a>). Ne créez pas de liens markdown [].\n";
+                        context += "\nINSTRUCTION: Utilisez ces informations pour répondre. Si vous recommandez un produit, vous DEVEZ utiliser le format de lien HTML fourni EXACTEMENT comme indiqué (<a href=...>...</a>). Donnez des détails sur le produit pour aider l'acheteur.\n";
                     }
                 }
 

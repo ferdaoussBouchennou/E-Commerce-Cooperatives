@@ -11,6 +11,11 @@ namespace E_Commerce_Cooperatives.Models
     {
         private string connectionString;
 
+        public string GetConnectionString()
+        {
+            return connectionString;
+        }
+
         public ECommerceDbContext()
         {
             var connection = ConfigurationManager.ConnectionStrings["ECommerceConnection"];

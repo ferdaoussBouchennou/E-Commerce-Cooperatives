@@ -357,12 +357,20 @@
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
     <Content Include="Content\admin.css" />
+    <Content Include="Content\AdminCop.css" />
+    <Content Include="Content\Admin_Produits.css" />
+    <Content Include="Content\images\hero-banner.jpg" />
+    <Content Include="Content\images\logo-coop.png" />
+    <Content Include="Content\images\categories\**\*" />
+    <Content Include="Content\images\produits\**\*" />
+    <Content Include="Content\images\cooperatives\**\*" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
     <Content Include="Scripts\bootstrap.esm.min.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
+    <None Include="Properties\PublishProfiles\cooporia - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
@@ -378,7 +386,8 @@
     <Content Include="Scripts\panier.js" />
     <Content Include="Scripts\checkout.js" />
     <Content Include="Scripts\admin.js" />
-
+    <Content Include="Scripts\catalogue.js" />
+    <Content Include="Scripts\search.js" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -387,13 +396,23 @@
       <DependentUpon>Web.config</DependentUpon>
     </Content>
     <Content Include="Views\Web.config" />
+    <Content Include="Views\Account\Error.cshtml" />
+    <Content Include="Views\Account\ForgotPassword.cshtml" />
+    <Content Include="Views\Account\Login.cshtml" />
+    <Content Include="Views\Account\Register.cshtml" />
+    <Content Include="Views\Account\ResetPassword.cshtml" />
+    <Content Include="Views\Account\VerifyEmail.cshtml" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Chatbot.cshtml" />
+    <Content Include="Views\Shared\_Header.cshtml" />
+    <Content Include="Views\Shared\_Footer.cshtml" />
+    <Content Include="Views\Shared\_ProductCard.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\Home\TestChatbot.cshtml" />
     <Content Include="Views\Categories\Index.cshtml" />
     <Content Include="Views\Catalogue\Index.cshtml" />
     <Content Include="Views\Favoris\Index.cshtml" />
@@ -403,10 +422,22 @@
     <Content Include="Views\Checkout\Index.cshtml" />
     <Content Include="Views\Checkout\Confirmation.cshtml" />
     <Content Include="Views\Checkout\MesCommandes.cshtml" />
+    <Content Include="Views\Checkout\SuiviLivraison.cshtml" />
     <Content Include="Views\Admin\_AdminLayout.cshtml" />
     <Content Include="Views\Admin\_ViewStart.cshtml" />
     <Content Include="Views\Admin\Commandes.cshtml" />
     <Content Include="Views\Admin\Admin_Produit.cshtml" />
+    <Content Include="Views\Admin\AjouterCategorie.cshtml" />
+    <Content Include="Views\Admin\AjouterProduit.cshtml" />
+    <Content Include="Views\Admin\Categories.cshtml" />
+    <Content Include="Views\Admin\Cooperatives.cshtml" />
+    <Content Include="Views\Admin\Dashboard.cshtml" />
+    <Content Include="Views\Admin\DetailsProduit.cshtml" />
+    <Content Include="Views\Admin\Livraison.cshtml" />
+    <Content Include="Views\Admin\ModifierCategorie.cshtml" />
+    <Content Include="Views\Admin\ModifierProduit.cshtml" />
+    <Content Include="Views\Admin\UserDetails.cshtml" />
+    <Content Include="Views\Admin\Utilisateurs.cshtml" />
     <Content Include="Views\UserSpace\_UserSpaceLayout.cshtml" />
     <Content Include="Views\UserSpace\_UserSidebar.cshtml" />
     <Content Include="Views\UserSpace\_ViewStart.cshtml" />
