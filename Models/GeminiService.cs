@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using E_Commerce_Cooperatives.Helpers;
 namespace E_Commerce_Cooperatives.Models
 {
     public class GeminiService
@@ -14,8 +15,9 @@ namespace E_Commerce_Cooperatives.Models
         private readonly HttpClient _httpClient;
         public GeminiService()
         {
-            _apiKey = Environment.GetEnvironmentVariable("GeminiApiKey") ?? ConfigurationManager.AppSettings["GeminiApiKey"];
-            _apiUrl = Environment.GetEnvironmentVariable("GeminiApiUrl") ?? ConfigurationManager.AppSettings["GeminiApiUrl"];
+            // Use EnvironmentHelper to get API keys from .env file
+            _apiKey = EnvironmentHelper.GetVariable("GEMINI_API_KEY");
+            _apiUrl = EnvironmentHelper.GetVariable("GEMINI_API_URL");
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromSeconds(60);
         }

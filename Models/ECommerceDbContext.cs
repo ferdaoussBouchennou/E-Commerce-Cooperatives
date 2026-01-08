@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Configuration;
+using E_Commerce_Cooperatives.Helpers;
 
 namespace E_Commerce_Cooperatives.Models
 {
@@ -18,15 +19,22 @@ namespace E_Commerce_Cooperatives.Models
 
         public ECommerceDbContext()
         {
-            var connection = ConfigurationManager.ConnectionStrings["ECommerceConnection"];
-            if (connection != null)
+            // Use EnvironmentHelper to get connection string from .env file
+            connectionString = EnvironmentHelper.GetDatabaseConnectionString();
+            
+            // Fallback to Web.config if environment variables are not set
+            if (string.IsNullOrEmpty(connectionString))
             {
-                connectionString = connection.ConnectionString;
-            }
-            else
-            {
-                // Valeur par défaut si la chaîne de connexion n'est pas trouvée
-                connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=ecommerce;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+                var connection = ConfigurationManager.ConnectionStrings["ECommerceConnection"];
+                if (connection != null)
+                {
+                    connectionString = connection.ConnectionString;
+                }
+                else
+                {
+                    // Valeur par défaut si la chaîne de connexion n'est pas trouvée
+                    connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=ecommerce;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+                }
             }
         }
 

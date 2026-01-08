@@ -5,6 +5,7 @@ using System.Configuration;
 using System.Web;
 using System.Text;
 using System.Collections.Generic;
+using E_Commerce_Cooperatives.Helpers;
 
 namespace E_Commerce_Cooperatives.Models
 {
@@ -29,12 +30,12 @@ namespace E_Commerce_Cooperatives.Models
                 string encodedEmail = System.Web.HttpUtility.UrlEncode(email);
                 string resetUrl = baseUrl + "/Account/ResetPassword?token=" + encodedToken + "&email=" + encodedEmail;
 
-                // Récupérer les paramètres SMTP depuis Web.config ou utiliser des valeurs par défaut
-                string smtpServer = ConfigurationManager.AppSettings["SmtpServer"] ?? "smtp.gmail.com";
-                int smtpPort = int.Parse(ConfigurationManager.AppSettings["SmtpPort"] ?? "587");
-                string smtpUsername = ConfigurationManager.AppSettings["SmtpUsername"] ?? "";
-                string smtpPassword = ConfigurationManager.AppSettings["SmtpPassword"] ?? "";
-                bool enableSsl = bool.Parse(ConfigurationManager.AppSettings["SmtpEnableSsl"] ?? "true");
+                // Récupérer les paramètres SMTP depuis .env via EnvironmentHelper
+                string smtpServer = EnvironmentHelper.GetVariable("SMTP_SERVER", "smtp.gmail.com");
+                int smtpPort = int.Parse(EnvironmentHelper.GetVariable("SMTP_PORT", "587"));
+                string smtpUsername = EnvironmentHelper.GetVariable("SMTP_USERNAME", "");
+                string smtpPassword = EnvironmentHelper.GetVariable("SMTP_PASSWORD", "");
+                bool enableSsl = bool.Parse(EnvironmentHelper.GetVariable("SMTP_ENABLE_SSL", "true"));
 
                 // Si les paramètres SMTP ne sont pas configurés, on simule l'envoi (pour le développement)
                 if (string.IsNullOrEmpty(smtpUsername) || string.IsNullOrEmpty(smtpPassword))
@@ -138,12 +139,12 @@ namespace E_Commerce_Cooperatives.Models
         {
             try
             {
-                // Récupérer les paramètres SMTP depuis Web.config ou utiliser des valeurs par défaut
-                string smtpServer = ConfigurationManager.AppSettings["SmtpServer"] ?? "smtp.gmail.com";
-                int smtpPort = int.Parse(ConfigurationManager.AppSettings["SmtpPort"] ?? "587");
-                string smtpUsername = ConfigurationManager.AppSettings["SmtpUsername"] ?? "";
-                string smtpPassword = ConfigurationManager.AppSettings["SmtpPassword"] ?? "";
-                bool enableSsl = bool.Parse(ConfigurationManager.AppSettings["SmtpEnableSsl"] ?? "true");
+                // Récupérer les paramètres SMTP depuis .env via EnvironmentHelper
+                string smtpServer = EnvironmentHelper.GetVariable("SMTP_SERVER", "smtp.gmail.com");
+                int smtpPort = int.Parse(EnvironmentHelper.GetVariable("SMTP_PORT", "587"));
+                string smtpUsername = EnvironmentHelper.GetVariable("SMTP_USERNAME", "");
+                string smtpPassword = EnvironmentHelper.GetVariable("SMTP_PASSWORD", "");
+                bool enableSsl = bool.Parse(EnvironmentHelper.GetVariable("SMTP_ENABLE_SSL", "true"));
 
                 // Si les paramètres SMTP ne sont pas configurés, on simule l'envoi (pour le développement)
                 if (string.IsNullOrEmpty(smtpUsername) || string.IsNullOrEmpty(smtpPassword))
@@ -239,11 +240,11 @@ namespace E_Commerce_Cooperatives.Models
         {
             try
             {
-                string smtpServer = ConfigurationManager.AppSettings["SmtpServer"] ?? "smtp.gmail.com";
-                int smtpPort = int.Parse(ConfigurationManager.AppSettings["SmtpPort"] ?? "587");
-                string smtpUsername = ConfigurationManager.AppSettings["SmtpUsername"] ?? "";
-                string smtpPassword = ConfigurationManager.AppSettings["SmtpPassword"] ?? "";
-                bool enableSsl = bool.Parse(ConfigurationManager.AppSettings["SmtpEnableSsl"] ?? "true");
+                string smtpServer = EnvironmentHelper.GetVariable("SMTP_SERVER", "smtp.gmail.com");
+                int smtpPort = int.Parse(EnvironmentHelper.GetVariable("SMTP_PORT", "587"));
+                string smtpUsername = EnvironmentHelper.GetVariable("SMTP_USERNAME", "");
+                string smtpPassword = EnvironmentHelper.GetVariable("SMTP_PASSWORD", "");
+                bool enableSsl = bool.Parse(EnvironmentHelper.GetVariable("SMTP_ENABLE_SSL", "true"));
 
                 var mail = new MailMessage();
                 mail.From = new MailAddress(smtpUsername, "Cooporia");
@@ -271,11 +272,11 @@ namespace E_Commerce_Cooperatives.Models
         {
             try
             {
-                string smtpServer = ConfigurationManager.AppSettings["SmtpServer"] ?? "smtp.gmail.com";
-                int smtpPort = int.Parse(ConfigurationManager.AppSettings["SmtpPort"] ?? "587");
-                string smtpUsername = ConfigurationManager.AppSettings["SmtpUsername"] ?? "";
-                string smtpPassword = ConfigurationManager.AppSettings["SmtpPassword"] ?? "";
-                bool enableSsl = bool.Parse(ConfigurationManager.AppSettings["SmtpEnableSsl"] ?? "true");
+                string smtpServer = EnvironmentHelper.GetVariable("SMTP_SERVER", "smtp.gmail.com");
+                int smtpPort = int.Parse(EnvironmentHelper.GetVariable("SMTP_PORT", "587"));
+                string smtpUsername = EnvironmentHelper.GetVariable("SMTP_USERNAME", "");
+                string smtpPassword = EnvironmentHelper.GetVariable("SMTP_PASSWORD", "");
+                bool enableSsl = bool.Parse(EnvironmentHelper.GetVariable("SMTP_ENABLE_SSL", "true"));
 
                 var mail = new MailMessage();
                 mail.From = new MailAddress(smtpUsername, "Cooporia");
@@ -421,11 +422,11 @@ namespace E_Commerce_Cooperatives.Models
         {
             try
             {
-                string smtpServer = ConfigurationManager.AppSettings["SmtpServer"] ?? "smtp.gmail.com";
-                int smtpPort = int.Parse(ConfigurationManager.AppSettings["SmtpPort"] ?? "587");
-                string smtpUsername = ConfigurationManager.AppSettings["SmtpUsername"] ?? "";
-                string smtpPassword = ConfigurationManager.AppSettings["SmtpPassword"] ?? "";
-                bool enableSsl = bool.Parse(ConfigurationManager.AppSettings["SmtpEnableSsl"] ?? "true");
+                string smtpServer = EnvironmentHelper.GetVariable("SMTP_SERVER", "smtp.gmail.com");
+                int smtpPort = int.Parse(EnvironmentHelper.GetVariable("SMTP_PORT", "587"));
+                string smtpUsername = EnvironmentHelper.GetVariable("SMTP_USERNAME", "");
+                string smtpPassword = EnvironmentHelper.GetVariable("SMTP_PASSWORD", "");
+                bool enableSsl = bool.Parse(EnvironmentHelper.GetVariable("SMTP_ENABLE_SSL", "true"));
 
                 // Si les paramètres SMTP ne sont pas configurés, on simule l'envoi (pour le développement)
                 if (string.IsNullOrEmpty(smtpUsername) || string.IsNullOrEmpty(smtpPassword))
