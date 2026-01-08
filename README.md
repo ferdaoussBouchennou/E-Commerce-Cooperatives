@@ -1,6 +1,5 @@
 <div align="center">
   <img src="Content/images/logo-coop.png" alt="Cooporia Logo" width="300px">
-  <h1>🛍️ Cooporia</h1>
   <p><b>La première plateforme e-commerce dédiée aux coopératives marocaines</b></p>
 
   [![ASP.NET MVC](https://img.shields.io/badge/ASP.NET%20MVC-5.2.9-blue.svg)](https://dotnet.microsoft.com/apps/aspnet/mvc)
