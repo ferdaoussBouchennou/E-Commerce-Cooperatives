@@ -9,26 +9,26 @@
 
 ---
 
-## 🌟 À propos de Cooporia
+## À propos de Cooporia
 
 **Cooporia** est une plateforme e-commerce moderne conçue pour mettre en lumière le savoir-faire des coopératives marocaines. Elle permet aux consommateurs du monde entier de découvrir et d'acheter des produits authentiques (terroir, artisanat, cosmétique) tout en soutenant directement l'économie sociale et solidaire au Maroc.
 
-## ✨ Fonctionnalités Clés
+## Fonctionnalités Clés
 
-### 👤 Espace Client
+### Espace Client
 - **Catalogue Intelligent** : Recherche facilitée par filtres avancés (prix, catégories, régions).
 - **Chatbot IA** : Un assistant virtuel (Gemini AI) disponible 24/7 pour conseiller les clients.
 - **Panier & Favoris** : Gestion fluide des achats et liste de souhaits.
 - **Suivi en Temps Réel** : Historique des commandes et suivi de livraison intégré.
 - **Paiement Sécurisé** : Option de paiement à la livraison.
 
-### 🛠️ Espace Administration
+### Espace Administration
 - **Tableau de Bord** : Statistiques de ventes et analyse des performances en temps réel.
 - **Gestion du Catalogue** : Contrôle total sur les produits, variantes, stocks et images.
 - **Suivi Logistique** : Gestion centralisée des commandes et des livraisons par zone.
 - **Génération Documentaire** : Création automatique de factures et bons de livraison professionnels en PDF.
 
-## 🚀 Technologies Utilisées
+## Technologies Utilisées
 
 - **Backend** : C# / ASP.NET MVC 5 (.NET Framework 4.7.2)
 - **Base de données** : SQL Server (AWS RDS)
@@ -36,7 +36,7 @@
 - **Frontend** : JavaScript moderne, jQuery, Bootstrap 5
 - **Services** : SMTP Gmail (Notifications), iTextSharp (PDF)
 
-## 🛠️ Installation Rapide
+## Installation Rapide
 
 ```bash
 # 1. Cloner le projet
@@ -50,7 +50,7 @@ cp .env.example .env
 # Puis lancer via IIS Express (F5)
 ```
 
-## 🔒 Sécurité et Configuration
+## Sécurité et Configuration
 
 Le projet utilise un système de variables d'environnement via un fichier `.env` pour protéger :
 - La chaîne de connexion à la base de données.
