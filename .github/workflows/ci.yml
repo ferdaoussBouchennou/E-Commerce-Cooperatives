@@ -28,5 +28,9 @@ jobs:
       run: msbuild E-Commerce-Cooperatives.sln /p:Configuration=Release /p:Platform="Any CPU"
 
     - name: Run Tests
+      shell: pwsh
       run: |
-        & "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe" Tests\bin\Release\E-Commerce-Cooperatives.Tests.dll
+        $vstest = Get-ChildItem -Path "C:\Program Files*" -Filter vstest.console.exe -Recurse | Select-Object -First 1
+        if ($null -eq $vstest) { throw "vstest.console.exe not found" }
+        Write-Host "Using test runner: $($vstest.FullName)"
+        & $vstest.FullName Tests\bin\Release\E-Commerce-Cooperatives.Tests.dll
