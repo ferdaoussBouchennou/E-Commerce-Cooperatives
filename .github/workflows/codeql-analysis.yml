@@ -45,7 +45,7 @@ jobs:
 
     - name: Build (required for C#)
       if: matrix.language == 'csharp'
-      run: msbuild E-Commerce-Cooperatives.sln /p:Configuration=Release
+      run: msbuild E-Commerce-Cooperatives.sln /p:Configuration=Release /p:Platform="Any CPU"
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

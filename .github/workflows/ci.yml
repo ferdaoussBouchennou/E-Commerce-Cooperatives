@@ -27,8 +27,6 @@ jobs:
     - name: Build solution
       run: msbuild E-Commerce-Cooperatives.sln /p:Configuration=Release /p:Platform="Any CPU"
 
-    - name: Setup VSTest
-      uses: microsoft/setup-vstest@v1
-
     - name: Run Tests
-      run: vstest.console.exe Tests\bin\Release\E-Commerce-Cooperatives.Tests.dll
+      run: |
+        & "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe" Tests\bin\Release\E-Commerce-Cooperatives.Tests.dll
