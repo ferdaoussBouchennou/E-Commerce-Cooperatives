@@ -33,4 +33,9 @@ jobs:
         $vstest = Get-ChildItem -Path "C:\Program Files*" -Filter vstest.console.exe -Recurse | Select-Object -First 1
         if ($null -eq $vstest) { throw "vstest.console.exe not found" }
         Write-Host "Using test runner: $($vstest.FullName)"
-        & $vstest.FullName Tests\bin\Release\E-Commerce-Cooperatives.Tests.dll
+        
+        $testDll = Get-ChildItem -Path "Tests\bin" -Filter "E-Commerce-Cooperatives.Tests.dll" -Recurse | Select-Object -First 1
+        if ($null -eq $testDll) { throw "Test DLL not found in Tests/bin" }
+        Write-Host "Using test DLL: $($testDll.FullName)"
+        
+        & $vstest.FullName $testDll.FullName
