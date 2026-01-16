@@ -1,0 +1,34 @@
+name: .NET Framework CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1
+      with:
+        nuget-version: 'latest'
+
+    - name: Restore NuGet Packages
+      run: nuget restore E-Commerce-Cooperatives.sln
+
+    - name: Build solution
+      run: msbuild E-Commerce-Cooperatives.sln /p:Configuration=Release /p:Platform="Any CPU"
+
+    - name: Setup VSTest
+      uses: microsoft/setup-vstest@v1
+
+    - name: Run Tests
+      run: vstest.console.exe Tests\bin\Release\E-Commerce-Cooperatives.Tests.dll

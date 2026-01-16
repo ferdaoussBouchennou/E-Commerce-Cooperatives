@@ -449,6 +449,7 @@
     <Content Include="Views\UserSpace\EditAddress.cshtml" />
     <Content Include="Views\UserSpace\ChangePassword.cshtml" />
     <Content Include="Views\UserSpace\Preferences.cshtml" />
+    <Content Include="Views\UserSpace\MesAvis.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
