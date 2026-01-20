@@ -14,7 +14,7 @@
 
     <!-- Stats Cards -->
     <div class="stats-cards">
-        <div class="stat-card">
+        <div class="stat-card stat-pending">
             <div class="stat-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
@@ -25,7 +25,7 @@
                 <div class="stat-label">Modes de livraison</div>
             </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card stat-preparation">
             <div class="stat-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
@@ -36,7 +36,7 @@
                 <div class="stat-label">Zones couvertes</div>
             </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card stat-shipped">
             <div class="stat-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
@@ -48,7 +48,7 @@
                 <div class="stat-label">Livraisons ce mois</div>
             </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card stat-delivered">
             <div class="stat-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c2.27-.179 3.678-1.438 3.678-3.3 0-1.59-.947-2.51-2.956-3.028l-.722-.187V3.467c1.122.11 1.879.714 2.07 1.616h1.47c-.166-1.6-1.54-2.748-3.54-2.875V1H7.591v1.233c-1.939.23-3.27 1.472-3.27 3.156 0 1.454.966 2.483 2.661 2.917l.61.162v4.031c-1.149-.17-1.94-.8-2.131-1.718H4zm3.391-3.836c-1.043-.263-1.6-.825-1.6-1.616 0-.944.704-1.641 1.8-1.828v3.495l-.2-.05zm1.591 1.872c1.287.323 1.852.859 1.852 1.769 0 1.097-.826 1.828-2.2 1.939V8.73l.348.086z"/>
@@ -105,10 +105,6 @@
                             <span class="mode-detail-label">Tarif de livraison</span>
                             <span class="mode-detail-value">@mode.Tarif.ToString("0") MAD</span>
                         </div>
-                        <div class="mode-detail-item">
-                            <span class="mode-detail-label">Délai de livraison</span>
-                            <span class="mode-detail-delai">@(mode.DelaiEstime ?? "Non spécifié")</span>
-                        </div>
                     </div>
                     @if (!mode.EstActif)
                     {
@@ -122,7 +118,7 @@
     </div>
 
     <!-- Zones de livraison Section -->
-    <div class="livraison-section" style="margin-top: 32px; width: 100%; max-width: 100%;">
+    <div id="zones-livraison" class="livraison-section" style="margin-top: 32px; width: 100%; max-width: 100%;">
         <div class="section-header">
             <h2 class="section-title">Zones de livraison</h2>
             <button class="btn btn-primary" onclick="openCreateZoneModal()">
@@ -139,7 +135,7 @@
                     <tr>
                         <th>Zone / Ville</th>
                         <th>Supplément</th>
-                        <th>Délai estimé</th>
+                        <th>Délais de livraison</th>
                         <th>Statut</th>
                         <th>Actions</th>
                     </tr>
@@ -172,7 +168,10 @@
                                     }
                                 </td>
                                 <td>
-                                    <span class="zone-delai">@zone.DelaiEstime</span>
+                                    <div class="zone-delai">
+                                        <div><strong>Standard:</strong> @zone.DelaiMinStandard-@zone.DelaiMaxStandard jours</div>
+                                        <div><strong>Express:</strong> @zone.DelaiMinExpress-@zone.DelaiMaxExpress jours</div>
+                                    </div>
                                 </td>
                                 <td>
                                     @if (zone.EstActif)
@@ -225,12 +224,12 @@
         {
             <div class="pagination-container">
                 <div class="pagination-info">
-                    Affichage de @((currentPage - 1) * 5 + 1) à @(System.Math.Min(currentPage * 5, zonesPaged.TotalCount)) sur @zonesPaged.TotalCount zones
+                    Affichage de @((currentPage - 1) * 10 + 1) à @(System.Math.Min(currentPage * 10, zonesPaged.TotalCount)) sur @zonesPaged.TotalCount zones
                 </div>
                 <div class="pagination">
                     @if (zonesPaged.HasPreviousPage)
                     {
-                        <a href="@Url.Action("Livraison", "Admin", new { page = currentPage - 1 })" class="pagination-btn">
+                        <a href="@Url.Action("Livraison", "Admin", new { page = currentPage - 1 })#zones-livraison" class="pagination-btn">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                 <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
                             </svg>
@@ -255,7 +254,7 @@
                         }
                         else if (i == 1 || i == zonesPaged.TotalPages || (i >= currentPage - 1 && i <= currentPage + 1))
                         {
-                            <a href="@Url.Action("Livraison", "Admin", new { page = i })" class="pagination-page">@i</a>
+                            <a href="@Url.Action("Livraison", "Admin", new { page = i })#zones-livraison" class="pagination-page">@i</a>
                         }
                         else if (i == currentPage - 2 || i == currentPage + 2)
                         {
@@ -265,7 +264,7 @@
 
                     @if (zonesPaged.HasNextPage)
                     {
-                        <a href="@Url.Action("Livraison", "Admin", new { page = currentPage + 1 })" class="pagination-btn">
+                        <a href="@Url.Action("Livraison", "Admin", new { page = currentPage + 1 })#zones-livraison" class="pagination-btn">
                             Suivant
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                 <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
@@ -306,8 +305,18 @@
                 <small style="color: var(--text-muted);">Mettez 0 pour "Gratuit"</small>
             </div>
             <div class="form-group">
-                <label for="DelaiEstimeZone">Délai estimé *</label>
-                <input type="text" id="DelaiEstimeZone" name="DelaiEstime" class="form-control" placeholder="Ex: 1-2 jours" required />
+                <label>Délais Standard (en jours) *</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="DelaiMinStandard" name="DelaiMinStandard" class="form-control" placeholder="Min" min="1" required />
+                    <input type="number" id="DelaiMaxStandard" name="DelaiMaxStandard" class="form-control" placeholder="Max" min="1" required />
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Délais Express (en jours) *</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="DelaiMinExpress" name="DelaiMinExpress" class="form-control" placeholder="Min" min="1" required />
+                    <input type="number" id="DelaiMaxExpress" name="DelaiMaxExpress" class="form-control" placeholder="Max" min="1" required />
+                </div>
             </div>
             <div class="form-group">
                 <label>
@@ -343,10 +352,6 @@
             <div class="form-group">
                 <label for="Tarif">Tarif (MAD) *</label>
                 <input type="number" id="Tarif" name="Tarif" class="form-control" step="0.01" min="0" required />
-            </div>
-            <div class="form-group">
-                <label for="DelaiEstime">Délai estimé *</label>
-                <input type="text" id="DelaiEstime" name="DelaiEstime" class="form-control" placeholder="Ex: 3-5 jours ouvrables" required />
             </div>
             <div class="form-group">
                 <label>
@@ -385,16 +390,23 @@
                         document.getElementById('Nom').value = data.mode.Nom;
                         document.getElementById('Description').value = data.mode.Description || '';
                         document.getElementById('Tarif').value = data.mode.Tarif;
-                        document.getElementById('DelaiEstime').value = data.mode.DelaiEstime || '';
                         document.getElementById('EstActif').checked = data.mode.EstActif;
                         document.getElementById('modeModal').style.display = 'block';
                     } else {
-                        alert('Erreur: ' + data.message);
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification(data.message || 'Erreur lors du chargement', 'error');
+                        } else {
+                            alert('Erreur: ' + data.message);
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Erreur lors du chargement des données');
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification('Erreur lors du chargement des données', 'error');
+                    } else {
+                        alert('Erreur lors du chargement des données');
+                    }
                 });
         }
 
@@ -421,36 +433,103 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    alert(result.message);
-                    location.reload();
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification(result.message || 'Enregistré avec succès', 'success');
+                        setTimeout(function() { location.reload(); }, 1500);
+                    } else {
+                        alert(result.message);
+                        location.reload();
+                    }
                 } else {
-                    alert('Erreur: ' + result.message);
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification(result.message || 'Erreur lors de l\'enregistrement', 'error');
+                    } else {
+                        alert('Erreur: ' + result.message);
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Erreur lors de l\'enregistrement');
+                if (typeof showAdminNotification !== 'undefined') {
+                    showAdminNotification('Erreur lors de l\'enregistrement', 'error');
+                } else {
+                    alert('Erreur lors de l\'enregistrement');
+                }
             });
         }
 
         function deleteMode(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer ce mode de livraison ?')) {
-                fetch('@Url.Action("DeleteModeLivraison", "Admin")?id=' + id, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        alert(result.message);
-                        location.reload();
-                    } else {
-                        alert('Erreur: ' + result.message);
+            if (typeof showAdminConfirm !== 'undefined') {
+                showAdminConfirm(
+                    'Êtes-vous sûr de vouloir supprimer ce mode de livraison ?\n\nCette action est irréversible.',
+                    'Confirmation de suppression',
+                    'Supprimer',
+                    'Annuler'
+                ).then(function(confirmed) {
+                    if (confirmed) {
+                        fetch('@Url.Action("DeleteModeLivraison", "Admin")?id=' + id, {
+                            method: 'POST'
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                                if (typeof showAdminNotification !== 'undefined') {
+                                    showAdminNotification(result.message || 'Mode de livraison supprimé avec succès', 'success');
+                                    setTimeout(function() { location.reload(); }, 1500);
+                                } else {
+                                    alert(result.message);
+                                    location.reload();
+                                }
+                            } else {
+                                if (typeof showAdminNotification !== 'undefined') {
+                                    showAdminNotification(result.message || 'Erreur lors de la suppression', 'error');
+                                } else {
+                                    alert('Erreur: ' + result.message);
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification('Erreur lors de la suppression', 'error');
+                            } else {
+                                alert('Erreur lors de la suppression');
+                            }
+                        });
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Erreur lors de la suppression');
                 });
+            } else {
+                if (confirm('Êtes-vous sûr de vouloir supprimer ce mode de livraison ?')) {
+                    fetch('@Url.Action("DeleteModeLivraison", "Admin")?id=' + id, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification(result.message || 'Mode de livraison supprimé avec succès', 'success');
+                                setTimeout(function() { location.reload(); }, 1500);
+                            } else {
+                                alert(result.message);
+                                location.reload();
+                            }
+                        } else {
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification(result.message || 'Erreur lors de la suppression', 'error');
+                            } else {
+                                alert('Erreur: ' + result.message);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification('Erreur lors de la suppression', 'error');
+                        } else {
+                            alert('Erreur lors de la suppression');
+                        }
+                    });
+                }
             }
         }
 
@@ -476,6 +555,10 @@
             document.getElementById('ZoneLivraisonId').value = '';
             document.getElementById('EstActifZone').checked = true;
             document.getElementById('Supplement').value = '0';
+            document.getElementById('DelaiMinStandard').value = '';
+            document.getElementById('DelaiMaxStandard').value = '';
+            document.getElementById('DelaiMinExpress').value = '';
+            document.getElementById('DelaiMaxExpress').value = '';
             document.getElementById('zoneModal').style.display = 'block';
         }
 
@@ -490,16 +573,27 @@
                         document.getElementById('ZoneLivraisonId').value = data.zone.ZoneLivraisonId;
                         document.getElementById('ZoneVille').value = data.zone.ZoneVille;
                         document.getElementById('Supplement').value = data.zone.Supplement;
-                        document.getElementById('DelaiEstimeZone').value = data.zone.DelaiEstime || '';
+                        document.getElementById('DelaiMinStandard').value = data.zone.DelaiMinStandard || '';
+                        document.getElementById('DelaiMaxStandard').value = data.zone.DelaiMaxStandard || '';
+                        document.getElementById('DelaiMinExpress').value = data.zone.DelaiMinExpress || '';
+                        document.getElementById('DelaiMaxExpress').value = data.zone.DelaiMaxExpress || '';
                         document.getElementById('EstActifZone').checked = data.zone.EstActif;
                         document.getElementById('zoneModal').style.display = 'block';
                     } else {
-                        alert('Erreur: ' + data.message);
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification(data.message || 'Erreur lors du chargement', 'error');
+                        } else {
+                            alert('Erreur: ' + data.message);
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Erreur lors du chargement des données');
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification('Erreur lors du chargement des données', 'error');
+                    } else {
+                        alert('Erreur lors du chargement des données');
+                    }
                 });
         }
 
@@ -525,37 +619,116 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    alert(result.message);
-                    location.reload();
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification(result.message || 'Zone enregistrée avec succès', 'success');
+                        setTimeout(function() { location.reload(); }, 1500);
+                    } else {
+                        alert(result.message);
+                        location.reload();
+                    }
                 } else {
-                    alert('Erreur: ' + result.message);
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification(result.message || 'Erreur lors de l\'enregistrement', 'error');
+                    } else {
+                        alert('Erreur: ' + result.message);
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Erreur lors de l\'enregistrement');
+                if (typeof showAdminNotification !== 'undefined') {
+                    showAdminNotification('Erreur lors de l\'enregistrement', 'error');
+                } else {
+                    alert('Erreur lors de l\'enregistrement');
+                }
             });
         }
 
         function deleteZone(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer cette zone de livraison ?')) {
-                fetch('@Url.Action("DeleteZoneLivraison", "Admin")?id=' + id, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        alert(result.message);
-                        location.reload();
-                    } else {
-                        alert('Erreur: ' + result.message);
+            if (typeof showAdminConfirm !== 'undefined') {
+                showAdminConfirm(
+                    'Êtes-vous sûr de vouloir supprimer cette zone de livraison ?\n\nCette action est irréversible.',
+                    'Confirmation de suppression',
+                    'Supprimer',
+                    'Annuler'
+                ).then(function(confirmed) {
+                    if (confirmed) {
+                        fetch('@Url.Action("DeleteZoneLivraison", "Admin")?id=' + id, {
+                            method: 'POST'
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                                if (typeof showAdminNotification !== 'undefined') {
+                                    showAdminNotification(result.message || 'Zone supprimée avec succès', 'success');
+                                    setTimeout(function() { location.reload(); }, 1500);
+                                } else {
+                                    alert(result.message);
+                                    location.reload();
+                                }
+                            } else {
+                                if (typeof showAdminNotification !== 'undefined') {
+                                    showAdminNotification(result.message || 'Erreur lors de la suppression', 'error');
+                                } else {
+                                    alert('Erreur: ' + result.message);
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification('Erreur lors de la suppression', 'error');
+                            } else {
+                                alert('Erreur lors de la suppression');
+                            }
+                        });
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Erreur lors de la suppression');
                 });
+            } else {
+                if (confirm('Êtes-vous sûr de vouloir supprimer cette zone de livraison ?')) {
+                    fetch('@Url.Action("DeleteZoneLivraison", "Admin")?id=' + id, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification(result.message || 'Zone supprimée avec succès', 'success');
+                                setTimeout(function() { location.reload(); }, 1500);
+                            } else {
+                                alert(result.message);
+                                location.reload();
+                            }
+                        } else {
+                            if (typeof showAdminNotification !== 'undefined') {
+                                showAdminNotification(result.message || 'Erreur lors de la suppression', 'error');
+                            } else {
+                                alert('Erreur: ' + result.message);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification('Erreur lors de la suppression', 'error');
+                        } else {
+                            alert('Erreur lors de la suppression');
+                        }
+                    });
+                }
             }
         }
+
+        // Scroll vers la section des zones de livraison si un ancrage est présent dans l'URL
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.location.hash === '#zones-livraison') {
+                const zonesSection = document.getElementById('zones-livraison');
+                if (zonesSection) {
+                    setTimeout(function() {
+                        zonesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                }
+            }
+        });
     </script>
 }

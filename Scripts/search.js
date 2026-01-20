@@ -37,7 +37,8 @@
         });
 
         function fetchSuggestions(term, container, input) {
-            fetch('/Catalogue/Suggestions?term=' + encodeURIComponent(term))
+            const timestamp = new Date().getTime();
+            fetch('/Catalogue/Suggestions?term=' + encodeURIComponent(term) + '&t=' + timestamp)
                 .then(response => response.json())
                 .then(data => {
                     renderSuggestions(data, container, input);
@@ -69,15 +70,6 @@
                     </a>
                 `;
             });
-            
-            // Add "See all results" link via form submission if possible, else link
-            if (input.form) {
-             html += `
-                <button type="submit" form="${input.form.id}" class="list-group-item list-group-item-action text-center text-primary small fw-bold py-2 bg-light border-top">
-                    Voir tous les résultats
-                </button>
-            `;
-            }
 
             html += '</div>';
             

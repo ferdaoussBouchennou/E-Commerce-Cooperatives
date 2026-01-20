@@ -1,0 +1,94 @@
+@model IEnumerable<E_Commerce_Cooperatives.Models.Produit>
+@{
+    ViewBag.Title = "Mes Favoris";
+}
+
+@Html.Partial("_Header")
+
+<main class="container py-5 mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="display-5 fw-bold mb-2">Mes Favoris</h1>
+            <p class="text-muted">Retrouvez ici tous les produits que vous avez aimés.</p>
+        </div>
+        <a href="@Url.Action("Index", "Catalogue")" class="btn btn-customer-terracotta btn-outline rounded-pill px-4">
+            Retour au catalogue
+        </a>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="#e0e0e0" class="bi bi-heartbreak" viewBox="0 0 16 16">
+                    <path d="M8.867 14.41c13.308-9.322 4.79-16.563.064-13.824L7 3l1.5 4-2 3L8 15a38 38 0 0 0 .867-.59m-.303-1.01c.967-.676 1.903-1.34 2.746-2.027C12.452 10.422 14 8.5 14 6c0-1.5-.5-3-1-3.5-.5-.5-1.5-1-2.5-1-1.5 0-2.5 1-3 2.5a3 3 0 0 1-1.127-1.47l-1.01 1.01 1.01 1.01a3 3 0 0 1 1.47 1.127c-.5.5-1 1.5-1 3 0 2.5 1.548 4.422 2.69 5.373a27 27 0 0 0 1.523 1.132l.004.003L8 14.4z"/>
+                    <path d="M7 14.41c-13.308-9.322-4.79-16.563-.064-13.824L9 3l-1.5 4 2 3L8 15a38 38 0 0 1-.867-.59m.303-1.01C6.336 12.724 5.4 12.06 4.557 11.373 3.548 10.422 2 8.5 2 6c0-1.5.5-3 1-3.5.5-.5 1.5-1 2.5-1 1.5 0 2.5 1 3 2.5a3 3 0 0 0 1.127-1.47l1.01 1.01-1.01 1.01a3 3 0 0 0-1.47 1.127c.5.5 1 1.5 1 3 0 2.5-1.548 4.422-2.69 5.373a27 27 0 0 1-1.523 1.132l-.004.003L8 14.4z"/>
+                </svg>
+            </div>
+            <h3 class="h4 fw-bold">Votre liste est vide</h3>
+            <p class="text-muted mb-4">Parcourez notre catalogue et ajoutez vos coups de cœur.</p>
+            <a href="@Url.Action("Index", "Catalogue")" class="btn btn-customer-terracotta rounded-pill px-5 py-3">
+                Découvrir nos produits
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4" id="favoris-grid">
+            @foreach (var produit in Model)
+            {
+                <div class="col-sm-6 col-md-4 col-lg-3 favori-item-container" data-produit-id="@produit.ProduitId">
+                    @Html.Partial("_ProductCard", produit)
+                </div>
+            }
+        </div>
+    }
+    <style>
+        .btn-customer-terracotta {
+            background-color: #C06C50;
+            color: white;
+            border: 1.5px solid #C06C50;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-customer-terracotta:hover {
+            background-color: #A5563D;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(192, 108, 80, 0.2);
+        }
+        .btn-customer-terracotta.btn-outline {
+            background-color: transparent;
+            color: #C06C50;
+        }
+        .btn-customer-terracotta.btn-outline:hover {
+            background-color: #C06C50;
+            color: white;
+        }
+    </style>
+</main>
+
+@Html.Partial("_Footer")
+
+@section scripts {
+    <script>
+        // Special handling for favoris page - if removed, hide from grid
+        document.addEventListener('favoriToggled', function(e) {
+            const { produitId, action } = e.detail;
+            if (action === 'removed') {
+                const item = document.querySelector(`.favori-item-container[data-produit-id="${produitId}"]`);
+                if (item) {
+                    item.style.transition = 'all 0.3s ease';
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        item.remove();
+                        if (document.querySelectorAll('.favori-item-container').length === 0) {
+                            location.reload(); // Show "list is empty" state
+                        }
+                    }, 300);
+                }
+            }
+        });
+    </script>
+}

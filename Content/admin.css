@@ -6,71 +6,102 @@
 /* Platform Color Palette - From index.css */
 :root {
     /* Platform primary colors */
-    --background: #F5F3EF; /* Blanco Roto */
-    --foreground: #305C7D; /* Azul Profundo */
-    --primary: #305C7D; /* Deep Blue */
-    --secondary: #E8DCC2; /* Soft Sand */
-    --accent: #C06C50; /* Terracotta */
-    --olive: #7D8453; /* Olive Green */
-    --muted: hsl(39, 30%, 90%); /* Light Sand - approximately #E8E5DF */
-    --muted-foreground: hsl(203, 20%, 50%); /* Bluish gray for secondary text */
-    --destructive: hsl(0, 84.2%, 60.2%); /* Rouge - Red */
-    
+    --background: #F5F3EF;
+    /* Blanco Roto */
+    --foreground: #305C7D;
+    /* Azul Profundo */
+    --primary: #305C7D;
+    /* Deep Blue */
+    --secondary: #E8DCC2;
+    /* Soft Sand */
+    --accent: #C06C50;
+    /* Terracotta */
+    --olive: #7D8453;
+    /* Olive Green */
+    --muted: hsl(39, 30%, 90%);
+    /* Light Sand - approximately #E8E5DF */
+    --muted-foreground: hsl(203, 20%, 50%);
+    /* Bluish gray for secondary text */
+    --destructive: hsl(0, 84.2%, 60.2%);
+    /* Rouge - Red */
+
     /* Sidebar colors */
     --sidebar-bg: #2B4C60;
     --sidebar-active: #4C7089;
     --sidebar-hover: rgba(255, 255, 255, 0.1);
     --sidebar-text: #ffffff;
-    
+
     /* Main content background - using platform background */
     --admin-bg: var(--background);
-    
+
     /* Text colors - using platform colors */
     --text-dark: var(--foreground);
     --text-muted: var(--muted-foreground);
     --text-light: #999999;
-    
+
     /* Border colors */
     --border-light: #D0D0D0;
     --border-table: #EAEAEA;
-    
+
     /* Status card background colors - EXACT colors from image */
-    --stat-total-bg: #F5F1ED; /* Light beige for Total card */
-    --stat-pending-bg: #EBD9B6; /* Warm beige/sand for Validée/En attente */
-    --stat-preparation-bg: #EFD1C1; /* Light pinkish-peach for Préparation */
-    --stat-shipped-bg: #BFCED8; /* Muted blue-grey/teal-grey for Expédiées */
-    --stat-delivered-bg: #D8DDAF; /* Light olive green/pale sage green for Livrées */
-    
+    --stat-total-bg: #F5F1ED;
+    /* Light beige for Total card */
+    --stat-pending-bg: #EBD9B6;
+    /* Warm beige/sand for Validée/En attente */
+    --stat-preparation-bg: #EFD1C1;
+    /* Light pinkish-peach for Préparation */
+    --stat-shipped-bg: #BFCED8;
+    /* Muted blue-grey/teal-grey for Expédiées */
+    --stat-delivered-bg: #D8DDAF;
+    /* Light olive green/pale sage green for Livrées */
+
     /* Stat card text colors - EXACT colors from image */
-    --stat-number-color: #325A77; /* Dark blue */
-    --stat-label-color: #6D6C6A; /* Dark grey */
-    
+    --stat-number-color: #325A77;
+    --stat-label-color: #6D6C6A;
+
+    /* Specific category color schemes - EXACT colors from Image 0 */
+    --cat-cosmetique-bg: #F0DCC8;
+    --cat-cosmetique-text: #8B6B47;
+    --cat-poterie-bg: #FDFBF7;
+    --cat-poterie-text: #5A6C7D;
+    --cat-alimentaire-bg: #E8DCC2;
+    --cat-alimentaire-text: #7A663C;
+
+
     /* Status badge colors - using platform colors (light versions) */
-    --badge-pending-bg: var(--secondary); /* #E8DCC2 - Sable doux */
+    --badge-pending-bg: var(--secondary);
+    /* #E8DCC2 - Sable doux */
     --badge-pending-text: #7A663C;
-    --badge-preparation-bg: rgba(192, 108, 80, 0.25); /* Terracotta clair - rose/peach */
+    --badge-preparation-bg: rgba(192, 108, 80, 0.25);
+    /* Terracotta clair - rose/peach */
     --badge-preparation-text: #8B4A3A;
-    --badge-shipped-bg: rgba(48, 92, 125, 0.2); /* Bleu clair */
+    --badge-shipped-bg: rgba(48, 92, 125, 0.2);
+    /* Bleu clair */
     --badge-shipped-text: #305C7D;
-    --badge-delivered-bg: rgba(125, 132, 83, 0.25); /* Vert olive clair */
+    --badge-delivered-bg: rgba(125, 132, 83, 0.25);
+    /* Vert olive clair */
     --badge-delivered-text: #5A6238;
-    --badge-cancelled-bg: rgba(220, 53, 69, 0.2); /* Rouge clair */
+    --badge-cancelled-bg: rgba(220, 53, 69, 0.2);
+    /* Rouge clair */
     --badge-cancelled-text: #C82333;
-    
+
     /* Link/Accent color - using platform primary */
     --link-color: var(--primary);
-    
+
     /* Delivery badge colors - light platform colors */
-    --badge-standard: #EEDCA8; /* Beige clair */
-    --badge-express: #FFB366; /* Orange clair */
-    --badge-point-relais: rgba(125, 132, 83, 0.3); /* Vert olive clair */
-    
+    --badge-standard: #EEDCA8;
+    /* Beige clair */
+    --badge-express: #FFB366;
+    /* Orange clair */
+    --badge-point-relais: rgba(125, 132, 83, 0.3);
+    /* Vert olive clair */
+
     /* Notification badge */
     --notification-badge: var(--destructive);
-    
+
     /* Avatar background */
     --avatar-bg: #666666;
-    
+
     /* Typography - Platform Fonts */
     --font-display: 'Playfair Display', Georgia, serif;
     --font-sans: 'Source Sans 3', system-ui, sans-serif;
@@ -80,7 +111,8 @@
     margin: 0;
     padding: 0;
     background-color: var(--admin-bg);
-    font-family: var(--font-sans); /* Source Sans 3 for body text */
+    font-family: var(--font-sans);
+    /* Source Sans 3 for body text */
 }
 
 /* Typography - Headings use Playfair Display */
@@ -90,8 +122,14 @@
 .admin-content h4,
 .admin-content h5,
 .admin-content h6,
-h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display); /* Playfair Display for titles */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-display);
+    /* Playfair Display for titles */
 }
 
 .admin-container {
@@ -99,20 +137,39 @@ h1, h2, h3, h4, h5, h6 {
     min-height: 100vh;
 }
 
-/* Sidebar */
+/* Sidebar - Modern Design */
 .admin-sidebar {
     position: fixed;
     left: 0;
     top: 0;
-    width: 256px;
+    width: 270px;
     height: 100vh;
-    background-color: var(--sidebar-bg);
+    background: linear-gradient(180deg, #2B4C60 0%, #1e3a4d 100%);
     color: var(--sidebar-text);
     z-index: 1000;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    font-family: Georgia, serif;
+    font-family: var(--font-sans);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom scrollbar for sidebar */
+.admin-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 /* Forcer toutes les images dans la sidebar à ne pas avoir de filtre */
@@ -125,11 +182,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .sidebar-header {
-    padding: 24px;
+    padding: 32px 24px 28px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 12px;
+    background: rgba(255, 255, 255, 0.02);
 }
 
 /* Forcer le logo à s'afficher en couleur - Règle très spécifique */
@@ -156,16 +216,19 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 .sidebar-header img[src*="logo-coop"] {
     height: auto !important;
     width: 100% !important;
-    max-width: 180px !important;
-    max-height: 120px !important;
-    margin-bottom: 12px;
+    max-width: 100px !important;
+    max-height: 100px !important;
+    margin-bottom: 16px;
     filter: none !important;
     -webkit-filter: none !important;
     -moz-filter: none !important;
     -ms-filter: none !important;
     -o-filter: none !important;
     opacity: 1 !important;
-    background: transparent !important;
+    background: #F5E6D3 !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     mix-blend-mode: normal !important;
     image-rendering: auto !important;
     object-fit: contain !important;
@@ -177,88 +240,108 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 }
 
 .sidebar-title {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
     margin: 0;
-    font-family: Georgia, serif;
+    font-family: var(--font-sans);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
 }
 
 .sidebar-nav {
-    padding: 0 16px;
+    padding: 8px 16px;
     flex: 1;
 }
 
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    color: var(--sidebar-text);
+    gap: 14px;
+    padding: 13px 16px;
+    color: rgba(255, 255, 255, 0.75);
     text-decoration: none;
-    border-radius: 8px;
-    transition: background-color 0.2s;
+    border-radius: 12px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     margin-bottom: 4px;
     position: relative;
-    font-family: Georgia, serif;
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    font-weight: 500;
 }
 
 .nav-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--sidebar-text);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
     text-decoration: none;
+    transform: translateX(2px);
 }
 
 .nav-item.active {
-    background-color: var(--sidebar-active);
-    color: var(--sidebar-text);
+    background: linear-gradient(135deg, rgba(232, 220, 194, 0.18) 0%, rgba(232, 220, 194, 0.08) 100%);
+    color: #ffffff;
+    box-shadow: inset 3px 0 0 #E8DCC2;
 }
 
 .nav-item.active::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 60%;
-    background-color: var(--sidebar-active);
-    border-radius: 0 2px 2px 0;
+    display: none;
 }
 
 .nav-item svg {
     flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.nav-item:hover svg,
+.nav-item.active svg {
+    opacity: 1;
 }
 
 .sidebar-footer {
-    padding: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px 16px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: auto;
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .sidebar-return {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: var(--sidebar-text);
+    justify-content: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    padding: 8px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-    font-family: Georgia, serif;
+    padding: 12px 16px;
+    border-radius: 10px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-return:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--sidebar-text);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
     text-decoration: none;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-return svg {
+    transition: transform 0.25s ease;
+}
+
+.sidebar-return:hover svg {
+    transform: translateX(-3px);
 }
 
 /* Main Content Area */
 .admin-main {
-    margin-left: 256px;
+    margin-left: 270px;
     flex: 1;
     display: flex;
-    width: calc(100% - 256px);
-    max-width: calc(100% - 256px);
+    width: calc(100% - 270px);
+    max-width: calc(100% - 270px);
     flex-direction: column;
     min-height: 100vh;
 }
@@ -380,14 +463,17 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 .admin-page-title {
     font-size: 1.75em;
     font-weight: 700;
-    color: var(--foreground); /* text-foreground */
+    color: var(--foreground);
+    /* text-foreground */
     margin: 0 0 6px 0;
-    font-family: var(--font-display); /* Playfair Display for titles */
+    font-family: var(--font-display);
+    /* Playfair Display for titles */
 }
 
 .admin-page-subtitle {
     font-size: 0.85em;
-    color: var(--muted-foreground); /* text-muted-foreground */
+    color: var(--muted-foreground);
+    /* text-muted-foreground */
     margin: 0;
     font-weight: 400;
 }
@@ -651,54 +737,66 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
     padding: 16px;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    text-align: left; /* Left-aligned text as in image */
+    text-align: left;
+    /* Left-aligned text as in image */
 }
 
 .stat-card.stat-total {
-    background-color: var(--stat-total-bg); /* Light beige */
+    background-color: var(--stat-total-bg);
+    /* Light beige */
 }
 
 .stat-card.stat-pending {
-    background-color: var(--stat-pending-bg); /* Muted light golden-yellow/sand */
+    background-color: var(--stat-pending-bg);
+    /* Muted light golden-yellow/sand */
 }
 
 .stat-card.stat-preparation {
-    background-color: var(--stat-preparation-bg); /* Soft light peach/dusty pink */
+    background-color: var(--stat-preparation-bg);
+    /* Soft light peach/dusty pink */
 }
 
 .stat-card.stat-shipped {
-    background-color: var(--stat-shipped-bg); /* Cool light blue-grey */
+    background-color: var(--stat-shipped-bg);
+    /* Cool light blue-grey */
 }
 
 .stat-card.stat-delivered {
-    background-color: var(--stat-delivered-bg); /* Light desaturated olive green/khaki */
+    background-color: var(--stat-delivered-bg);
+    /* Light desaturated olive green/khaki */
 }
 
 /* Override white background for colored stat cards in admin pages */
-.admin-page > .stats-cards .stat-card.stat-total {
-    background-color: var(--stat-total-bg) !important; /* Light beige */
+.admin-page>.stats-cards .stat-card.stat-total {
+    background-color: var(--stat-total-bg) !important;
+    /* Light beige */
 }
 
-.admin-page > .stats-cards .stat-card.stat-pending {
-    background-color: var(--stat-pending-bg) !important; /* Warm beige/sand */
+.admin-page>.stats-cards .stat-card.stat-pending {
+    background-color: var(--stat-pending-bg) !important;
+    /* Warm beige/sand */
 }
 
-.admin-page > .stats-cards .stat-card.stat-preparation {
-    background-color: var(--stat-preparation-bg) !important; /* Light pinkish-peach */
+.admin-page>.stats-cards .stat-card.stat-preparation {
+    background-color: var(--stat-preparation-bg) !important;
+    /* Light pinkish-peach */
 }
 
-.admin-page > .stats-cards .stat-card.stat-shipped {
-    background-color: var(--stat-shipped-bg) !important; /* Muted blue-grey/teal-grey */
+.admin-page>.stats-cards .stat-card.stat-shipped {
+    background-color: var(--stat-shipped-bg) !important;
+    /* Muted blue-grey/teal-grey */
 }
 
-.admin-page > .stats-cards .stat-card.stat-delivered {
-    background-color: var(--stat-delivered-bg) !important; /* Light olive green/pale sage green */
+.admin-page>.stats-cards .stat-card.stat-delivered {
+    background-color: var(--stat-delivered-bg) !important;
+    /* Light olive green/pale sage green */
 }
 
 .stat-value {
     font-size: 28px;
     font-weight: 700;
-    color: var(--stat-number-color); /* #325A77 - Dark blue from image */
+    color: var(--stat-number-color);
+    /* #325A77 - Dark blue from image */
     line-height: 1;
     margin-bottom: 4px;
     font-family: var(--font-display);
@@ -706,10 +804,253 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 
 .stat-label {
     font-size: 14px;
-    color: var(--stat-label-color); /* #6D6C6A - Dark grey from image */
+    color: var(--stat-label-color);
     font-weight: 400;
     font-family: var(--font-sans);
 }
+
+/* Category Grid & Cards - EXACTLY matching Image 0 */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.category-card {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.category-card-header {
+    height: 160px;
+    background-color: #F1EBE4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.category-card-header img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.category-folder-icon {
+    font-size: 48px;
+    color: #A0A0A0;
+    opacity: 0.6;
+}
+
+.category-card-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.category-card:hover .category-card-actions {
+    opacity: 1;
+}
+
+.btn-card-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-card-edit {
+    background-color: #EADBC0;
+    color: #2C3E50;
+}
+
+.btn-card-delete {
+    background-color: #EB5757;
+    color: white;
+}
+
+.category-card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.category-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #305C7D;
+    margin: 0;
+}
+
+.category-card-desc {
+    font-size: 14px;
+    color: #6D6C6A;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    flex: 1;
+}
+
+.category-card-footer {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: #305C7D;
+}
+
+/* Product Specific Table Styles - Image 1 */
+.product-image-cell {
+    width: 60px;
+}
+
+.product-image-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background-color: #F0F0F0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-image-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-info-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.product-name-text {
+    font-weight: 600;
+    color: #305C7D;
+    font-size: 15px;
+}
+
+.product-coop-text {
+    font-size: 12px;
+    color: #95A5A6;
+}
+
+.product-price-cell {
+    font-weight: 600;
+    color: #305C7D;
+}
+
+.badge-stock {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+    padding: 4px 10px;
+}
+
+.badge-stock-faible {
+    background-color: #FFEBEE;
+    color: #C62828;
+}
+
+.badge-dispo {
+    background-color: #7D8453;
+    color: white;
+}
+
+.badge-vedette {
+    background-color: #C06C50;
+    color: white;
+}
+
+/* Form Styles for Modals */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #305C7D;
+    font-size: 14px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #D0D0D0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    border-color: #305C7D;
+    box-shadow: 0 0 0 3px rgba(48, 92, 125, 0.1);
+    outline: none;
+}
+
+.form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #F0F0F0;
+}
+
+.btn-save {
+    background-color: #305C7D;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-cancel {
+    background-color: #F5F3EF;
+    color: #6D6C6A;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: 1px solid #D0D0D0;
+    cursor: pointer;
+}
+
 
 /* Table */
 .admin-table-container {
@@ -733,7 +1074,8 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
     padding: 16px;
     font-weight: 600;
     font-size: 14px;
-    color: var(--foreground); /* text-foreground */
+    color: var(--foreground);
+    /* text-foreground */
     border-bottom: none;
     text-align: left;
     background-color: transparent;
@@ -756,7 +1098,8 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 .order-number {
     font-family: 'Courier New', monospace;
     font-weight: 600;
-    color: var(--primary); /* text-primary */
+    color: var(--primary);
+    /* text-primary */
 }
 
 .client-info {
@@ -766,7 +1109,8 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 
 .client-name {
     font-weight: 600;
-    color: var(--primary); /* text-primary */
+    color: var(--primary);
+    /* text-primary */
     text-decoration: none;
     margin-bottom: 4px;
     transition: color 0.2s;
@@ -779,13 +1123,15 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 
 .client-email {
     font-size: 12px;
-    color: var(--muted-foreground); /* text-muted-foreground */
+    color: var(--muted-foreground);
+    /* text-muted-foreground */
     font-weight: 400;
 }
 
 .order-amount {
     font-weight: 600;
-    color: var(--foreground); /* text-foreground */
+    color: var(--foreground);
+    /* text-foreground */
 }
 
 /* Badges */
@@ -809,57 +1155,66 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 /* Status badges - matching image exactly with light platform colors */
 .badge-status.badge-validee,
 .badge-validee {
-    background-color: var(--badge-pending-bg); /* #E8DCC2 - Sable doux */
+    background-color: var(--badge-pending-bg);
+    /* #E8DCC2 - Sable doux */
     color: var(--badge-pending-text);
 }
 
 .badge-status.badge-preparation,
 .badge-preparation {
-    background-color: var(--badge-preparation-bg); /* Rose/peach clair */
+    background-color: var(--badge-preparation-bg);
+    /* Rose/peach clair */
     color: var(--badge-preparation-text);
 }
 
 .badge-status.badge-expediee,
 .badge-expediee {
-    background-color: var(--badge-shipped-bg); /* Bleu clair */
+    background-color: var(--badge-shipped-bg);
+    /* Bleu clair */
     color: var(--badge-shipped-text);
 }
 
 .badge-status.badge-livree,
 .badge-livree {
-    background-color: var(--badge-delivered-bg); /* Vert olive clair */
+    background-color: var(--badge-delivered-bg);
+    /* Vert olive clair */
     color: var(--badge-delivered-text);
 }
 
 .badge-status.badge-annulee,
 .badge-annulee {
-    background-color: var(--badge-cancelled-bg); /* Rouge clair */
+    background-color: var(--badge-cancelled-bg);
+    /* Rouge clair */
     color: var(--badge-cancelled-text);
 }
 
 /* Delivery badges - light platform colors */
 .badge-delivery {
-    background-color: var(--badge-standard); /* Beige clair */
+    background-color: var(--badge-standard);
+    /* Beige clair */
     color: #1a1a1a;
 }
 
 /* Badges de livraison spécifiques */
 .badge-livraison-standard,
 .badge-standard {
-    background-color: var(--badge-standard); /* #EEDCA8 - Beige clair */
+    background-color: var(--badge-standard);
+    /* #EEDCA8 - Beige clair */
     color: #1a1a1a;
 }
 
 .badge-livraison-express,
 .badge-express {
-    background-color: var(--badge-express); /* #FFB366 - Orange clair */
+    background-color: var(--badge-express);
+    /* #FFB366 - Orange clair */
     color: #8B4513;
 }
 
 .badge-livraison-point-relais,
 .badge-point-relais,
 .badge-retrait-en-magasin {
-    background-color: var(--badge-point-relais); /* Vert olive clair */
+    background-color: var(--badge-point-relais);
+    /* Vert olive clair */
     color: #5A6238;
 }
 
@@ -1020,10 +1375,12 @@ aside.admin-sidebar .sidebar-header img.sidebar-logo {
 .modal-title {
     font-size: 1.5em;
     font-weight: 700;
-    color: var(--foreground); /* text-foreground */
+    color: var(--foreground);
+    /* text-foreground */
     margin: 0;
     flex: 1;
-    font-family: var(--font-display); /* Playfair Display for titles */
+    font-family: var(--font-display);
+    /* Playfair Display for titles */
 }
 
 .btn-close {
@@ -1063,7 +1420,8 @@ body.modal-open {
 }
 
 .detail-card {
-    background-color: var(--secondary); /* bg-secondary - Sand background */
+    background-color: var(--secondary);
+    /* bg-secondary - Sand background */
     padding: 12px;
     border-radius: 8px;
     height: 100%;
@@ -1073,13 +1431,16 @@ body.modal-open {
     font-weight: 600;
     font-size: 13px;
     margin-bottom: 8px;
-    color: var(--foreground); /* text-foreground */
-    font-family: var(--font-display); /* Playfair Display for titles */
+    color: var(--foreground);
+    /* text-foreground */
+    font-family: var(--font-display);
+    /* Playfair Display for titles */
 }
 
 .detail-card p {
     margin: 0;
-    color: var(--foreground); /* text-foreground */
+    color: var(--foreground);
+    /* text-foreground */
     font-size: 14px;
     line-height: 1.5;
 }
@@ -1090,7 +1451,8 @@ body.modal-open {
 }
 
 .detail-card .text-muted {
-    color: var(--muted-foreground) !important; /* text-muted-foreground */
+    color: var(--muted-foreground) !important;
+    /* text-muted-foreground */
     font-size: 13px;
 }
 
@@ -1108,9 +1470,11 @@ body.modal-open {
 .order-items .detail-title {
     font-size: 15px;
     font-weight: 600;
-    color: var(--foreground); /* text-foreground */
+    color: var(--foreground);
+    /* text-foreground */
     margin-bottom: 12px;
-    font-family: var(--font-display); /* Playfair Display for titles */
+    font-family: var(--font-display);
+    /* Playfair Display for titles */
 }
 
 .order-items-table {
@@ -1153,7 +1517,8 @@ body.modal-open {
 
 .order-item-name {
     font-weight: 500;
-    color: var(--foreground); /* text-foreground */
+    color: var(--foreground);
+    /* text-foreground */
     font-size: 13px;
     margin-bottom: 1px;
     line-height: 1.3;
@@ -1161,14 +1526,16 @@ body.modal-open {
 
 .order-item-quantity {
     font-size: 11px;
-    color: var(--muted-foreground); /* text-muted-foreground */
+    color: var(--muted-foreground);
+    /* text-muted-foreground */
     line-height: 1.2;
 }
 
 .order-item-price {
     text-align: right;
     font-weight: 600;
-    color: var(--primary); /* text-primary - for total price */
+    color: var(--primary);
+    /* text-primary - for total price */
     font-size: 12px;
     line-height: 1.3;
 }
@@ -1276,14 +1643,17 @@ body.modal-open {
 .order-total-label {
     font-weight: 600;
     font-size: 16px;
-    color: var(--foreground); /* text-foreground */
-    font-family: var(--font-display); /* Playfair Display for labels */
+    color: var(--foreground);
+    /* text-foreground */
+    font-family: var(--font-display);
+    /* Playfair Display for labels */
 }
 
 .order-total-amount {
     font-weight: 700;
     font-size: 18px;
-    color: var(--primary); /* text-primary - for total price */
+    color: var(--primary);
+    /* text-primary - for total price */
 }
 
 /* Order Status Update Section */
@@ -1296,10 +1666,12 @@ body.modal-open {
 .order-status-update .form-label {
     font-weight: 600;
     font-size: 14px;
-    color: var(--foreground); /* text-foreground */
+    color: var(--foreground);
+    /* text-foreground */
     margin-bottom: 12px;
     display: block;
-    font-family: var(--font-display); /* Playfair Display for labels/titles */
+    font-family: var(--font-display);
+    /* Playfair Display for labels/titles */
 }
 
 .order-status-input-group {
@@ -1329,7 +1701,8 @@ body.modal-open {
 }
 
 .btn-update-status {
-    background-color: var(--primary); /* Using platform primary color */
+    background-color: var(--primary);
+    /* Using platform primary color */
     color: #ffffff;
     border: none;
     border-radius: 5px;
@@ -1342,7 +1715,8 @@ body.modal-open {
 }
 
 .btn-update-status:hover {
-    background-color: #1e3d54; /* Darker shade of primary */
+    background-color: #1e3d54;
+    /* Darker shade of primary */
     color: #ffffff;
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(48, 92, 125, 0.3);
@@ -1493,7 +1867,8 @@ body.modal-open {
 /* Print buttons - Now part of order-actions-section */
 .btn-print {
     background-color: #ffffff;
-    color: var(--foreground); /* text-foreground */
+    color: var(--foreground);
+    /* text-foreground */
     border: 1px solid var(--border-light);
     border-radius: 5px;
     padding: 8px 16px;
@@ -1534,7 +1909,8 @@ body.modal-open {
 
 /* Stat-total card uses exact color from image */
 .stat-total {
-    background-color: var(--stat-total-bg); /* Light beige - matching image */
+    background-color: var(--stat-total-bg);
+    /* Light beige - matching image */
 }
 
 /* Table row hover effect - subtle */
@@ -1600,7 +1976,7 @@ body.modal-open {
     .admin-main {
         margin-left: 0;
     }
-    
+
     .modal-dialog.modal-lg {
         max-width: 95% !important;
         width: 95% !important;
@@ -1619,50 +1995,50 @@ body.modal-open {
     .status-filter {
         width: 100%;
     }
-    
+
     .admin-page-title {
         font-size: 1.5em;
     }
-    
+
     .modal-dialog {
         margin: 16px;
     }
-    
+
     .order-status-input-group {
         flex-direction: column;
     }
-    
+
     .btn-update-status {
         width: 100%;
     }
-    
+
     .order-print-buttons {
         flex-direction: column;
     }
-    
+
     /* Sur les petits écrans, permettre le wrap */
     .order-actions-section {
         flex-wrap: wrap;
         gap: 8px;
     }
-    
+
     .order-actions-section .btn-cancel-order,
     .order-actions-section .btn-print {
         flex: 1 1 auto;
         min-width: 140px;
     }
-    
+
     .order-items-table td {
         display: block;
         width: 100% !important;
         text-align: left !important;
     }
-    
+
     .order-item-price {
         text-align: left !important;
         margin-top: 8px;
     }
-    
+
     .modal-dialog.modal-lg {
         max-width: calc(100% - 32px) !important;
         width: calc(100% - 32px) !important;
@@ -1682,7 +2058,7 @@ body.modal-open {
    ============================================ */
 
 /* Stats Cards pour Livraison - Style spécifique pour la page Livraison */
-.admin-page > .stats-cards .stat-card {
+.admin-page>.stats-cards .stat-card {
     background-color: #ffffff;
     border-radius: 10px;
     padding: 16px;
@@ -1693,7 +2069,7 @@ body.modal-open {
     min-height: 120px;
 }
 
-.admin-page > .stats-cards .stat-icon {
+.admin-page>.stats-cards .stat-icon {
     width: 40px;
     height: 40px;
     border-radius: 8px;
@@ -1706,12 +2082,12 @@ body.modal-open {
     flex-shrink: 0;
 }
 
-.admin-page > .stats-cards .stat-icon svg {
+.admin-page>.stats-cards .stat-icon svg {
     width: 20px;
     height: 20px;
 }
 
-.admin-page > .stats-cards .stat-value {
+.admin-page>.stats-cards .stat-value {
     font-size: 1.75em;
     font-weight: 700;
     color: var(--foreground);
@@ -1720,7 +2096,7 @@ body.modal-open {
     line-height: 1.2;
 }
 
-.admin-page > .stats-cards .stat-label {
+.admin-page>.stats-cards .stat-label {
     font-size: 0.85em;
     color: var(--muted-foreground);
     line-height: 1.3;
@@ -1767,7 +2143,8 @@ body.modal-open {
     transition: box-shadow 0.2s, transform 0.2s;
     display: flex;
     flex-direction: column;
-    min-width: 0; /* Permet aux cartes de se rétrécir si nécessaire */
+    min-width: 0;
+    /* Permet aux cartes de se rétrécir si nécessaire */
 }
 
 .mode-card:hover {
@@ -2365,12 +2742,12 @@ body.modal-open {
     .modes-livraison-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .modal-content {
         width: 95%;
         margin: 10% auto;
     }
-    
+
     .section-header {
         flex-direction: column;
         align-items: flex-start;
@@ -2402,3 +2779,285 @@ body.modal-open {
     }
 }
 
+#categorieModal {
+    z-index: 1060 !important;
+}
+
+#categorieModal .modal-dialog {
+    z-index: 1061 !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+/* ============================================
+   ADMIN NOTIFICATIONS - Platform Design
+   ============================================ */
+
+.admin-notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 420px;
+    pointer-events: none;
+}
+
+.admin-notification {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid;
+    min-width: 320px;
+    max-width: 420px;
+    pointer-events: auto;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-family: var(--font-sans);
+    animation: slideInNotification 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes slideInNotification {
+    from {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.admin-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.admin-notification.hide {
+    animation: slideOutNotification 0.3s ease-in forwards;
+}
+
+@keyframes slideOutNotification {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+}
+
+/* Notification Types */
+.admin-notification.success {
+    border-left-color: var(--olive);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9f5 100%);
+}
+
+.admin-notification.error {
+    border-left-color: var(--destructive);
+    background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+}
+
+.admin-notification.info {
+    border-left-color: var(--primary);
+    background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%);
+}
+
+.admin-notification.warning {
+    border-left-color: var(--accent);
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f5 100%);
+}
+
+/* Notification Icon */
+.admin-notification-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+.admin-notification.success .admin-notification-icon {
+    color: var(--olive);
+}
+
+.admin-notification.error .admin-notification-icon {
+    color: var(--destructive);
+}
+
+.admin-notification.info .admin-notification-icon {
+    color: var(--primary);
+}
+
+.admin-notification.warning .admin-notification-icon {
+    color: var(--accent);
+}
+
+/* Notification Content */
+.admin-notification-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.admin-notification-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-dark);
+    line-height: 1.4;
+    margin: 0;
+    font-family: var(--font-sans);
+}
+
+.admin-notification-message {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+    font-family: var(--font-sans);
+}
+
+/* Notification Close Button */
+.admin-notification-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-light);
+    border-radius: 4px;
+    transition: all 0.2s;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.admin-notification-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-dark);
+}
+
+.admin-notification-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Progress Bar */
+.admin-notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+}
+
+.admin-notification-progress-bar {
+    height: 100%;
+    width: 100%;
+    transform-origin: left;
+    animation: progressBar 4s linear forwards;
+}
+
+.admin-notification.success .admin-notification-progress-bar {
+    background: var(--olive);
+}
+
+.admin-notification.error .admin-notification-progress-bar {
+    background: var(--destructive);
+}
+
+.admin-notification.info .admin-notification-progress-bar {
+    background: var(--primary);
+}
+
+.admin-notification.warning .admin-notification-progress-bar {
+    background: var(--accent);
+}
+
+@keyframes progressBar {
+    from {
+        transform: scaleX(1);
+    }
+
+    to {
+        transform: scaleX(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin-notification-container {
+        right: 12px;
+        left: 12px;
+        max-width: none;
+    }
+
+    .admin-notification {
+        min-width: auto;
+        max-width: none;
+    }
+}
+
+/* === PRODUCT MODAL AND VARIANT ENLARGEMENT === */
+#produitModal .modal-dialog {
+    max-width: 1100px !important;
+    width: 95% !important;
+}
+
+#produitModal .form-input,
+#produitModal .form-select {
+    padding: 12px 16px !important;
+    font-size: 16px !important;
+    border: 2px solid #D09E86 !important;
+}
+
+#produitModal .form-label {
+    font-size: 16px !important;
+    margin-bottom: 10px !important;
+}
+
+.variant-input {
+    width: 100% !important;
+    padding: 10px 8px !important;
+    border: 2px solid #D09E86 !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    min-height: 45px !important;
+    min-width: 90px !important;
+    background-color: white !important;
+}
+
+.variants-title {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+}
+
+.variants-table th {
+    font-size: 14px !important;
+    padding: 12px !important;
+}

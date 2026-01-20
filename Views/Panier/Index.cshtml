@@ -1,0 +1,104 @@
+@using E_Commerce_Cooperatives.Models
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@Html.Partial("_Header")
+
+<main class="py-5" style="background-color: #F5F3EF; min-height: 70vh;">
+    <div class="container">
+        <h1 class="display-5 fw-bold mb-5" style="color: #305C7D;">Mon Panier</h1>
+
+        <div id="cart-content">
+            <!-- Content will be rendered by JS -->
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Empty Cart Template -->
+<template id="empty-cart-template">
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-cart-x text-muted opacity-25" viewBox="0 0 16 16">
+                <path d="M7.354 5.646a.5.5 0 1 0-.708.708L7.793 7.5 6.646 8.646a.5.5 0 1 0 .708.708L8.5 8.207l1.146 1.147a.5.5 0 0 0 .708-.708L9.207 7.5l1.147-1.146a.5.5 0 0 0-.708-.708L8.5 6.793 7.354 5.646z"/>
+                <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+            </svg>
+        </div>
+        <h2 class="h3 fw-bold mb-3">Votre panier est vide</h2>
+        <p class="text-muted mb-4">Découvrez nos produits artisanaux et ajoutez-les à votre panier.</p>
+        <a href="@Url.Action("Index", "Catalogue")" class="btn btn-lg px-4" style="background-color: #C06C50; color: white; border: none;">
+            Explorer le catalogue
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+            </svg>
+        </a>
+    </div>
+</template>
+
+<!-- Cart Items Template -->
+<template id="cart-layout-template">
+    <div class="row g-4">
+        <!-- Cart Items -->
+        <div class="col-lg-8">
+            <div id="cart-items-list" class="space-y-4">
+                <!-- Items injected here -->
+            </div>
+            <div class="mt-4">
+                <button id="clear-cart-btn" class="btn btn-link text-muted text-decoration-none p-0 d-flex align-items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                    </svg>
+                    Vider le panier
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-soft p-4 rounded-4 sticky-top" style="top: 130px; background-color: white; z-index: 1000;">
+                <h2 class="h4 fw-bold mb-4">Récapitulatif</h2>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Nombre d'articles</span>
+                    <span id="items-count" class="fw-medium">0</span>
+                </div>
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Livraison</span>
+                    <span class="text-muted small">Calculée à la commande</span>
+                </div>
+
+                
+                <hr class="my-4 opacity-10">
+                
+                <div class="d-flex justify-content-between mb-5 align-items-center">
+                    <span class="h5 fw-bold mb-0">Total</span>
+                    <span id="total-amount" class="h4 fw-bold mb-0" style="color: #305C7D;">0.00 MAD</span>
+                </div>
+                
+                <a href="@Url.Action("Index", "Checkout")" class="btn btn-lg w-100 mb-3 py-3 d-flex align-items-center justify-content-center gap-2" style="background-color: #C06C50; color: white; border: none;">
+                    Passer la commande
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                    </svg>
+                </a>
+                
+                <a href="@Url.Action("Index", "Catalogue")" class="btn btn-link w-100 text-muted text-decoration-none small text-center">
+                    Continuer mes achats
+                </a>
+            </div>
+        </div>
+    </div>
+</template>
+
+@section scripts {
+    <script src="~/Scripts/panier.js"></script>
+}
+
+@Html.Partial("_Footer")

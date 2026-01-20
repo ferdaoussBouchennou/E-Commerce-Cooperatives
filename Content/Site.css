@@ -1,4 +1,6 @@
-﻿/* Custom Colors - Palette de la page React */
+﻿@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+/* Custom Colors - Palette de la page React */
 :root {
     /* Palette principale */
     --azul-profundo: #305C7D;
@@ -29,13 +31,28 @@
     /* Verde Oliva pour success */
     --text-dark: #2d3748;
     --text-muted: #5a6c7d;
+
+    /* Typographie */
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Source Sans 3', system-ui, -apple-system, sans-serif;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-sans);
     color: var(--text-dark);
     padding-top: 0;
     background-color: var(--blanco-roto);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-display {
+    font-family: var(--font-display);
+    font-weight: 700;
 }
 
 /* Remove default body-content padding */
@@ -88,6 +105,51 @@ body {
     border-color: rgba(255, 255, 255, 0.5);
 }
 
+.btn-link-dark {
+    color: var(--azul-profundo) !important;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-link-dark:hover {
+    color: var(--primary-dark) !important;
+    transform: translateX(4px);
+}
+
+/* Green Olive Button Hover */
+.btn-outline-success:hover {
+    background-color: #7D8453 !important;
+    border-color: #7D8453 !important;
+    color: white !important;
+}
+
+/* Filter Form Controls - Dark Teal Color */
+.form-check-input:checked {
+    background-color: #305C7D;
+    border-color: #305C7D;
+}
+
+.form-check-input:focus {
+    border-color: #305C7D;
+    box-shadow: 0 0 0 0.25rem rgba(48, 92, 125, 0.25);
+}
+
+.form-range::-webkit-slider-thumb {
+    background-color: #305C7D;
+}
+
+.form-range::-moz-range-thumb {
+    background-color: #305C7D;
+}
+
+.form-range::-webkit-slider-runnable-track {
+    background-color: rgba(48, 92, 125, 0.2);
+}
+
+.form-range::-moz-range-track {
+    background-color: rgba(48, 92, 125, 0.2);
+}
+
 /* Category Card */
 .category-card {
     transition: transform 0.3s ease;
@@ -114,6 +176,237 @@ body {
 .category-card:hover .category-overlay {
     opacity: 0.9;
 }
+
+
+/* Categories Page Styles - Design Mockup Match */
+.categories-hero-dark {
+    background-color: var(--arena-suave);
+    min-height: 450px;
+    display: flex;
+    align-items: center;
+    padding: 4rem 0;
+}
+
+.categories-hero-dark.text-white {
+    color: var(--text-dark) !important;
+}
+
+.categories-hero-dark.text-white h1 {
+    color: var(--azul-profundo) !important;
+}
+
+.categories-hero-dark.text-white p {
+    color: var(--text-muted) !important;
+}
+
+.category-badge-beige {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    color: var(--text-dark) !important;
+    border: none;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #C06C50;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: capitalize;
+    font-weight: 500;
+}
+
+.category-search-bg {
+    background-color: white !important;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.search-container .form-control {
+    padding: 0.75rem 1rem;
+    background-color: white !important;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.search-container .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(48, 92, 125, 0.15);
+    background-color: white !important;
+    border-color: var(--azul-profundo);
+}
+
+.search-container .input-group {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.view-toggle-btn {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 8px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.view-toggle-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.view-toggle-btn.active {
+    background-color: #e3f2fd;
+    color: var(--azul-profundo);
+    border-color: var(--azul-profundo);
+}
+
+.category-card-modern {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.category-card-modern:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.category-card-modern .category-image {
+    transition: transform 0.5s ease;
+}
+
+.category-card-modern:hover .category-image {
+    transform: scale(1.1);
+}
+
+.category-overlay-modern {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
+    transition: background 0.3s ease;
+}
+
+.category-card-modern:hover .category-overlay-modern {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+}
+
+.category-content-modern {
+    z-index: 2;
+}
+
+.popular-category-box {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.popular-category-box:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.popular-product-item {
+    background-color: #f8f9fa;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.popular-product-item:hover {
+    background-color: white;
+    border-color: #dee2e6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateX(5px);
+}
+
+/* Category List View Styles */
+.category-list-card {
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.category-list-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    transform: translateX(5px);
+    border-color: #dee2e6;
+}
+
+.category-active-badge {
+    background-color: #7D8453 !important;
+    color: white !important;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.category-list-image-container {
+    overflow: hidden;
+}
+
+/* Popular Products Section Background */
+.popular-product-image-container {
+    overflow: hidden;
+}
+
+/* Fade-in Animation - DISABLED to prevent disappearing elements */
+/*
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.fade-in.visible {
+    opacity: 1;
+}
+
+.fade-in[data-index="0"] {
+    animation-delay: 0ms;
+}
+
+.fade-in[data-index="1"] {
+    animation-delay: 100ms;
+}
+
+.fade-in[data-index="2"] {
+    animation-delay: 200ms;
+}
+
+.fade-in[data-index="3"] {
+    animation-delay: 300ms;
+}
+
+.fade-in[data-index="4"] {
+    animation-delay: 400ms;
+}
+
+.fade-in[data-index="5"] {
+    animation-delay: 500ms;
+}
+
+.fade-in[data-index="6"] {
+    animation-delay: 600ms;
+}
+
+.fade-in[data-index="7"] {
+    animation-delay: 700ms;
+}
+*/
 
 /* Product Card */
 .product-card {
@@ -314,6 +607,10 @@ html {
     color: var(--verde-oliva) !important;
 }
 
+.text-accent {
+    color: var(--terracota-calido) !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .hero-section {
@@ -391,4 +688,156 @@ textarea {
 
 .page-item.disabled .page-link {
     color: var(--text-muted);
+}
+
+/* Utility: Space-y */
+.space-y-4>*+* {
+    margin-top: 1.5rem;
+}
+
+/* Shadow Soft */
+.shadow-soft {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Cart Specific */
+.object-cover {
+    object-fit: cover;
+}
+
+.cart-item-card {
+    transition: transform 0.2s ease;
+}
+
+.cart-item-card:hover {
+    transform: translateX(4px);
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--blanco-roto);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* ============================================
+   CHECKOUT PAGES STYLES
+   ============================================ */
+
+/* Checkout Progress Steps */
+.checkout-step {
+    transition: all 0.3s ease;
+}
+
+.checkout-step.active {
+    background-color: var(--terracota-calido) !important;
+    color: white !important;
+}
+
+.checkout-step.completed {
+    background-color: var(--terracota-calido) !important;
+    color: white !important;
+}
+
+/* Delivery Option Selection */
+.delivery-option {
+    transition: all 0.3s ease;
+}
+
+.delivery-option:hover {
+    border-color: var(--terracota-calido) !important;
+    background-color: rgba(192, 108, 80, 0.05) !important;
+}
+
+.delivery-option.selected {
+    border-color: var(--terracota-calido) !important;
+    background-color: rgba(192, 108, 80, 0.05) !important;
+}
+
+/* Order Summary Sticky */
+.order-summary-sticky {
+    position: sticky;
+    top: 100px;
+}
+
+/* Order Tracking Progress */
+.order-tracking-progress {
+    position: relative;
+}
+
+.order-tracking-progress::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: #e0e0e0;
+    z-index: 0;
+    margin: 0 40px;
+}
+
+.order-tracking-progress-bar {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 4px;
+    background-color: var(--terracota-calido);
+    z-index: 1;
+    margin: 0 40px;
+    transition: width 0.3s ease;
+}
+
+/* Order Status Badges */
+.order-status-livree {
+    color: #28a745 !important;
+}
+
+.order-status-expediee,
+.order-status-en-cours {
+    color: #007bff !important;
+}
+
+.order-status-preparation {
+    color: #ffc107 !important;
+}
+
+/* Checkout Form Validation */
+.checkout-form .form-control:invalid {
+    border-color: #dc3545;
+}
+
+.checkout-form .form-control:valid {
+    border-color: #28a745;
+}
+
+/* Responsive adjustments for checkout */
+@media (max-width: 768px) {
+    .order-summary-sticky {
+        position: relative;
+        top: 0;
+    }
+    
+    .checkout-step span {
+        display: none;
+    }
 }

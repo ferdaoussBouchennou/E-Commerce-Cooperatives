@@ -1,0 +1,399 @@
+@model E_Commerce_Cooperatives.Models.Produit
+
+@{
+    ViewBag.Title = "Ajouter un nouveau produit";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+    var categories = ViewBag.Categories as List<E_Commerce_Cooperatives.Models.Categorie> ?? new List<E_Commerce_Cooperatives.Models.Categorie>();
+    var cooperatives = ViewBag.Cooperatives as List<E_Commerce_Cooperatives.Models.Cooperative> ?? new List<E_Commerce_Cooperatives.Models.Cooperative>();
+}
+
+<div class="admin-page">
+    <div class="modal-form-container">
+        <div class="modal-form-header">
+            <h1 class="admin-page-title"><span class="title-accent"></span>Ajouter un nouveau produit</h1>
+            <a href="@Url.Action("Produits")" class="modal-close-btn">&times;</a>
+        </div>
+
+        @using (Html.BeginForm("AjouterProduit", "Admin", FormMethod.Post, new { @class = "premium-form", enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="form-row">
+                <div class="form-group flex-2">
+                    <label>Nom du produit</label>
+                    <input type="text" name="Nom" class="form-control" placeholder="Ex: Huile d'Argan Pure" required />
+                </div>
+                <div class="form-group flex-1">
+                    <label>Prix (MAD)</label>
+                    <input type="number" step="0.01" name="Prix" class="form-control" placeholder="0.00" required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="Description" class="form-control" placeholder="Description du produit..." rows="4"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>Catégorie</label>
+                    <div class="status-filter-wrapper-full">
+                        <select name="CategorieId" class="status-filter-full">
+                            <option value="">Sélectionner</option>
+                            @foreach (var cat in categories)
+                            {
+                                <option value="@cat.CategorieId">@cat.Nom</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group flex-1">
+                    <label>Coopérative</label>
+                    <div class="status-filter-wrapper-full">
+                        <select name="CooperativeId" class="status-filter-full">
+                            <option value="">Sélectionner</option>
+                            @foreach (var coop in cooperatives)
+                            {
+                                <option value="@coop.CooperativeId">@coop.Nom</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>Stock initial</label>
+                    <input type="number" name="StockTotal" class="form-control" value="0" />
+                </div>
+                <div class="form-group flex-1">
+                    <label>Seuil d'alerte</label>
+                    <input type="number" name="SeuilAlerte" class="form-control" value="10" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Photo du produit</label>
+                <div class="image-upload-wrapper">
+                    <div class="image-preview" id="imagePreview">
+                        <div class="preview-placeholder">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                            </svg>
+                            <span>Aucune photo sélectionnée</span>
+                        </div>
+                        <img src="" alt="Aperçu" style="display:none;" />
+                    </div>
+                    <div class="image-upload-controls">
+                        <button type="button" class="btn-secondary-action" onclick="document.getElementById('imageFile').click()">
+                            Choisir une photo
+                        </button>
+                        <input type="file" name="imageFile" id="imageFile" accept="image/*" style="display:none;" onchange="previewImage(this)" />
+                        <p class="upload-tip">Formats acceptés : JPG, PNG. Taille max : 2Mo</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row toggles-row">
+                <div class="toggle-group">
+                    <label class="switch">
+                        <input type="checkbox" name="EstDisponible" value="true" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Disponible</span>
+                    <input type="hidden" name="EstDisponible" value="false" />
+                </div>
+                <div class="toggle-group">
+                    <label class="switch">
+                        <input type="checkbox" name="EstEnVedette" value="true">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>En vedette</span>
+                    <input type="hidden" name="EstEnVedette" value="false" />
+                </div>
+                <div class="toggle-group">
+                    <label class="switch">
+                        <input type="checkbox" name="EstNouveau" value="true">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Nouveau</span>
+                    <input type="hidden" name="EstNouveau" value="false" />
+                </div>
+            </div>
+
+            <div class="modal-form-footer">
+                <a href="@Url.Action("Produits")" class="btn-secondary-action">Annuler</a>
+                <button type="submit" class="btn-primary-action-save">Enregistrer</button>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    function previewImage(input) {
+        var preview = document.getElementById('imagePreview');
+        var img = preview.querySelector('img');
+        var placeholder = preview.querySelector('.preview-placeholder');
+        
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+            
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+    </div>
+</div>
+
+<style>
+    .modal-form-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        padding: 32px;
+        max-width: 1100px !important;
+        width: 95% !important;
+        margin: 20px auto;
+        position: relative;
+    }
+
+    .modal-form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+    }
+
+    .title-accent {
+        display: inline-block;
+        width: 4px;
+        height: 24px;
+        background: #FFD700;
+        margin-right: 12px;
+        vertical-align: middle;
+        border-radius: 2px;
+    }
+
+    .modal-close-btn {
+        font-size: 28px;
+        color: #6D6C6A;
+        text-decoration: none;
+        line-height: 1;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .flex-1 { flex: 1; }
+    .flex-2 { flex: 2; }
+
+    .premium-form label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #305C7D;
+        font-size: 14px;
+    }
+
+    .premium-form .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #EAEAEA;
+        border-radius: 8px;
+        background: #F8F9FA;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .premium-form .form-control:focus {
+        background: white;
+        border-color: #C06C50;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(192, 108, 80, 0.1);
+    }
+
+    /* Image Upload Styles */
+    .image-upload-wrapper {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        background: #F8F9FA;
+        padding: 20px;
+        border-radius: 12px;
+        border: 2px dashed #DEE2E6;
+    }
+
+    .image-preview {
+        width: 120px;
+        height: 120px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #EAEAEA;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .image-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .preview-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        color: #ADB5BD;
+        font-size: 11px;
+        padding: 10px;
+    }
+
+    .preview-placeholder svg {
+        margin-bottom: 8px;
+        opacity: 0.5;
+    }
+
+    .image-upload-controls {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 120px;
+    }
+
+    .upload-tip {
+        font-size: 12px;
+        color: #6D6C6A;
+        margin-top: 10px;
+        margin-bottom: 0;
+    }
+
+    /* Style for custom select to match image */
+    .status-filter-wrapper-full {
+        position: relative;
+    }
+
+    .status-filter-wrapper-full::after {
+        content: '';
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 12px;
+        height: 12px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        pointer-events: none;
+    }
+
+    .status-filter-full {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #EAEAEA;
+        border-radius: 8px;
+        background: #F8F9FA;
+        appearance: none;
+        font-size: 14px;
+        color: #666;
+    }
+
+    /* Toggle Switch Style */
+    .toggles-row {
+        gap: 32px;
+        align-items: center;
+        margin-top: 12px;
+    }
+
+    .toggle-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+        color: #305C7D;
+        font-size: 14px;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #DEE2E6;
+        transition: .4s;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px; width: 18px;
+        left: 3px; bottom: 3px;
+        background-color: white;
+        transition: .4s;
+    }
+
+    input:checked + .slider { background-color: #305C7D; }
+    input:checked + .slider:before { transform: translateX(20px); }
+    .slider.round { border-radius: 34px; }
+    .slider.round:before { border-radius: 50%; }
+
+    /* Footer Buttons */
+    .modal-form-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 16px;
+        margin-top: 40px;
+    }
+
+    .btn-secondary-action {
+        padding: 12px 32px;
+        border: 2px solid #305C7D;
+        background: white;
+        color: #305C7D;
+        border-radius: 8px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary-action:hover {
+        background: #F8F9FA;
+    }
+
+    .btn-primary-action-save {
+        padding: 12px 32px;
+        border: none;
+        background: #305C7D;
+        color: white;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-primary-action-save:hover {
+        background: #254a64;
+        box-shadow: 0 4px 12px rgba(48,92,125,0.2);
+    }
+</style>

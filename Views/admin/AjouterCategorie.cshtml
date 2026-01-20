@@ -1,0 +1,262 @@
+@model E_Commerce_Cooperatives.Models.Categorie
+
+@{
+    ViewBag.Title = "Ajouter une Catégorie";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+}
+
+<div class="admin-page">
+    <div class="modal-form-container">
+        <div class="modal-form-header">
+            <h1 class="admin-page-title"><span class="title-accent"></span>Ajouter une Catégorie</h1>
+            <a href="@Url.Action("Categories")" class="modal-close-btn">&times;</a>
+        </div>
+
+        @using (Html.BeginForm("AjouterCategorie", "Admin", FormMethod.Post, new { enctype = "multipart/form-data", @class = "premium-form" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.DateCreation)
+
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>Nom de la catégorie</label>
+                    <input type="text" name="Nom" class="form-control" required placeholder="Ex: Cosmétiques" />
+                </div>
+                <div class="form-group flex-1">
+                    <label>Statut</label>
+                    <div class="toggle-group-full">
+                        <label class="switch">
+                            <input type="checkbox" name="EstActive" value="true" checked>
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Active</span>
+                        <input type="hidden" name="EstActive" value="false" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description (Info-bulle)</label>
+                <textarea name="Description" class="form-control" rows="3" placeholder="Brève description de la catégorie..."></textarea>
+            </div>
+
+            <!-- Image Upload Section -->
+            <div class="form-group">
+                <label>Image de la catégorie</label>
+                <div class="image-upload-container" id="drop-zone">
+                    <input type="file" name="imageFile" id="file-input" accept="image/*" hidden />
+                    <div class="upload-placeholder" id="upload-placeholder">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <p class="upload-text">Glissez une image ici ou <span class="browse-link">parcourir</span></p>
+                        <p class="upload-hint">Format recommandé : 800x600px (JPG, PNG)</p>
+                    </div>
+                    <div class="image-preview-container" id="preview-container" style="display: none;">
+                        <img id="image-preview" src="" alt="Aperçu" />
+                        <button type="button" class="remove-image-btn" id="remove-image">&times;</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-form-footer">
+                <a href="@Url.Action("Categories")" class="btn-secondary-action">Annuler</a>
+                <button type="submit" class="btn-primary-action-save">Enregistrer la catégorie</button>
+            </div>
+        }
+    </div>
+</div>
+
+@section scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Image Upload Logic
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const placeholder = document.getElementById('upload-placeholder');
+        const previewContainer = document.getElementById('preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeBtn = document.getElementById('remove-image');
+
+        // Click trigger
+        placeholder.addEventListener('click', () => fileInput.click());
+
+        // File change
+        fileInput.addEventListener('change', function(e) {
+            handleFile(this.files[0]);
+        });
+
+        // Drag & Drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        // Remove image
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.value = '';
+            showPlaceholder();
+        });
+
+        function handleFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    showPreview();
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function showPreview() {
+            placeholder.style.display = 'none';
+            previewContainer.style.display = 'block';
+        }
+
+        function showPlaceholder() {
+            placeholder.style.display = 'flex';
+            previewContainer.style.display = 'none';
+            imagePreview.src = '';
+        }
+    });
+</script>
+}
+
+<style>
+    .modal-form-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        padding: 32px;
+        max-width: 800px;
+        margin: 20px auto;
+        position: relative;
+    }
+
+    .form-row { display: flex; gap: 24px; margin-bottom: 24px; }
+    .flex-1 { flex: 1; }
+
+    .premium-form label { display: block; margin-bottom: 8px; font-weight: 600; color: #305C7D; font-size: 14px; }
+    
+    .premium-form .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #EAEAEA;
+        border-radius: 8px;
+        background: #F8F9FA;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .premium-form .form-control:focus {
+        background: white;
+        border-color: #C06C50;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(192, 108, 80, 0.1);
+    }
+
+    /* Toggle & Upload Styles */
+    .toggle-group-full {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        background: #F8F9FA;
+        border-radius: 8px;
+        border: 1px solid #EAEAEA;
+    }
+
+    .image-upload-container {
+        border: 2px dashed #D0D0D0;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #F8F9FA;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .image-upload-container:hover, .image-upload-container.drag-over {
+        border-color: #C06C50;
+        background: #FFF3E0;
+    }
+
+    .upload-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .upload-icon { font-size: 40px; color: #305C7D; opacity: 0.5; }
+    .upload-text { font-size: 14px; color: #555; margin: 0; }
+    .browse-link { color: #C06C50; font-weight: 600; text-decoration: underline; }
+    .upload-hint { font-size: 12px; color: #888; margin: 0; }
+
+    .image-preview-container { position: relative; width: 100%; height: 100%; min-height: 200px; }
+    .image-preview-container img {
+        max-width: 100%;
+        max-height: 250px;
+        border-radius: 8px;
+        object-fit: contain;
+    }
+
+    .remove-image-btn {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #C06C50;
+        color: white;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* Footer Buttons */
+    .modal-form-footer { display: flex; justify-content: flex-end; gap: 16px; margin-top: 40px; }
+
+    .btn-secondary-action {
+        padding: 12px 32px;
+        border: 2px solid #305C7D;
+        background: white;
+        color: #305C7D;
+        border-radius: 8px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-primary-action-save {
+        padding: 12px 32px;
+        background: #305C7D;
+        color: white;
+        border-radius: 8px;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-primary-action-save:hover { background: #254a64; box-shadow: 0 4px 12px rgba(48,92,125,0.2); }
+</style>

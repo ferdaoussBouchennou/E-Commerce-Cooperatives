@@ -1,0 +1,63 @@
+@{
+    ViewBag.Title = "Test API Gemini";
+}
+
+<h2>Test Direct de l'API Gemini</h2>
+
+<div style="max-width: 800px; margin: 20px auto; padding: 20px;">
+    <div style="background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <h3>Configuration</h3>
+        <p><strong>API URL:</strong> @System.Configuration.ConfigurationManager.AppSettings["GeminiApiUrl"]</p>
+        <p><strong>API Key:</strong> @(System.Configuration.ConfigurationManager.AppSettings["GeminiApiKey"]?.Substring(0, 15))...</p>
+    </div>
+
+    <form id="testForm">
+        <div style="margin-bottom: 15px;">
+            <label>Message à tester:</label><br/>
+            <input type="text" name="message" id="testMessage" value="Bonjour, comment ça va?" 
+                   style="width: 100%; padding: 10px; font-size: 16px;" />
+        </div>
+        <button type="submit" style="padding: 10px 30px; font-size: 16px; background: #305C7D; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Tester l'API
+        </button>
+    </form>
+
+    <div id="loading" style="display: none; margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px;">
+        ⏳ Appel en cours... Veuillez patienter (peut prendre jusqu'à 60 secondes)
+    </div>
+
+    <div id="result" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; display: none;">
+        <h4>Résultat:</h4>
+        <pre id="resultContent" style="white-space: pre-wrap; word-wrap: break-word; max-height: 500px; overflow-y: auto;"></pre>
+    </div>
+</div>
+
+<script src="~/Scripts/jquery-3.7.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#testForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            var message = $('#testMessage').val();
+            $('#loading').show();
+            $('#result').hide();
+            
+            $.ajax({
+                url: '@Url.Action("TestApi", "GeminiTest")',
+                type: 'POST',
+                data: { message: message },
+                timeout: 65000, // 65 secondes
+                success: function(response) {
+                    $('#loading').hide();
+                    $('#result').show();
+                    $('#resultContent').text(JSON.stringify(response, null, 2));
+                },
+                error: function(xhr, status, error) {
+                    $('#loading').hide();
+                    $('#result').show();
+                    $('#resultContent').text('ERREUR AJAX!\nStatus: ' + status + '\nError: ' + error + '\nResponse: ' + xhr.responseText);
+                }
+            });
+        });
+    });
+</script>

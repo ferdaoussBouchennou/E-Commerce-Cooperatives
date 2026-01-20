@@ -1,0 +1,285 @@
+/* AdminCop.css - Custom Styles for Cooperative Management */
+
+:root {
+    --primary-blue: #305C7D;
+    --primary-blue-light: #3D7BA8;
+    --success-green: #7D8453;
+    --danger-red: #EB5757;
+    --bg-beige: #F5F3EF;
+    --border-bronze: #D09E86;
+    --text-dark: #2C3E50;
+    --text-muted: #5D6D7E;
+}
+
+.cooperatives-page {
+    padding: 30px;
+}
+
+.cooperatives-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.coop-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    position: relative;
+}
+
+.coop-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background-color: var(--primary-blue);
+    opacity: 0.8;
+}
+
+.coop-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    border-color: var(--border-bronze);
+}
+
+.coop-card.inactive {
+    opacity: 0.7;
+    filter: grayscale(0.5);
+}
+
+.coop-card.inactive::before {
+    background-color: var(--text-muted);
+}
+
+.coop-card-header {
+    padding: 25px 25px 0 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background-color: transparent;
+    border-bottom: none;
+    height: auto;
+}
+
+.coop-icon-container {
+    width: 54px;
+    height: 54px;
+    background-color: var(--bg-beige);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-blue);
+    font-size: 24px;
+    transition: transform 0.3s ease;
+}
+
+.coop-card:hover .coop-icon-container {
+    transform: scale(1.1);
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+.coop-badge-active {
+    background-color: var(--success-green);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.coop-badge-inactive {
+    background-color: var(--text-muted);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.coop-card-body {
+    padding: 20px 25px;
+    flex-grow: 1;
+}
+
+.coop-name {
+    font-family: 'Georgia', serif;
+    color: var(--primary-blue);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.coop-desc {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    height: 45px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.coop-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.coop-info-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.coop-info-row i {
+    width: 14px;
+    color: var(--border-bronze);
+}
+
+.coop-card-footer {
+    padding: 0 25px 25px 25px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-modifier {
+    flex: 1;
+    padding: 10px;
+    background-color: transparent;
+    border: 2px solid var(--primary-blue);
+    color: var(--primary-blue);
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-modifier:hover {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+.btn-supprimer {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background-color: transparent;
+    color: var(--danger-red);
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-supprimer:hover {
+    transform: scale(1.1);
+}
+
+.btn-desactiver {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background-color: transparent;
+    color: var(--danger-red);
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-activer {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background-color: transparent;
+    color: var(--success-green);
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-desactiver:hover,
+.btn-activer:hover {
+    transform: scale(1.2);
+}
+
+/* Header style consistent with other admin pages */
+.page-title-section h1 {
+    font-family: 'Georgia', serif;
+    color: var(--primary-blue);
+    font-size: 32px;
+    font-weight: 700;
+}
+
+/* Modal Z-index Stabilization */
+#cooperativeModal {
+    z-index: 1060 !important;
+}
+
+#cooperativeModal .modal-dialog {
+    z-index: 1061 !important;
+}
+
+/* Ensure backdrop doesn't cover the modal content */
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+/* === PRODUCT MODAL AND VARIANT ENLARGEMENT === */
+#produitModal .modal-dialog {
+    max-width: 1100px !important;
+    width: 95% !important;
+}
+
+.variant-input {
+    width: 100% !important;
+    padding: 10px 8px !important;
+    border: 2px solid #D09E86 !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    min-height: 45px !important;
+    min-width: 90px !important;
+    background-color: white !important;
+}
+
+.pagination-btn:hover {
+    background-color: #305C7D !important;
+    color: white !important;
+    text-decoration: none !important;
+}

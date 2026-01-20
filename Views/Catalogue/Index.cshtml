@@ -12,6 +12,26 @@
 
 <main style="min-height: calc(100vh - 200px);">
     <div class="container py-5">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" style="color: #305C7D;">Accueil</a></li>
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Catalogue")" style="color: #305C7D;">Catalogue</a></li>
+                @if (selectedCategorie.HasValue)
+                {
+                    var selectedCat = categories.FirstOrDefault(c => c.CategorieId == selectedCategorie.Value);
+                    if (selectedCat != null)
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">@selectedCat.Nom</li>
+                    }
+                }
+                else
+                {
+                    <li class="breadcrumb-item active" aria-current="page">Tous les produits</li>
+                }
+            </ol>
+        </nav>
+
         <!-- Page Header -->
         <div class="mb-4">
             <h1 class="display-5 fw-bold mb-2">
@@ -29,143 +49,6 @@
                 <span id="product-count">@produits.Count</span> produit@(produits.Count > 1 ? "s" : "") trouvé@(produits.Count > 1 ? "s" : "")
             </p>
         </div>
-
-        <!-- Active Filters Display -->
-        @if (ViewBag.SelectedCategorie != null || 
-             ViewBag.MinPrice != ViewBag.GlobalMinPrice || 
-             ViewBag.MaxPrice != ViewBag.GlobalMaxPrice ||
-             (ViewBag.SelectedCoops != null && ((List<int>)ViewBag.SelectedCoops).Any()) ||
-             ViewBag.OnlyAvailable == true ||
-             ViewBag.MinRating != null)
-        {
-            <div class="mb-4">
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <span class="text-muted small">Filtres actifs:</span>
-                    
-                    <!-- Prix Filter Badge -->
-                    @if (ViewBag.MinPrice != ViewBag.GlobalMinPrice || ViewBag.MaxPrice != ViewBag.GlobalMaxPrice)
-                    {
-                        <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-tag"></i>
-                            Prix: @ViewBag.MinPrice - @ViewBag.MaxPrice MAD
-                            <a href="@Url.Action("Index", "Catalogue", new { 
-                                categorie = ViewBag.SelectedCategorie,
-                                search = ViewBag.SearchTerm,
-                                sort = ViewBag.CurrentSort,
-                                coops = ViewBag.SelectedCoops != null ? string.Join(",", ViewBag.SelectedCoops) : null,
-                                onlyAvailable = ViewBag.OnlyAvailable,
-                                minRating = ViewBag.MinRating,
-                                page = ViewBag.CurrentPage
-                            })" class="text-decoration-none text-dark">
-                                <i class="bi bi-x"></i>
-                            </a>
-                        </span>
-                    }
-                    
-                    <!-- Category Filter Badge -->
-                    @if (ViewBag.SelectedCategorie != null)
-                    {
-                        var selectedCat = categories.FirstOrDefault(c => c.CategorieId == ViewBag.SelectedCategorie);
-                        <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-folder"></i>
-                            @selectedCat?.Nom
-                            <a href="@Url.Action("Index", "Catalogue", new { 
-                                search = ViewBag.SearchTerm,
-                                sort = ViewBag.CurrentSort,
-                                minPrice = ViewBag.MinPrice != ViewBag.GlobalMinPrice ? ViewBag.MinPrice : null,
-                                maxPrice = ViewBag.MaxPrice != ViewBag.GlobalMaxPrice ? ViewBag.MaxPrice : null,
-                                coops = ViewBag.SelectedCoops != null ? string.Join(",", ViewBag.SelectedCoops) : null,
-                                onlyAvailable = ViewBag.OnlyAvailable,
-                                minRating = ViewBag.MinRating,
-                                page = ViewBag.CurrentPage
-                            })" class="text-decoration-none text-dark">
-                                <i class="bi bi-x"></i>
-                            </a>
-                        </span>
-                    }
-                    
-                    <!-- Cooperatives Filter Badges -->
-                    @if (ViewBag.SelectedCoops != null)
-                    {
-                        var selectedCoopIds = ViewBag.SelectedCoops as List<int>;
-                        foreach (var coopId in selectedCoopIds)
-                        {
-                            var coop = cooperatives.FirstOrDefault(c => c.CooperativeId == coopId);
-                            if (coop != null)
-                            {
-                                var otherCoops = selectedCoopIds.Where(id => id != coopId).ToList();
-                                <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-2">
-                                    <i class="bi bi-building"></i>
-                                    @coop.Nom
-                                    <a href="@Url.Action("Index", "Catalogue", new { 
-                                        categorie = ViewBag.SelectedCategorie,
-                                        search = ViewBag.SearchTerm,
-                                        sort = ViewBag.CurrentSort,
-                                        minPrice = ViewBag.MinPrice != ViewBag.GlobalMinPrice ? ViewBag.MinPrice : null,
-                                        maxPrice = ViewBag.MaxPrice != ViewBag.GlobalMaxPrice ? ViewBag.MaxPrice : null,
-                                        coops = otherCoops.Any() ? string.Join(",", otherCoops) : null,
-                                        onlyAvailable = ViewBag.OnlyAvailable,
-                                        minRating = ViewBag.MinRating,
-                                        page = ViewBag.CurrentPage
-                                    })" class="text-decoration-none text-dark">
-                                        <i class="bi bi-x"></i>
-                                    </a>
-                                </span>
-                            }
-                        }
-                    }
-                    
-                    <!-- Rating Filter Badge -->
-                    @if (ViewBag.MinRating != null)
-                    {
-                        <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            @ViewBag.MinRating+ étoiles
-                            <a href="@Url.Action("Index", "Catalogue", new { 
-                                categorie = ViewBag.SelectedCategorie,
-                                search = ViewBag.SearchTerm,
-                                sort = ViewBag.CurrentSort,
-                                minPrice = ViewBag.MinPrice != ViewBag.GlobalMinPrice ? ViewBag.MinPrice : null,
-                                maxPrice = ViewBag.MaxPrice != ViewBag.GlobalMaxPrice ? ViewBag.MaxPrice : null,
-                                coops = ViewBag.SelectedCoops != null ? string.Join(",", ViewBag.SelectedCoops) : null,
-                                onlyAvailable = ViewBag.OnlyAvailable,
-                                page = ViewBag.CurrentPage
-                            })" class="text-decoration-none text-dark">
-                                <i class="bi bi-x"></i>
-                            </a>
-                        </span>
-                    }
-                    
-                    <!-- Availability Filter Badge -->
-                    @if (ViewBag.OnlyAvailable == true)
-                    {
-                        <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-check-circle text-success"></i>
-                            En stock
-                            <a href="@Url.Action("Index", "Catalogue", new { 
-                                categorie = ViewBag.SelectedCategorie,
-                                search = ViewBag.SearchTerm,
-                                sort = ViewBag.CurrentSort,
-                                minPrice = ViewBag.MinPrice != ViewBag.GlobalMinPrice ? ViewBag.MinPrice : null,
-                                maxPrice = ViewBag.MaxPrice != ViewBag.GlobalMaxPrice ? ViewBag.MaxPrice : null,
-                                coops = ViewBag.SelectedCoops != null ? string.Join(",", ViewBag.SelectedCoops) : null,
-                                minRating = ViewBag.MinRating,
-                                page = ViewBag.CurrentPage
-                            })" class="text-decoration-none text-dark">
-                                <i class="bi bi-x"></i>
-                            </a>
-                        </span>
-                    }
-                    
-                    <!-- Clear All Filters -->
-                    <a href="@Url.Action("Index", "Catalogue", new { search = ViewBag.SearchTerm, sort = ViewBag.CurrentSort })" 
-                       class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-x-circle me-1"></i>
-                        Tout effacer
-                    </a>
-                </div>
-            </div>
-        }
 
         <!-- Search & Controls -->
         <div class="row mb-4">
@@ -275,7 +158,7 @@
         <div class="row">
             <!-- Desktop Sidebar Filters -->
             <aside class="col-lg-3 d-none d-lg-block">
-                <form id="filter-form" action="@Url.Action("Index", "Catalogue")" method="get" class="bg-white rounded-3 p-4 shadow-sm sticky-top" style="top: 120px; z-index: 900;">
+                <form id="filter-form" action="@Url.Action("Index", "Catalogue")" method="get" class="bg-white rounded-3 p-4 shadow-sm">
                     <h3 class="h5 fw-bold mb-4">Filtres</h3>
                     
                     <!-- Hidden inputs to preserve other states -->
@@ -402,10 +285,10 @@
                     </div>
 
                     <!-- Clear Filters -->
-                    <a href="@Url.Action("Index", "Catalogue")" class="btn btn-outline-secondary w-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle me-2" viewBox="0 0 16 16">
-                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    <a href="@Url.Action("Index", "Catalogue")" class="btn btn-outline-success w-100" style="border-color: #7D8453; color: #7D8453;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise me-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466"/>
                         </svg>
                         Effacer les filtres
                     </a>
@@ -549,8 +432,8 @@
                             <i class="bi bi-check-circle me-2"></i>
                             Appliquer les filtres
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" id="clear-filters-mobile">
-                            <i class="bi bi-x-circle me-2"></i>
+                        <button type="button" class="btn btn-outline-success" id="clear-filters-mobile" style="border-color: #7D8453; color: #7D8453;">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>
                             Effacer les filtres
                         </button>
                     </div>
@@ -668,8 +551,7 @@
             var searchTerm = '@Html.Raw(HttpUtility.JavaScriptStringEncode(ViewBag.SearchTerm as string))';
             if (searchTerm && searchTerm.length > 0) {
                 try {
-                    var regex = new RegExp('(' + searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\                            <label for="price-range-max-mobile" class="form-label small mt-3">Maximum</label>
-                            <input type="range" class="form-range" id="price-range-max-mobile" min="@globalMin') + ')', 'gi');
+                    var regex = new RegExp('(' + searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
                     var titles = document.querySelectorAll('.product-title');
                     titles.forEach(function(title) {
                         var text = title.textContent;
@@ -684,5 +566,7 @@
         });
     </script>
 }
+
+
 
 

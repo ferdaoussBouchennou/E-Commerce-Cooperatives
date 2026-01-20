@@ -304,13 +304,21 @@
             
             // Vérifier que jQuery est disponible
             if (typeof jQuery === 'undefined' || typeof $ === 'undefined') {
-                alert('Erreur : jQuery n\'est pas chargé. Veuillez rafraîchir la page.');
+                if (typeof showAdminNotification !== 'undefined') {
+                    showAdminNotification('jQuery n\'est pas chargé. Veuillez rafraîchir la page.', 'error');
+                } else {
+                    alert('Erreur : jQuery n\'est pas chargé. Veuillez rafraîchir la page.');
+                }
                 console.error('jQuery n\'est pas disponible');
                 return;
             }
             
             if (!commandeId || commandeId <= 0) {
-                alert('Erreur : ID de commande invalide');
+                if (typeof showAdminNotification !== 'undefined') {
+                    showAdminNotification('ID de commande invalide', 'error');
+                } else {
+                    alert('Erreur : ID de commande invalide');
+                }
                 return;
             }
             
@@ -324,7 +332,11 @@
                 .done(function (data) {
                     console.log('Données reçues:', data);
                     if (!data) {
-                        alert('Erreur : Impossible de charger les détails de la commande');
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification('Impossible de charger les détails de la commande', 'error');
+                        } else {
+                            alert('Erreur : Impossible de charger les détails de la commande');
+                        }
                         return;
                     }
                 
@@ -484,7 +496,11 @@
                 var $modal = $('#orderDetailsModal');
                 
                 if ($modal.length === 0) {
-                    alert('Erreur : La modal n\'a pas été trouvée dans le DOM');
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification('La modal n\'a pas été trouvée dans le DOM', 'error');
+                    } else {
+                        alert('Erreur : La modal n\'a pas été trouvée dans le DOM');
+                    }
                     console.error('Modal #orderDetailsModal non trouvée');
                     return;
                 }
@@ -543,7 +559,11 @@
                     console.error('Erreur lors du chargement des détails:', error);
                     console.error('Status:', status);
                     console.error('Response:', xhr.responseText);
-                    alert('Erreur : Impossible de charger les détails de la commande. Veuillez réessayer.\n\nErreur: ' + error);
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification('Impossible de charger les détails de la commande. Veuillez réessayer.', 'error');
+                    } else {
+                        alert('Erreur : Impossible de charger les détails de la commande. Veuillez réessayer.\n\nErreur: ' + error);
+                    }
                 });
         }
         
@@ -613,24 +633,41 @@
             
             // Protection supplémentaire côté client : empêcher l'annulation via ce dropdown
             if (newStatus === "Annulée") {
-                alert('⚠️ Pour annuler une commande, veuillez utiliser le bouton "Annuler la commande" et fournir une raison d\'annulation.');
+                if (typeof showAdminNotification !== 'undefined') {
+                    showAdminNotification('Pour annuler une commande, veuillez utiliser le bouton "Annuler la commande" et fournir une raison d\'annulation.', 'warning');
+                } else {
+                    alert('⚠️ Pour annuler une commande, veuillez utiliser le bouton "Annuler la commande" et fournir une raison d\'annulation.');
+                }
                 return;
             }
             
             $.post('@Url.Action("UpdateStatus", "Admin")', { commandeId: commandeId, nouveauStatut: newStatus }, function (result) {
                 if (result && result.success) {
-                    alert(' Statut mis à jour avec succès');
-                    location.reload();
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification('Statut mis à jour avec succès', 'success');
+                        setTimeout(function() { location.reload(); }, 1500);
+                    } else {
+                        alert(' Statut mis à jour avec succès');
+                        location.reload();
+                    }
                 } else {
                     var errorMsg = result && result.message ? result.message : 'Erreur lors de la mise à jour';
-                    alert(' Erreur : ' + errorMsg);
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification(errorMsg, 'error');
+                    } else {
+                        alert(' Erreur : ' + errorMsg);
+                    }
                 }
             }).fail(function(xhr, status, error) {
                 var errorMessage = 'Une erreur est survenue lors de la mise à jour du statut';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
                 }
-                alert(' Erreur : ' + errorMessage);
+                if (typeof showAdminNotification !== 'undefined') {
+                    showAdminNotification(errorMessage, 'error');
+                } else {
+                    alert(' Erreur : ' + errorMessage);
+                }
             });
         }
         
@@ -649,25 +686,55 @@
             
             // Validation côté client
             if (!raison || raison === '') {
-                alert('Veuillez indiquer la raison d\'annulation');
+                if (typeof showAdminNotification !== 'undefined') {
+                    showAdminNotification('Veuillez indiquer la raison d\'annulation', 'warning');
+                } else {
+                    alert('Veuillez indiquer la raison d\'annulation');
+                }
                 $('#raisonAnnulation_' + commandeId).focus();
                 return;
             }
             
             if (raison.length < 10) {
-                alert('La raison d\'annulation doit contenir au moins 10 caractères');
+                if (typeof showAdminNotification !== 'undefined') {
+                    showAdminNotification('La raison d\'annulation doit contenir au moins 10 caractères', 'warning');
+                } else {
+                    alert('La raison d\'annulation doit contenir au moins 10 caractères');
+                }
                 $('#raisonAnnulation_' + commandeId).focus();
                 return;
             }
             
             // Confirmation avec message amélioré
-            if (!confirm('⚠️ Attention : Annulation de commande\n\nÊtes-vous sûr de vouloir annuler cette commande ?\n\nCette action est irréversible et la raison d\'annulation sera enregistrée.')) {
-                return;
-            }
-            
-            // Désactiver le bouton pendant le traitement
             var $btn = $('.btn-confirm-cancel');
             var originalText = $btn.html();
+            
+            if (typeof showAdminConfirm !== 'undefined') {
+                showAdminConfirm(
+                    'Êtes-vous sûr de vouloir annuler cette commande ?\n\nCette action est irréversible et la raison d\'annulation sera enregistrée.',
+                    'Attention : Annulation de commande',
+                    'Confirmer l\'annulation',
+                    'Annuler'
+                ).then(function(confirmed) {
+                    if (confirmed) {
+                        proceedWithCancellation(commandeId, raison, $btn, originalText);
+                    }
+                });
+            } else {
+                if (confirm('⚠️ Attention : Annulation de commande\n\nÊtes-vous sûr de vouloir annuler cette commande ?\n\nCette action est irréversible et la raison d\'annulation sera enregistrée.')) {
+                    proceedWithCancellation(commandeId, raison, $btn, originalText);
+                }
+            }
+        }
+        
+        function proceedWithCancellation(commandeId, raison, $btn, originalText) {
+            // Désactiver le bouton pendant le traitement
+            if (!$btn || $btn.length === 0) {
+                $btn = $('.btn-confirm-cancel');
+            }
+            if (!originalText) {
+                originalText = $btn.html();
+            }
             $btn.prop('disabled', true).html('Traitement...');
             
             // Récupérer le token antiforgery si disponible
@@ -690,11 +757,20 @@
                 contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
                 success: function (result) {
                     if (result && result.success) {
-                        alert('✅ Commande annulée avec succès');
-                        location.reload();
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification('Commande annulée avec succès', 'success');
+                            setTimeout(function() { location.reload(); }, 1500);
+                        } else {
+                            alert('✅ Commande annulée avec succès');
+                            location.reload();
+                        }
                     } else {
                         var errorMsg = result && result.message ? result.message : 'Erreur lors de l\'annulation';
-                        alert('❌ Erreur : ' + errorMsg);
+                        if (typeof showAdminNotification !== 'undefined') {
+                            showAdminNotification(errorMsg, 'error');
+                        } else {
+                            alert('❌ Erreur : ' + errorMsg);
+                        }
                         $btn.prop('disabled', false).html(originalText);
                     }
                 },
@@ -739,7 +815,11 @@
                         error: error
                     });
                     
-                    alert('❌ Erreur : ' + errorMessage);
+                    if (typeof showAdminNotification !== 'undefined') {
+                        showAdminNotification(errorMessage, 'error');
+                    } else {
+                        alert('❌ Erreur : ' + errorMessage);
+                    }
                     $btn.prop('disabled', false).html(originalText);
                 }
             });
@@ -813,5 +893,31 @@
                 activeBtn.addClass('active');
             }
         }
+
+        // Auto-filter Logic
+        $(function() {
+            var $form = $('.filter-form');
+            var $applyBtn = $('.btn-filter-apply');
+            var debounceTimer;
+
+            // Hide apply button initially
+            $applyBtn.hide();
+
+            // Function to submit form
+            function submitForm() {
+                $form.submit();
+            }
+
+            // Debounce for text inputs (search, amounts)
+            $('.search-input, .amount-filter').on('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(submitForm, 600); // 600ms delay to wait for typing
+            });
+
+            // Immediate submit for select and date
+            $('.status-filter, .date-filter').on('change', function() {
+                submitForm();
+            });
+        });
     </script>
 }
