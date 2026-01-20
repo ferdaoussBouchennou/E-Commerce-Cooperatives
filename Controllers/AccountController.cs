@@ -120,6 +120,7 @@ namespace E_Commerce_Cooperatives.Controllers
                     Session["PendingEmail"] = model.Email;
                     Session["PendingNom"] = model.Nom;
                     Session["PendingPrenom"] = model.Prenom;
+                    Session["PendingTelephone"] = model.Telephone;
                     Session["VerificationCode"] = verificationCode;
                     Session["CodeExpiration"] = codeExpiration;
 
@@ -274,26 +275,18 @@ namespace E_Commerce_Cooperatives.Controllers
                     }
                 }
 
-                // Créer la session de connexion
-                Session["UserId"] = pendingUserId;
-                Session["ClientId"] = pendingClientId;
-                Session["Email"] = pendingEmail;
-                Session["Nom"] = Session["PendingNom"];
-                Session["Prenom"] = Session["PendingPrenom"];
-                Session["ClientNom"] = Session["PendingPrenom"] + " " + Session["PendingNom"];
-                Session["TypeUtilisateur"] = "Client";
-
                 // Nettoyer la session de vérification
                 Session.Remove("PendingUserId");
                 Session.Remove("PendingClientId");
                 Session.Remove("PendingEmail");
                 Session.Remove("PendingNom");
                 Session.Remove("PendingPrenom");
+                Session.Remove("PendingTelephone");
                 Session.Remove("VerificationCode");
                 Session.Remove("CodeExpiration");
 
-                TempData["SuccessMessage"] = "Votre email a été vérifié avec succès ! Votre compte est maintenant actif.";
-                return RedirectToAction("Index", "Home");
+                TempData["SuccessMessage"] = "Votre email a été vérifié avec succès ! Votre compte est maintenant actif. Veuillez vous connecter pour continuer.";
+                return RedirectToAction("Login", "Account");
             }
             catch (SqlException sqlEx)
             {
@@ -320,7 +313,7 @@ namespace E_Commerce_Cooperatives.Controllers
                     connection.Open();
 
                     // Récupérer les informations du client
-                    var getClientQuery = @"SELECT c.ClientId, c.UtilisateurId, c.Nom, c.Prenom, u.Email
+                    var getClientQuery = @"SELECT c.ClientId, c.UtilisateurId, c.Nom, c.Prenom, u.Email, c.Telephone
                                          FROM Clients c
                                          INNER JOIN Utilisateurs u ON c.UtilisateurId = u.UtilisateurId
                                          WHERE u.Email = @Email AND c.EstActif = 0";
@@ -338,6 +331,7 @@ namespace E_Commerce_Cooperatives.Controllers
                                 string nom = reader.GetString(2);
                                 string prenom = reader.GetString(3);
                                 string clientEmail = reader.GetString(4);
+                                string telephone = !reader.IsDBNull(5) ? reader.GetString(5) : null;
 
                                 reader.Close();
 
@@ -369,6 +363,7 @@ namespace E_Commerce_Cooperatives.Controllers
                                 Session["PendingEmail"] = clientEmail;
                                 Session["PendingNom"] = nom;
                                 Session["PendingPrenom"] = prenom;
+                                Session["PendingTelephone"] = telephone;
                                 Session["VerificationCode"] = verificationCode;
                                 Session["CodeExpiration"] = codeExpiration;
 
@@ -427,7 +422,7 @@ namespace E_Commerce_Cooperatives.Controllers
 
                     // Récupérer l'utilisateur
                     var loginQuery = @"SELECT u.UtilisateurId, u.MotDePasse, u.TypeUtilisateur, 
-                                      c.ClientId, c.Nom, c.Prenom, c.EstActif, c.TokenResetPassword
+                                      c.ClientId, c.Nom, c.Prenom, c.EstActif, c.TokenResetPassword, c.Telephone
                                       FROM Utilisateurs u
                                       LEFT JOIN Clients c ON u.UtilisateurId = c.UtilisateurId
                                       WHERE u.Email = @Email";
@@ -520,6 +515,11 @@ namespace E_Commerce_Cooperatives.Controllers
                                                         Session["Nom"] = reader2.GetString(4);
                                                         Session["Prenom"] = reader2.GetString(5);
                                                         Session["ClientNom"] = reader2.GetString(5) + " " + reader2.GetString(4);
+                                                        // Ajouter le téléphone à la session
+                                                        if (!reader2.IsDBNull(8))
+                                                        {
+                                                            Session["Telephone"] = reader2.GetString(8);
+                                                        }
                                                     }
 
                                                     // Handle "Remember Me"
@@ -571,6 +571,11 @@ namespace E_Commerce_Cooperatives.Controllers
                                         Session["Nom"] = reader.GetString(4);
                                         Session["Prenom"] = reader.GetString(5);
                                         Session["ClientNom"] = reader.GetString(5) + " " + reader.GetString(4);
+                                        // Ajouter le téléphone à la session
+                                        if (!reader.IsDBNull(8))
+                                        {
+                                            Session["Telephone"] = reader.GetString(8);
+                                        }
                                     }
 
                                     // Handle "Remember Me"

@@ -1,0 +1,126 @@
+@model E_Commerce_Cooperatives.Models.ViewModels.OrderConfirmationViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Commande confirmée";
+}
+
+@Html.Partial("_Header")
+
+<main class="py-5" style="background-color: #F5F3EF; min-height: 80vh;">
+    <div class="container">
+        <div class="max-w-2xl mx-auto text-center" style="max-width: 42rem;">
+            <!-- Confirmation Header -->
+            <div class="mb-5">
+                <div class="w-20 h-20 bg-success rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" 
+                     style="width: 80px; height: 80px; background-color: #d1f2eb;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#27ae60" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z"/>
+                    </svg>
+                </div>
+                <h1 class="font-display mb-3" style="font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: #305C7D;">
+                    Commande confirmée !
+                </h1>
+                <p class="lead" style="color: #5a6c7d; font-size: 1.25rem;">
+                    Merci pour votre commande. Nous avons bien reçu votre paiement.
+                </p>
+            </div>
+
+            <!-- Order Number -->
+            <div class="bg-white rounded-4 p-4 shadow-soft mb-4" style="box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                <p class="text-muted mb-2 small">Numéro de commande</p>
+                <p class="h3 fw-bold mb-0" style="color: #C06C50; font-size: 1.75rem;">
+                    @Model.NumeroCommande
+                </p>
+            </div>
+
+            <!-- Order Tracking -->
+            <div class="bg-white rounded-4 p-4 shadow-soft mb-4" style="box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                <h2 class="font-display mb-4" style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700; color: #305C7D;">
+                    Suivi de votre commande
+                </h2>
+
+                <div class="d-flex justify-content-between align-items-center position-relative">
+                    <!-- Progress Line -->
+                    <div class="position-absolute top-50 start-0 end-0" style="height: 2px; background-color: #e0e0e0; z-index: 0; margin: 0 40px; top: 20px;">
+                        <div class="h-100 rounded" style="width: 25%; background-color: #C06C50;"></div>
+                    </div>
+
+                    @{
+                        var steps = new[]
+                        {
+                            new { Icon = "check-circle", Label = "Confirmée", Active = true },
+                            new { Icon = "box", Label = "Préparation", Active = false },
+                            new { Icon = "truck", Label = "Expédition", Active = false },
+                            new { Icon = "house", Label = "Livrée", Active = false }
+                        };
+                    }
+
+                    @foreach (var step in steps)
+                    {
+                        <div class="d-flex flex-column align-items-center position-relative" style="z-index: 10;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px; background-color: @(step.Active ? "#C06C50" : "#e0e0e0"); color: white;">
+                                @if (step.Icon == "check-circle")
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z"/>
+                                    </svg>
+                                }
+                                else if (step.Icon == "box")
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 .114 0l7.129 2.852A.5.5 0 0 1 15 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                                    </svg>
+                                }
+                                else if (step.Icon == "truck")
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-1h11V3.5zM3 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM2 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5V7H2V5.5z"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5Z"/>
+                                    </svg>
+                                }
+                            </div>
+                            <span class="small mt-2" style="color: @(step.Active ? "#305C7D" : "#9e9e9e"); font-weight: @(step.Active ? "500" : "400");">
+                                @step.Label
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="bg-light rounded-4 p-4 mb-4" style="background-color: #E8DCC2 !important;">
+                <h3 class="font-display mb-3" style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700; color: #305C7D;">
+                    Prochaines étapes
+                </h3>
+                <ul class="text-start mb-0" style="color: #5a6c7d; list-style: none; padding-left: 0;">
+                    <li class="mb-2">• Vous recevrez un email de confirmation avec les détails de votre commande</li>
+                    <li class="mb-0">• Vous pouvez suivre votre commande depuis votre profil</li>
+                </ul>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                <a href="/mes-commandes" class="btn btn-lg d-inline-flex align-items-center justify-content-center gap-2" 
+                   style="background-color: #C06C50; color: white; border: none;">
+                    Voir mes commandes
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                    </svg>
+                </a>
+                <a href="@Url.Action("Index", "Catalogue")" class="btn btn-lg btn-outline-primary" 
+                   style="border-color: #305C7D; color: #305C7D; background-color: white;">
+                    Continuer mes achats
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+@Html.Partial("_Footer")
+

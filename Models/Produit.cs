@@ -46,6 +46,7 @@ namespace E_Commerce_Cooperatives.Models
         // Propriétés calculées pour la vue
         public decimal NoteMoyenne { get; set; }
         public int NombreAvis { get; set; }
+        public decimal PrixTTC { get { return Math.Round(Prix * 1.20m, 2); } }
         public virtual ICollection<AvisProduit> Avis { get; set; }
         
         public Produit()

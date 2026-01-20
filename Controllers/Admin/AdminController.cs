@@ -1,20 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using E_Commerce_Cooperatives.Models;
 using E_Commerce_Cooperatives.Models.ViewModels;
-using System.IO;
-// Note: iTextSharp requires NuGet package installation: Install-Package iTextSharp
-// Run this command in Package Manager Console: Install-Package iTextSharp
-using iTextSharp.text;
-using iTextSharp.text.pdf;
-using System.Text;
 using System.Data.SqlClient;
 using System.Configuration;
+using System.Data;
+using System.Web.Script.Serialization;
 
-namespace E_Commerce_Cooperatives.Controllers.Admin
+namespace E_Commerce_Cooperatives.Controllers
 {
     public class AdminController : Controller
     {
@@ -38,6 +33,7 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
         {
             return RedirectToAction("Dashboard");
         }
+        
 
         // GET: Admin/Commandes
         public ActionResult Commandes(string searchTerm = null, string statutFilter = "all", 
@@ -106,8 +102,8 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                             Nom = item.Produit?.Nom
                         },
                         Quantite = item.Quantite,
-                        PrixUnitaire = item.PrixUnitaire,
-                        TotalLigne = item.TotalLigne
+                        PrixUnitaire = item.PrixUnitaireTTC, // Prix TTC pour l'affichage
+                        TotalLigne = item.TotalLigneTTC // Total TTC pour l'affichage
                     }).ToList()
                 };
                 
@@ -202,7 +198,7 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                     var commande = db.GetCommandeDetails(commandeId);
                     if (commande == null)
                     {
-                        return Json(new { success = false, message = "Commande introuvable" });
+                        return Json(new { success = false, message = "La commande n'a pas été trouvée." });
                     }
 
                     // Vérifier que la commande n'est pas déjà annulée
@@ -211,25 +207,258 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                         return Json(new { success = false, message = "Cette commande est déjà annulée" });
                     }
 
-                    var success = db.AnnulerCommande(commandeId, raisonAnnulation.Trim());
+                    // Vérifier que la commande n'est pas déjà livrée
+                    if (commande.Statut == "Livrée")
+                    {
+                        return Json(new { success = false, message = "Impossible d'annuler une commande déjà livrée" });
+                    }
+
+                    // Annuler la commande
+                    var success = db.AnnulerCommande(commandeId, raisonAnnulation);
                     if (success)
                     {
+                        // Recharger la commande pour avoir les données à jour (statut, date d'annulation, etc.)
+                        var commandeAnnulee = db.GetCommandeDetails(commandeId);
+                        
+                        // Envoyer l'email d'annulation au client
+                        try
+                        {
+                            if (commandeAnnulee != null && commandeAnnulee.Client != null && !string.IsNullOrEmpty(commandeAnnulee.Client.Email))
+                            {
+                                EmailHelper.SendOrderCancellationEmail(commandeAnnulee, raisonAnnulation);
+                            }
+                        }
+                        catch (Exception emailEx)
+                        {
+                            // Ne pas faire échouer l'annulation si l'email échoue, mais logger l'erreur
+                            System.Diagnostics.Debug.WriteLine("Erreur lors de l'envoi de l'email d'annulation : " + emailEx.Message);
+                        }
+                        
                         return Json(new { success = true, message = "Commande annulée avec succès" });
                     }
                     else
                     {
-                        return Json(new { success = false, message = "Erreur lors de la mise à jour du statut. Vérifiez que le statut 'Annulée' est autorisé dans la base de données." });
+                        return Json(new { success = false, message = "La commande n'a pas été trouvée." });
+                    }
+                }
+            }
+            catch (System.Data.SqlClient.SqlException sqlEx)
+            {
+                System.Diagnostics.Debug.WriteLine("SQL Error in Cancel: " + sqlEx.Message);
+                return Json(new { success = false, message = "Erreur de base de données : " + sqlEx.Message });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error in Cancel: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack trace: " + ex.StackTrace);
+                return Json(new { success = false, message = "Erreur lors de l'annulation : " + ex.Message });
+            }
+        }
+        // GET: Admin/Cooperatives
+        public ActionResult Cooperatives(string searchTerm = "", int page = 1)
+        {
+            try
+            {
+                int pageSize = 6;
+                var db = new ECommerceDbContext();
+                var allCooperatives = db.GetCooperativesWithStats()
+                    .OrderByDescending(c => c.DateCreation)
+                    .ToList();
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    allCooperatives = allCooperatives.Where(c => 
+                        c.Nom.ToLower().Contains(searchTerm.ToLower()) || 
+                        c.Ville.ToLower().Contains(searchTerm.ToLower())
+                    ).ToList();
+                }
+
+                int totalItems = allCooperatives.Count;
+                var cooperatives = allCooperatives
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                ViewBag.SearchTerm = searchTerm;
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+                ViewBag.TotalItems = totalItems;
+
+                return View(cooperatives);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans Cooperatives: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement des coopératives";
+                return View(new List<Cooperative>());
+            }
+        }
+
+        [HttpGet]
+        public JsonResult GetCooperative(int id)
+        {
+            try
+            {
+                var db = new ECommerceDbContext();
+                var c = db.GetCooperative(id);
+                if (c == null) return Json(new { success = false, message = "Coopérative non trouvée" }, JsonRequestBehavior.AllowGet);
+
+                return Json(new { success = true, cooperative = c }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AjouterCooperative(Cooperative coop, System.Web.HttpPostedFileBase logoFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    if (logoFile != null && logoFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(logoFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/cooperatives/"), fileName);
+                        
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        logoFile.SaveAs(path);
+                        coop.Logo = "~/Content/images/cooperatives/" + fileName;
+                    }
+
+                    coop.DateCreation = DateTime.Now;
+                    db.AddCooperative(coop);
+
+                    return Json(new { success = true, message = "Coopérative ajoutée avec succès" });
+                }
+                return Json(new { success = false, message = "Données invalides" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Erreur: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ModifierCooperative(Cooperative coop, System.Web.HttpPostedFileBase logoFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var existing = db.GetCooperative(coop.CooperativeId);
+                    if (existing == null) return Json(new { success = false, message = "Coopérative non trouvée" });
+
+                    if (logoFile != null && logoFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(logoFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/cooperatives/"), fileName);
+                        
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        logoFile.SaveAs(path);
+                        coop.Logo = "~/Content/images/cooperatives/" + fileName;
+                    }
+                    else
+                    {
+                        coop.Logo = existing.Logo;
+                    }
+
+                    db.UpdateCooperative(coop);
+                    return Json(new { success = true, message = "Coopérative modifiée avec succès" });
+                }
+                return Json(new { success = false, message = "Données invalides" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Erreur: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ToggleStatutCooperative(int id)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            // 1. Récupérer le statut actuel
+                            bool actuelStatut = false;
+                            using (var cmdStatus = new SqlCommand("SELECT EstActive FROM Cooperatives WHERE CooperativeId = @id", connection, transaction))
+                            {
+                                cmdStatus.Parameters.AddWithValue("@id", id);
+                                var result = cmdStatus.ExecuteScalar();
+                                if (result == null) return Json(new { success = false, message = "Coopérative non trouvée" });
+                                actuelStatut = (bool)result;
+                            }
+
+                            bool nouveauStatut = !actuelStatut;
+
+                            // 2. Mettre à jour le statut de la coopérative
+                            using (var cmdUpdateCoop = new SqlCommand("UPDATE Cooperatives SET EstActive = @nouveauStatut WHERE CooperativeId = @id", connection, transaction))
+                            {
+                                cmdUpdateCoop.Parameters.AddWithValue("@nouveauStatut", nouveauStatut);
+                                cmdUpdateCoop.Parameters.AddWithValue("@id", id);
+                                cmdUpdateCoop.ExecuteNonQuery();
+                            }
+
+                            int productsAffected = 0;
+                            // 3. Si désactivation, désactiver aussi tous les produits
+                            if (!nouveauStatut)
+                            {
+                                var updateProductsQuery = @"UPDATE Produits 
+                                                           SET EstDisponible = 0, 
+                                                               DateModification = GETDATE() 
+                                                           WHERE CooperativeId = @CooperativeId";
+                                
+                                using (var cmdProducts = new SqlCommand(updateProductsQuery, connection, transaction))
+                                {
+                                    cmdProducts.Parameters.AddWithValue("@CooperativeId", id);
+                                    productsAffected = cmdProducts.ExecuteNonQuery();
+                                }
+                            }
+
+                            transaction.Commit();
+
+                            string action = nouveauStatut ? "activée" : "désactivée";
+                            string message = $"Coopérative {action} avec succès";
+                            if (!nouveauStatut && productsAffected > 0)
+                            {
+                                message += $" et {productsAffected} produit(s) rendu(s) indisponible(s).";
+                            }
+
+                            return Json(new { success = true, message = message });
+                        }
+                        catch (Exception)
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Logger l'erreur (à implémenter avec un système de logging)
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+                return Json(new { success = false, message = "Erreur lors du changement de statut : " + ex.Message });
             }
         }
 
-        // GET: Admin/Commandes/PrintInvoice/5
+
+        // GET: Admin/PrintInvoice/5
         public ActionResult PrintInvoice(int id)
         {
             using (var db = new ECommerceDbContext())
@@ -240,11 +469,19 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                     return HttpNotFound();
                 }
 
-                return GenerateInvoicePDF(commande);
+                try
+                {
+                    byte[] pdfBytes = E_Commerce_Cooperatives.Helpers.InvoiceHelper.GenerateInvoice(commande);
+                    return File(pdfBytes, "application/pdf", $"Facture_{commande.NumeroCommande}.pdf");
+                }
+                catch (Exception ex)
+                {
+                    return Content($"Erreur lors de la génération de la facture: {ex.Message}");
+                }
             }
         }
 
-        // GET: Admin/Commandes/PrintDeliverySlip/5
+        // GET: Admin/PrintDeliverySlip/5
         public ActionResult PrintDeliverySlip(int id)
         {
             using (var db = new ECommerceDbContext())
@@ -255,719 +492,1039 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                     return HttpNotFound();
                 }
 
-                return GenerateDeliverySlipPDF(commande);
+                try
+                {
+                    byte[] pdfBytes = E_Commerce_Cooperatives.Helpers.DeliverySlipHelper.GenerateDeliverySlip(commande);
+                    return File(pdfBytes, "application/pdf", $"Bordereau_{commande.NumeroCommande}.pdf");
+                }
+                catch (Exception ex)
+                {
+                    return Content($"Erreur lors de la génération du bordereau: {ex.Message}");
+                }
             }
         }
+        private readonly ECommerceDbContext db = new ECommerceDbContext();
 
-        private ActionResult GenerateInvoicePDF(Commande commande)
+        // ============================================
+        // GESTION DES PRODUITS
+        // ============================================
+
+        /// <summary>
+        /// Affiche la liste des produits avec filtres et statistiques
+        /// </summary>
+        public ActionResult Produits(string searchTerm = "", string categorieFilter = "all", string statutFilter = "all")
         {
-            using (MemoryStream stream = new MemoryStream())
+            try
             {
-                Document document = new Document(PageSize.A4, 40, 40, 60, 40);
-                PdfWriter writer = PdfWriter.GetInstance(document, stream);
-                document.Open();
-
-                // Définir les couleurs - Palette du projet CoopShop
-                BaseColor primaryColor = new BaseColor(48, 92, 125); // Azul Profundo (#305C7D) - Bleu profond
-                BaseColor secondaryColor = new BaseColor(125, 132, 83); // Verde Oliva (#7D8453) - Vert olive
-                BaseColor accentColor = new BaseColor(192, 108, 80); // Terracotta Cálido (#C06C50) - Terracotta chaud
-                BaseColor headerBgColor = new BaseColor(48, 92, 125); // Azul Profundo pour en-tête
-                BaseColor headerTextColor = BaseColor.WHITE;
-                BaseColor backgroundWarm = new BaseColor(232, 220, 194); // Arena Suave (#E8DCC2) - Sable doux
-                BaseColor backgroundLight = new BaseColor(245, 243, 239); // Blanco Roto (#F5F3EF) - Blanc cassé
-                BaseColor darkGray = new BaseColor(97, 97, 97);
-                BaseColor borderColor = new BaseColor(224, 224, 224);
-                BaseColor textMuted = new BaseColor(90, 108, 125); // Couleur texte secondaire
-
-                // En-tête avec couleur
-                PdfPTable headerTable = new PdfPTable(1);
-                headerTable.WidthPercentage = 100;
-                PdfPCell headerCell = new PdfPCell(new Phrase("FACTURE", FontFactory.GetFont(FontFactory.TIMES_BOLD, 24, headerTextColor)));
-                headerCell.BackgroundColor = headerBgColor;
-                headerCell.Padding = 15;
-                headerCell.HorizontalAlignment = Element.ALIGN_CENTER;
-                headerCell.Border = Rectangle.NO_BORDER;
-                headerTable.AddCell(headerCell);
-                document.Add(headerTable);
-                document.Add(new Paragraph("\n"));
-
-                // Informations de la commande dans un tableau stylisé
-                PdfPTable infoTable = new PdfPTable(2);
-                infoTable.WidthPercentage = 100;
-                infoTable.SetWidths(new float[] { 1, 1 });
-
-                Font normalFont = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10);
-                Font boldFont = FontFactory.GetFont(FontFactory.TIMES_BOLD, 10);
-                Font labelFont = FontFactory.GetFont(FontFactory.TIMES_BOLD, 9, darkGray);
-
-                // Colonne gauche - Informations commande
-                PdfPCell infoCell1 = new PdfPCell();
-                infoCell1.Border = Rectangle.NO_BORDER;
-                infoCell1.Padding = 10;
-                Paragraph info1 = new Paragraph();
-                info1.Add(new Chunk("Numéro de commande\n", labelFont));
-                info1.Add(new Chunk(commande.NumeroCommande + "\n\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 11, primaryColor)));
-                info1.Add(new Chunk("Date\n", labelFont));
-                info1.Add(new Chunk(commande.DateCommande.ToString("dd/MM/yyyy") + "\n\n", normalFont));
-                info1.Add(new Chunk("Statut\n", labelFont));
-                info1.Add(new Chunk(commande.Statut ?? "Non défini", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10, secondaryColor)));
-                infoCell1.AddElement(info1);
-                infoTable.AddCell(infoCell1);
-
-                // Colonne droite - Informations client
-                PdfPCell infoCell2 = new PdfPCell();
-                infoCell2.Border = Rectangle.NO_BORDER;
-                infoCell2.Padding = 10;
-                Paragraph info2 = new Paragraph();
-                info2.Add(new Chunk("CLIENT\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 12, primaryColor)));
-                if (commande.Client != null)
+                // Récupérer tous les produits
+                var produits = db.Produits.ToList();
+                
+                // Charger les relations manuellement
+                var categories = db.Categories.ToList();
+                var cooperatives = db.Cooperatives.ToList();
+                
+                foreach (var p in produits)
                 {
-                    info2.Add(new Chunk(commande.Client.NomComplet + "\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                    info2.Add(new Chunk(commande.Client.Email ?? "N/A" + "\n", normalFont));
-                }
-                else
-                {
-                    info2.Add(new Chunk("Client non disponible\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                }
-                if (commande.Adresse != null)
-                {
-                    info2.Add(new Chunk("\n" + commande.Adresse.AdresseComplete + "\n", normalFont));
-                    info2.Add(new Chunk(commande.Adresse.Ville + ", " + commande.Adresse.CodePostal, normalFont));
-                }
-                infoCell2.AddElement(info2);
-                infoTable.AddCell(infoCell2);
-
-                document.Add(infoTable);
-                document.Add(new Paragraph("\n"));
-
-                // Table des produits avec style amélioré
-                PdfPTable table = new PdfPTable(4);
-                table.WidthPercentage = 100;
-                table.SetWidths(new float[] { 3, 1, 1.5f, 1.5f });
-                table.SpacingBefore = 10f;
-
-                // En-têtes de tableau avec couleur
-                Font headerFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10, headerTextColor);
-                string[] headers = { "Produit", "Qté", "Prix unit.", "Total" };
-                foreach (string header in headers)
-                {
-                    PdfPCell tableHeaderCell = new PdfPCell(new Phrase(header, headerFont));
-                    tableHeaderCell.BackgroundColor = headerBgColor;
-                    tableHeaderCell.Padding = 8;
-                    tableHeaderCell.HorizontalAlignment = header == "Produit" ? Element.ALIGN_LEFT : 
-                                                      header == "Qté" ? Element.ALIGN_CENTER : Element.ALIGN_RIGHT;
-                    tableHeaderCell.BorderColor = borderColor;
-                    table.AddCell(tableHeaderCell);
+                    if (p.CategorieId.HasValue)
+                        p.Categorie = categories.FirstOrDefault(c => c.CategorieId == p.CategorieId.Value);
+                    if (p.CooperativeId.HasValue)
+                        p.Cooperative = cooperatives.FirstOrDefault(c => c.CooperativeId == p.CooperativeId.Value);
                 }
 
-                // Lignes de produits avec alternance de couleurs
-                bool alternate = false;
-                if (commande.Items != null && commande.Items.Any())
+                // Appliquer les filtres
+                if (!string.IsNullOrEmpty(searchTerm))
                 {
-                    foreach (var item in commande.Items)
+                    produits = produits.Where(p =>
+                        p.Nom.ToLower().Contains(searchTerm.ToLower()) ||
+                        (p.Cooperative != null && p.Cooperative.Nom.ToLower().Contains(searchTerm.ToLower()))
+                    ).ToList();
+                }
+
+                if (categorieFilter != "all" && int.TryParse(categorieFilter, out int catId))
+                {
+                    produits = produits.Where(p => p.CategorieId == catId).ToList();
+                }
+
+                if (statutFilter != "all")
+                {
+                    switch (statutFilter)
                     {
-                        if (item?.Produit == null) continue;
-                        
-                        BaseColor rowColor = alternate ? backgroundLight : BaseColor.WHITE;
-                        alternate = !alternate;
-
-                        PdfPCell cell1 = new PdfPCell(new Phrase(item.Produit.Nom ?? "Produit inconnu", normalFont));
-                    cell1.BackgroundColor = rowColor;
-                    cell1.Padding = 8;
-                    cell1.BorderColor = borderColor;
-                    table.AddCell(cell1);
-
-                    PdfPCell cell2 = new PdfPCell(new Phrase(item.Quantite.ToString(), normalFont));
-                    cell2.BackgroundColor = rowColor;
-                    cell2.Padding = 8;
-                    cell2.HorizontalAlignment = Element.ALIGN_CENTER;
-                    cell2.BorderColor = borderColor;
-                    table.AddCell(cell2);
-
-                    PdfPCell cell3 = new PdfPCell(new Phrase(item.PrixUnitaire.ToString("0.00") + " MAD", normalFont));
-                    cell3.BackgroundColor = rowColor;
-                    cell3.Padding = 8;
-                    cell3.HorizontalAlignment = Element.ALIGN_RIGHT;
-                    cell3.BorderColor = borderColor;
-                    table.AddCell(cell3);
-
-                        PdfPCell cell4 = new PdfPCell(new Phrase(item.TotalLigne.ToString("0.00") + " MAD", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                        cell4.BackgroundColor = rowColor;
-                        cell4.Padding = 8;
-                        cell4.HorizontalAlignment = Element.ALIGN_RIGHT;
-                        cell4.BorderColor = borderColor;
-                        table.AddCell(cell4);
+                        case "disponible":
+                            produits = produits.Where(p => p.EstDisponible).ToList();
+                            break;
+                        case "vedette":
+                            produits = produits.Where(p => p.EstEnVedette).ToList();
+                            break;
+                        case "stock-faible":
+                            produits = produits.Where(p => p.StockTotal <= p.SeuilAlerte).ToList();
+                            break;
                     }
                 }
-                else
+
+                // Trier par date d'ajout (plus récent au début)
+                produits = produits.OrderByDescending(p => p.DateCreation).ToList();
+
+                // Calculer les statistiques
+                var stats = new Dictionary<string, int>
                 {
-                    // Aucun produit
-                    PdfPCell emptyCell = new PdfPCell(new Phrase("Aucun produit", normalFont));
-                    emptyCell.Colspan = 4;
-                    emptyCell.HorizontalAlignment = Element.ALIGN_CENTER;
-                    emptyCell.Padding = 15;
-                    table.AddCell(emptyCell);
-                }
+                    { "Total", produits.Count },
+                    { "Disponibles", produits.Count(p => p.EstDisponible) },
+                    { "EnVedette", produits.Count(p => p.EstEnVedette) },
+                    { "StockFaible", produits.Count(p => p.StockTotal <= p.SeuilAlerte) }
+                };
 
-                document.Add(table);
-                document.Add(new Paragraph("\n"));
+                // Passer les données à la vue
+                ViewBag.Stats = stats;
+                ViewBag.SearchTerm = searchTerm;
+                ViewBag.CategorieFilter = categorieFilter;
+                ViewBag.StatutFilter = statutFilter;
 
-                // Totaux dans un tableau stylisé
-                PdfPTable totalsTable = new PdfPTable(2);
-                totalsTable.WidthPercentage = 50;
-                totalsTable.HorizontalAlignment = Element.ALIGN_RIGHT;
-                totalsTable.SetWidths(new float[] { 2, 1.5f });
+                // For Modals
+                ViewBag.Categories = categories;
+                ViewBag.Cooperatives = cooperatives;
 
-                // Ligne sous-total HT
-                AddTotalRow(totalsTable, "Sous-total HT:", commande.TotalHT.ToString("0.00") + " MAD", normalFont, boldFont, borderColor);
-                
-                // Ligne TVA
-                AddTotalRow(totalsTable, "TVA:", commande.MontantTVA.ToString("0.00") + " MAD", normalFont, normalFont, borderColor);
-                
-                // Ligne frais de livraison
-                AddTotalRow(totalsTable, "Frais de livraison:", commande.FraisLivraison.ToString("0.00") + " MAD", normalFont, normalFont, borderColor);
-                
-                // Ligne séparatrice
-                PdfPCell separator = new PdfPCell(new Phrase(""));
-                separator.Border = Rectangle.TOP_BORDER;
-                separator.BorderColor = textMuted;
-                separator.Colspan = 2;
-                separator.Padding = 5;
-                separator.FixedHeight = 1f;
-                totalsTable.AddCell(separator);
-                
-                // Ligne TOTAL TTC avec couleur gris bleuté
-                PdfPCell totalLabelCell = new PdfPCell(new Phrase("TOTAL TTC", FontFactory.GetFont(FontFactory.TIMES_BOLD, 12, BaseColor.WHITE)));
-                totalLabelCell.BackgroundColor = textMuted; // Gris bleuté (#5A6C7D)
-                totalLabelCell.Padding = 10;
-                totalLabelCell.BorderColor = borderColor;
-                totalsTable.AddCell(totalLabelCell);
-
-                PdfPCell totalValueCell = new PdfPCell(new Phrase(commande.TotalTTC.ToString("0.00") + " MAD", FontFactory.GetFont(FontFactory.TIMES_BOLD, 14, BaseColor.WHITE)));
-                totalValueCell.BackgroundColor = textMuted; // Gris bleuté (#5A6C7D)
-                totalValueCell.Padding = 10;
-                totalValueCell.HorizontalAlignment = Element.ALIGN_RIGHT;
-                totalValueCell.BorderColor = borderColor;
-                totalsTable.AddCell(totalValueCell);
-
-                document.Add(totalsTable);
-
-                // Pied de page
-                document.Add(new Paragraph("\n\n"));
-                Paragraph footer = new Paragraph("Merci pour votre confiance !", FontFactory.GetFont(FontFactory.TIMES_ITALIC, 9, textMuted));
-                footer.Alignment = Element.ALIGN_CENTER;
-                document.Add(footer);
-
-                document.Close();
-
-                byte[] byteArray = stream.ToArray();
-                return File(byteArray, "application/pdf", "Facture_" + commande.NumeroCommande + ".pdf");
+                return View("Admin_Produit", produits);
             }
-        }
-
-        private void AddTotalRow(PdfPTable table, string label, string value, Font normalFont, Font valueFont, BaseColor borderColor)
-        {
-            PdfPCell labelCell = new PdfPCell(new Phrase(label, normalFont));
-            labelCell.Border = Rectangle.NO_BORDER;
-            labelCell.Padding = 5;
-            table.AddCell(labelCell);
-
-            PdfPCell valueCell = new PdfPCell(new Phrase(value, valueFont));
-            valueCell.Border = Rectangle.NO_BORDER;
-            valueCell.Padding = 5;
-            valueCell.HorizontalAlignment = Element.ALIGN_RIGHT;
-            table.AddCell(valueCell);
-        }
-
-        private ActionResult GenerateDeliverySlipPDF(Commande commande)
-        {
-            using (MemoryStream stream = new MemoryStream())
+            catch (Exception ex)
             {
-                Document document = new Document(PageSize.A4, 40, 40, 60, 40);
-                PdfWriter writer = PdfWriter.GetInstance(document, stream);
-                document.Open();
-
-                // Définir les couleurs - Palette du projet CoopShop
-                BaseColor primaryColor = new BaseColor(48, 92, 125); // Azul Profundo (#305C7D) - Bleu profond
-                BaseColor secondaryColor = new BaseColor(125, 132, 83); // Verde Oliva (#7D8453) - Vert olive
-                BaseColor accentColor = new BaseColor(192, 108, 80); // Terracotta Cálido (#C06C50) - Terracotta chaud
-                BaseColor headerBgColor = new BaseColor(48, 92, 125); // Azul Profundo pour en-tête bordereau
-                BaseColor headerTextColor = BaseColor.WHITE;
-                BaseColor backgroundWarm = new BaseColor(232, 220, 194); // Arena Suave (#E8DCC2) - Sable doux
-                BaseColor backgroundLight = new BaseColor(245, 243, 239); // Blanco Roto (#F5F3EF) - Blanc cassé
-                BaseColor darkGray = new BaseColor(97, 97, 97);
-                BaseColor borderColor = new BaseColor(224, 224, 224);
-                BaseColor infoBgColor = new BaseColor(245, 243, 239); // Blanco Roto pour fonds d'info
-                BaseColor textMuted = new BaseColor(90, 108, 125); // Couleur texte secondaire (#5A6C7D)
-
-                // En-tête avec couleur
-                PdfPTable headerTable = new PdfPTable(1);
-                headerTable.WidthPercentage = 100;
-                PdfPCell headerCell = new PdfPCell(new Phrase("BORDEREAU DE LIVRAISON", FontFactory.GetFont(FontFactory.TIMES_BOLD, 24, headerTextColor)));
-                headerCell.BackgroundColor = headerBgColor;
-                headerCell.Padding = 15;
-                headerCell.HorizontalAlignment = Element.ALIGN_CENTER;
-                headerCell.Border = Rectangle.NO_BORDER;
-                headerTable.AddCell(headerCell);
-                document.Add(headerTable);
-                document.Add(new Paragraph("\n"));
-
-                Font normalFont = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10);
-                Font boldFont = FontFactory.GetFont(FontFactory.TIMES_BOLD, 10);
-                Font labelFont = FontFactory.GetFont(FontFactory.TIMES_BOLD, 9, textMuted);
-
-                // Informations de la commande dans un tableau stylisé
-                PdfPTable infoTable = new PdfPTable(2);
-                infoTable.WidthPercentage = 100;
-                infoTable.SetWidths(new float[] { 1, 1 });
-
-                PdfPCell infoCell1 = new PdfPCell();
-                infoCell1.BackgroundColor = BaseColor.WHITE; // Blanc par défaut
-                infoCell1.BorderColor = borderColor;
-                infoCell1.Padding = 12;
-                Paragraph info1 = new Paragraph();
-                info1.Add(new Chunk("INFORMATIONS COMMANDE\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 11, primaryColor)));
-                info1.Add(new Chunk("\nNuméro: ", labelFont));
-                info1.Add(new Chunk(commande.NumeroCommande + "\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                info1.Add(new Chunk("Date: ", labelFont));
-                info1.Add(new Chunk(commande.DateCommande.ToString("dd/MM/yyyy"), normalFont));
-                infoCell1.AddElement(info1);
-                infoTable.AddCell(infoCell1);
-
-                // Mode de livraison
-                PdfPCell infoCell2 = new PdfPCell();
-                infoCell2.BackgroundColor = BaseColor.WHITE; // Blanc par défaut
-                infoCell2.BorderColor = borderColor;
-                infoCell2.Padding = 12;
-                Paragraph info2 = new Paragraph();
-                if (commande.ModeLivraison != null)
-                {
-                    info2.Add(new Chunk("MODE DE LIVRAISON\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 11, primaryColor)));
-                    info2.Add(new Chunk("\n" + commande.ModeLivraison.Nom + "\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                    if (!string.IsNullOrEmpty(commande.ModeLivraison.Description))
-                    {
-                        info2.Add(new Chunk(commande.ModeLivraison.Description, normalFont));
-                    }
-                }
-                else
-                {
-                    info2.Add(new Chunk("MODE DE LIVRAISON\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 11, primaryColor)));
-                    info2.Add(new Chunk("\nStandard", normalFont));
-                }
-                infoCell2.AddElement(info2);
-                infoTable.AddCell(infoCell2);
-
-                document.Add(infoTable);
-                document.Add(new Paragraph("\n"));
-
-                // Adresse de livraison dans un encadré
-                if (commande.Adresse != null)
-                {
-                    PdfPTable addressTable = new PdfPTable(1);
-                    addressTable.WidthPercentage = 100;
-                    PdfPCell addressCell = new PdfPCell();
-                    addressCell.BackgroundColor = backgroundLight; // Blanco Roto
-                    addressCell.BorderColor = primaryColor;
-                    addressCell.BorderWidth = 2f;
-                    addressCell.Padding = 12;
-                    Paragraph address = new Paragraph();
-                    address.Add(new Chunk("ADRESSE DE LIVRAISON\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 12, primaryColor)));
-                    address.Add(new Chunk("\n" + commande.Adresse.AdresseComplete + "\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                    address.Add(new Chunk(commande.Adresse.Ville + ", " + commande.Adresse.CodePostal + "\n", normalFont));
-                    address.Add(new Chunk(commande.Adresse.Pays, normalFont));
-                    addressCell.AddElement(address);
-                    addressTable.AddCell(addressCell);
-                    document.Add(addressTable);
-                    document.Add(new Paragraph("\n"));
-                }
-
-                // Liste des produits avec style amélioré
-                PdfPTable table = new PdfPTable(3);
-                table.WidthPercentage = 100;
-                table.SetWidths(new float[] { 3, 1, 1.5f });
-                table.SpacingBefore = 10f;
-
-                // En-têtes de tableau avec couleur
-                Font headerFont = FontFactory.GetFont(FontFactory.TIMES_BOLD, 10, headerTextColor);
-                string[] headers = { "Produit", "Qté", "Vérifié" };
-                foreach (string header in headers)
-                {
-                    PdfPCell tableHeaderCell = new PdfPCell(new Phrase(header, headerFont));
-                    tableHeaderCell.BackgroundColor = headerBgColor;
-                    tableHeaderCell.Padding = 8;
-                    tableHeaderCell.HorizontalAlignment = header == "Produit" ? Element.ALIGN_LEFT : Element.ALIGN_CENTER;
-                    tableHeaderCell.BorderColor = borderColor;
-                    table.AddCell(tableHeaderCell);
-                }
-
-                // Lignes de produits avec alternance de couleurs
-                bool alternate = false;
-                if (commande.Items != null && commande.Items.Any())
-                {
-                    foreach (var item in commande.Items)
-                    {
-                        if (item?.Produit == null) continue;
-                        
-                        BaseColor rowColor = alternate ? backgroundLight : BaseColor.WHITE;
-                        alternate = !alternate;
-
-                        PdfPCell cell1 = new PdfPCell(new Phrase(item.Produit.Nom ?? "Produit inconnu", normalFont));
-                    cell1.BackgroundColor = rowColor;
-                    cell1.Padding = 8;
-                    cell1.BorderColor = borderColor;
-                    table.AddCell(cell1);
-
-                    PdfPCell cell2 = new PdfPCell(new Phrase(item.Quantite.ToString(), FontFactory.GetFont(FontFactory.TIMES_BOLD, 10)));
-                    cell2.BackgroundColor = rowColor;
-                    cell2.Padding = 8;
-                    cell2.HorizontalAlignment = Element.ALIGN_CENTER;
-                    cell2.BorderColor = borderColor;
-                    table.AddCell(cell2);
-
-                    // Cellule pour cocher avec bordure
-                        PdfPCell cell3 = new PdfPCell(new Phrase("", normalFont));
-                        cell3.BackgroundColor = rowColor;
-                        cell3.Padding = 15;
-                        cell3.HorizontalAlignment = Element.ALIGN_CENTER;
-                        cell3.VerticalAlignment = Element.ALIGN_MIDDLE;
-                        cell3.BorderColor = darkGray;
-                        cell3.BorderWidth = 1.5f;
-                        table.AddCell(cell3);
-                    }
-                }
-                else
-                {
-                    // Aucun produit
-                    PdfPCell emptyCell = new PdfPCell(new Phrase("Aucun produit", normalFont));
-                    emptyCell.Colspan = 3;
-                    emptyCell.HorizontalAlignment = Element.ALIGN_CENTER;
-                    emptyCell.Padding = 15;
-                    table.AddCell(emptyCell);
-                }
-
-                document.Add(table);
-                document.Add(new Paragraph("\n\n"));
-
-                // Zone pour signature stylisée
-                PdfPTable signatureTable = new PdfPTable(1);
-                signatureTable.WidthPercentage = 60;
-                signatureTable.HorizontalAlignment = Element.ALIGN_RIGHT;
-                
-                PdfPCell signatureCell = new PdfPCell();
-                signatureCell.BackgroundColor = backgroundLight; // Blanco Roto (#F5F3EF)
-                signatureCell.BorderColor = borderColor;
-                signatureCell.BorderWidth = 1f;
-                signatureCell.Padding = 15;
-                Paragraph signature = new Paragraph();
-                signature.Add(new Chunk("Signature du destinataire\n", FontFactory.GetFont(FontFactory.TIMES_BOLD, 11, primaryColor)));
-                signature.Add(new Chunk("\n\n", normalFont));
-                signature.Add(new Chunk("___________________________\n", FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10, textMuted)));
-                signature.Add(new Chunk("\nNom et prénom", FontFactory.GetFont(FontFactory.TIMES_ROMAN, 8, textMuted)));
-                signatureCell.AddElement(signature);
-                signatureTable.AddCell(signatureCell);
-                
-                document.Add(signatureTable);
-
-                // Note en bas
-                document.Add(new Paragraph("\n"));
-                Paragraph note = new Paragraph("Veuillez vérifier l'état des produits avant de signer.", FontFactory.GetFont(FontFactory.TIMES_ITALIC, 9, textMuted));
-                note.Alignment = Element.ALIGN_CENTER;
-                document.Add(note);
-
-                document.Close();
-
-                byte[] byteArray = stream.ToArray();
-                return File(byteArray, "application/pdf", "Bordereau_" + commande.NumeroCommande + ".pdf");
+                // Logger l'erreur
+                System.Diagnostics.Debug.WriteLine($"Erreur dans Produits: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement des produits";
+                return View("Admin_Produit", new List<Produit>());
             }
         }
 
-        // GET: Admin/Livraison
+        [HttpGet]
+        public JsonResult GetProduit(int id)
+        {
+            try
+            {
+                var p = db.FindProduit(id);
+                if (p == null) return Json(new { success = false, message = "Produit non trouvé" }, JsonRequestBehavior.AllowGet);
+
+                var variantes = db.GetVariantesProduit(id);
+
+                return Json(new
+                {
+                    success = true,
+                    produit = new
+                    {
+                        p.ProduitId,
+                        p.Nom,
+                        p.Description,
+                        p.Prix,
+                        p.CategorieId,
+                        p.CooperativeId,
+                        p.StockTotal,
+                        p.SeuilAlerte,
+                        p.EstDisponible,
+                        p.EstEnVedette,
+                        p.EstNouveau,
+                        p.ImageUrl
+                    },
+                    variantes = variantes.Select(v => new {
+                        v.VarianteId,
+                        v.Taille,
+                        v.Couleur,
+                        v.Stock,
+                        v.PrixSupplementaire,
+                        v.SKU,
+                        v.EstDisponible
+                    }).ToList(),
+                    images = db.GetImagesProduit(id).Select(img => new {
+                        img.ImageId,
+                        img.UrlImage,
+                        img.EstPrincipale
+                    }).ToList()
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary>
+        /// Affiche le formulaire d'ajout de produit
+        /// </summary>
+        public ActionResult AjouterProduit()
+        {
+            try
+            {
+                ViewBag.Categories = db.Categories.ToList();
+                ViewBag.Cooperatives = db.Cooperatives.ToList();
+                return View(new Produit());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterProduit GET: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement du formulaire";
+                return RedirectToAction("Produits");
+            }
+        }
+
+        /// <summary>
+        /// Traite l'ajout d'un nouveau produit
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AjouterProduit(Produit produit, System.Web.HttpPostedFileBase imageFile, IEnumerable<System.Web.HttpPostedFileBase> secondaryImages, string variantesJson)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    // Gestion de l'image
+                    if (imageFile != null && imageFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/produits/"), fileName);
+                        
+                        // Créer le répertoire s'il n'existe pas
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        produit.ImageUrl = "~/Content/images/produits/" + fileName;
+                    }
+
+                    produit.DateCreation = DateTime.Now;
+                    db.ProduitsSet.Add(produit);
+                    db.SaveChanges();
+
+                    // Gestion des images secondaires
+                    if (secondaryImages != null)
+                    {
+                        foreach (var file in secondaryImages)
+                        {
+                            if (file != null && file.ContentLength > 0)
+                            {
+                                string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(file.FileName);
+                                string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/produits/"), fileName);
+                                
+                                file.SaveAs(path);
+                                
+                                var img = new ImageProduit
+                                {
+                                    ProduitId = produit.ProduitId,
+                                    UrlImage = "~/Content/images/produits/" + fileName,
+                                    EstPrincipale = false
+                                };
+                                db.AddImageProduit(img);
+                            }
+                        }
+                    }
+
+                    if (Request.IsAjaxRequest())
+                    {
+                        // Gestion des variantes
+                        if (!string.IsNullOrEmpty(variantesJson))
+                        {
+                            var serializer = new JavaScriptSerializer();
+                            var variantes = serializer.Deserialize<List<Variante>>(variantesJson);
+                            if (variantes != null)
+                            {
+                                foreach (var v in variantes)
+                                {
+                                    v.ProduitId = produit.ProduitId;
+                                    db.AddVariante(v);
+                                }
+                            }
+                        }
+
+                        return Json(new { success = true, message = "Produit ajouté avec succès" });
+                    }
+
+                    TempData["SuccessMessage"] = "Produit ajouté avec succès";
+                    return RedirectToAction("Produits");
+                }
+
+                if (Request.IsAjaxRequest())
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return Json(new { success = false, errors = errors });
+                }
+
+                ViewBag.Categories = db.Categories.ToList();
+                ViewBag.Cooperatives = db.Cooperatives.ToList();
+                return View(produit);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterProduit POST: {ex.Message}");
+                
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(new { success = false, message = "Erreur lors de l'ajout du produit: " + ex.Message });
+                }
+
+                TempData["ErrorMessage"] = "Erreur lors de l'ajout du produit";
+                ViewBag.Categories = db.Categories.ToList();
+                ViewBag.Cooperatives = db.Cooperatives.ToList();
+                return View(produit);
+            }
+        }
+
+        /// <summary>
+        /// Affiche les détails d'un produit
+        /// </summary>
+        public ActionResult DetailsProduit(int id)
+        {
+            try
+            {
+                var produit = db.Produits.FirstOrDefault(p => p.ProduitId == id);
+                
+                if (produit != null)
+                {
+                    // Charger les relations manuellement
+                    if (produit.CategorieId.HasValue)
+                        produit.Categorie = db.Categories.FirstOrDefault(c => c.CategorieId == produit.CategorieId.Value);
+                    if (produit.CooperativeId.HasValue)
+                        produit.Cooperative = db.Cooperatives.FirstOrDefault(c => c.CooperativeId == produit.CooperativeId.Value);
+                }
+
+                if (produit == null)
+                {
+                    TempData["ErrorMessage"] = "Produit non trouvé";
+                    return RedirectToAction("Produits");
+                }
+
+                return View(produit);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans DetailsProduit: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement des détails";
+                return RedirectToAction("Produits");
+            }
+        }
+
+        /// <summary>
+        /// Affiche le formulaire de modification de produit
+        /// </summary>
+        public ActionResult ModifierProduit(int id)
+        {
+            try
+            {
+                var produit = db.ProduitsSet.Find(id);
+
+                if (produit == null)
+                {
+                    TempData["ErrorMessage"] = "Produit non trouvé";
+                    return RedirectToAction("Produits");
+                }
+
+                ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();
+                ViewBag.Cooperatives = db.Cooperatives.Where(c => c.EstActive).ToList();
+
+                return View(produit);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans ModifierProduit GET: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement du produit";
+                return RedirectToAction("Produits");
+            }
+        }
+
+        /// <summary>
+        /// Traite la modification d'un produit
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ModifierProduit(Produit produit, System.Web.HttpPostedFileBase imageFile, IEnumerable<System.Web.HttpPostedFileBase> secondaryImages, string deletedImageIds, string variantesJson)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var produitExistant = db.ProduitsSet.Find(produit.ProduitId);
+
+                    if (produitExistant == null)
+                    {
+                        TempData["ErrorMessage"] = "Produit non trouvé";
+                        return RedirectToAction("Produits");
+                    }
+
+                    // Gestion de l'image
+                    if (imageFile != null && imageFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/produits/"), fileName);
+                        
+                        // Créer le répertoire s'il n'existe pas
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        
+                        // Optionnel : Supprimer l'ancienne image si elle existe et n'est pas une image par défaut
+                        
+                        produitExistant.ImageUrl = "~/Content/images/produits/" + fileName;
+                    }
+                    else if (!string.IsNullOrEmpty(produit.ImageUrl))
+                    {
+                        // Si l'utilisateur a modifié l'URL manuellement ou si elle est passée en masqué
+                        produitExistant.ImageUrl = produit.ImageUrl;
+                    }
+
+                    // Mettre à jour les propriétés
+                    produitExistant.Nom = produit.Nom;
+                    produitExistant.Description = produit.Description;
+                    produitExistant.Prix = produit.Prix;
+                    produitExistant.CategorieId = produit.CategorieId;
+                    produitExistant.CooperativeId = produit.CooperativeId;
+                    produitExistant.StockTotal = produit.StockTotal;
+                    produitExistant.SeuilAlerte = produit.SeuilAlerte;
+                    produitExistant.EstDisponible = produit.EstDisponible;
+                    produitExistant.EstEnVedette = produit.EstEnVedette;
+                    produitExistant.EstNouveau = produit.EstNouveau;
+                    produitExistant.DateModification = DateTime.Now;
+                    
+                    db.UpdateProduit(produitExistant);
+                    db.SaveChanges();
+
+                    // Gestion des images secondaires (Granulaire)
+                    
+                    // 1. Suppressions
+                    if (!string.IsNullOrEmpty(deletedImageIds))
+                    {
+                        var idsToDelete = deletedImageIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                                       .Select(id => int.Parse(id))
+                                                       .ToList();
+                        foreach (var id in idsToDelete)
+                        {
+                            db.DeleteImageProduit(id);
+                        }
+                    }
+
+                    // 2. Ajouts
+                    if (secondaryImages != null)
+                    {
+                        foreach (var file in secondaryImages)
+                        {
+                            if (file != null && file.ContentLength > 0)
+                            {
+                                string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(file.FileName);
+                                string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/produits/"), fileName);
+                                
+                                file.SaveAs(path);
+                                
+                                var img = new ImageProduit
+                                {
+                                    ProduitId = produit.ProduitId,
+                                    UrlImage = "~/Content/images/produits/" + fileName,
+                                    EstPrincipale = false
+                                };
+                                db.AddImageProduit(img);
+                            }
+                        }
+                    }
+
+                    if (Request.IsAjaxRequest())
+                    {
+                        // Gestion des variantes
+                        if (variantesJson != null)
+                        {
+                            var serializer = new JavaScriptSerializer();
+                            var variantes = serializer.Deserialize<List<Variante>>(variantesJson);
+                            
+                            // Récupérer les variantes existantes
+                            var variantesExistantes = db.GetVariantesProduit(produit.ProduitId);
+                            
+                            if (variantes != null)
+                            {
+                                foreach (var v in variantes)
+                                {
+                                    v.ProduitId = produit.ProduitId;
+                                    if (v.VarianteId > 0)
+                                    {
+                                        db.UpdateVariante(v);
+                                    }
+                                    else
+                                    {
+                                        db.AddVariante(v);
+                                    }
+                                }
+                                
+                                // Supprimer les variantes qui ne sont plus dans la liste
+                                var idsIdsRestants = variantes.Where(v => v.VarianteId > 0).Select(v => v.VarianteId).ToList();
+                                foreach (var ve in variantesExistantes)
+                                {
+                                    if (!idsIdsRestants.Contains(ve.VarianteId))
+                                    {
+                                        db.DeleteVariante(ve.VarianteId);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Si la liste est vide/nulle, supprimer toutes les variantes? 
+                                // On va dire que si c'est null on touche à rien, mais si c'est "[]" on supprime tout.
+                                // Le désérialiseur donnera une liste vide pour "[]".
+                            }
+                        }
+
+                        return Json(new { success = true, message = "Produit modifié avec succès" });
+                    }
+
+                    TempData["SuccessMessage"] = "Produit modifié avec succès";
+                    return RedirectToAction("Produits");
+                }
+
+                if (Request.IsAjaxRequest())
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return Json(new { success = false, errors = errors });
+                }
+
+                ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();
+                ViewBag.Cooperatives = db.Cooperatives.Where(c => c.EstActive).ToList();
+
+                return View(produit);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans ModifierProduit POST: {ex.Message}");
+
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(new { success = false, message = "Erreur lors de la modification du produit: " + ex.Message });
+                }
+
+                TempData["ErrorMessage"] = "Erreur lors de la modification du produit";
+
+                ViewBag.Categories = db.Categories.Where(c => c.EstActive).ToList();
+                ViewBag.Cooperatives = db.Cooperatives.Where(c => c.EstActive).ToList();
+
+                return View(produit);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult SupprimerProduit(int id)
+        {
+            try
+            {
+                var p = db.ProduitsSet.Find(id);
+                if (p == null) return Json(new { success = false, message = "Produit non trouvé" });
+
+                // Soft delete: désactiver le produit au lieu de le supprimer
+                p.EstDisponible = false;
+                db.SaveChanges();
+                
+                return Json(new { success = true, message = "Produit désactivé avec succès" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Supprime un produit (AJAX)
+        /// </summary>
+        //[HttpPost]
+        //public JsonResult SupprimerProduit(int id)
+        //{
+        //    try
+        //    {
+        //        var produit = db.ProduitsSet.Find(id);
+
+        //        if (produit == null)
+        //        {
+        //            return Json(new { success = false, message = "Produit non trouvé" });
+        //        }
+
+        //        // Vérifier si le produit est dans des commandes
+        //        var commandesAvecProduit = db.CommandeItems.Any(ci => ci.ProduitId == id);
+
+        //        if (commandesAvecProduit)
+        //        {
+        //            return Json(new { success = false, message = "Impossible de supprimer : le produit est présent dans des commandes" });
+        //        }
+
+        //        db.ProduitsSet.Remove(produit);
+        //        db.SaveChanges();
+
+        //        return Json(new { success = true, message = "Produit supprimé avec succès" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        System.Diagnostics.Debug.WriteLine($"Erreur dans SupprimerProduit: {ex.Message}");
+        //        return Json(new { success = false, message = "Erreur lors de la suppression" });
+        //    }
+        //}
+
+        /// <summary>
+        /// Met à jour le statut d'un produit (AJAX)
+        /// </summary>
+        [HttpPost]
+        public JsonResult UpdateStatutProduit(int id, bool disponible)
+        {
+            try
+            {
+                var produit = db.ProduitsSet.Find(id);
+
+                if (produit == null)
+                {
+                    return Json(new { success = false, message = "Produit non trouvé" });
+                }
+
+                produit.EstDisponible = disponible;
+                produit.DateModification = DateTime.Now;
+                db.UpdateProduit(produit);
+                db.SaveChanges();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans UpdateStatutProduit: {ex.Message}");
+                return Json(new { success = false, message = "Erreur lors de la mise à jour" });
+            }
+        }
+
         public ActionResult Livraison(int page = 1)
         {
             using (var db = new ECommerceDbContext())
             {
                 var modes = db.GetModesLivraison();
+                var zonesPaged = db.GetZonesLivraisonPaged(page, 10);
                 var stats = db.GetLivraisonStats();
-                
-                // Pagination des zones de livraison (5 par page)
-                int pageSize = 5;
-                var zonesPaged = db.GetZonesLivraisonPaged(page, pageSize);
-                
+
                 ViewBag.Stats = stats;
-                ViewBag.Zones = zonesPaged.Items;
                 ViewBag.ZonesPaged = zonesPaged;
+                ViewBag.Zones = zonesPaged.Items;
                 ViewBag.CurrentPage = page;
-                
+
                 return View(modes);
             }
         }
 
-        // POST: Admin/Livraison/Create
-        [HttpPost]
-        public ActionResult CreateModeLivraison(FormCollection form)
+        // --- Delivery Modes ---
+
+        [HttpGet]
+        public ActionResult GetModeLivraison(int id)
         {
             try
             {
-                // Récupérer EstActif - peut être "true", "false", ou absent (checkbox non cochée)
-                var estActifValue = form["EstActif"];
-                bool estActif = !string.IsNullOrEmpty(estActifValue) && estActifValue.ToLower() == "true";
-                
-                var mode = new ModeLivraison
-                {
-                    Nom = form["Nom"],
-                    Description = string.IsNullOrEmpty(form["Description"]) ? null : form["Description"],
-                    Tarif = decimal.Parse(form["Tarif"] ?? "0"),
-                    DelaiEstime = form["DelaiEstime"],
-                    EstActif = estActif
-                };
-
-                if (string.IsNullOrWhiteSpace(mode.Nom) || mode.Tarif < 0 || string.IsNullOrWhiteSpace(mode.DelaiEstime))
-                {
-                    return Json(new { success = false, message = "Données invalides. Veuillez remplir tous les champs obligatoires." });
-                }
-
                 using (var db = new ECommerceDbContext())
                 {
-                    if (db.CreateModeLivraison(mode))
-                    {
-                        return Json(new { success = true, message = "Mode de livraison créé avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la création" });
+                    var mode = db.GetModeLivraison(id);
+                    if (mode == null) return Json(new { success = false, message = "Mode introuvable" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = true, mode = mode }, JsonRequestBehavior.AllowGet);
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
-        // POST: Admin/Livraison/Update
         [HttpPost]
-        public ActionResult UpdateModeLivraison(FormCollection form)
+        public ActionResult CreateModeLivraison(ModeLivraison mode)
         {
             try
             {
-                if (string.IsNullOrEmpty(form["ModeLivraisonId"]) || !int.TryParse(form["ModeLivraisonId"], out int modeId))
-                {
-                    return Json(new { success = false, message = "ID invalide" });
-                }
+                ModelState.Remove("ModeLivraisonId");
+                ModelState.Remove("DateCreation");
 
-                // Récupérer EstActif - peut être "true", "false", ou absent (checkbox non cochée)
-                var estActifValue = form["EstActif"];
-                bool estActif = !string.IsNullOrEmpty(estActifValue) && estActifValue.ToLower() == "true";
-                
-                var mode = new ModeLivraison
+                if (ModelState.IsValid)
                 {
-                    ModeLivraisonId = modeId,
-                    Nom = form["Nom"],
-                    Description = string.IsNullOrEmpty(form["Description"]) ? null : form["Description"],
-                    Tarif = decimal.Parse(form["Tarif"] ?? "0"),
-                    DelaiEstime = form["DelaiEstime"],
-                    EstActif = estActif
-                };
-
-                if (string.IsNullOrWhiteSpace(mode.Nom) || mode.Tarif < 0 || string.IsNullOrWhiteSpace(mode.DelaiEstime))
-                {
-                    return Json(new { success = false, message = "Données invalides. Veuillez remplir tous les champs obligatoires." });
-                }
-
-                using (var db = new ECommerceDbContext())
-                {
-                    if (db.UpdateModeLivraison(mode))
+                    mode.DateCreation = DateTime.Now;
+                    using (var db = new ECommerceDbContext())
                     {
-                        return Json(new { success = true, message = "Mode de livraison mis à jour avec succès" });
+                        db.CreateModeLivraison(mode);
+                        return Json(new { success = true, message = "Mode de livraison ajouté avec succès" });
                     }
-                    return Json(new { success = false, message = "Erreur lors de la mise à jour" });
                 }
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = "Données invalides: " + errors });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+                return Json(new { success = false, message = ex.Message });
             }
         }
 
-        // POST: Admin/Livraison/Delete
+        [HttpPost]
+        public ActionResult UpdateModeLivraison(ModeLivraison mode)
+        {
+            try
+            {
+                ModelState.Remove("DateCreation");
+
+                if (ModelState.IsValid)
+                {
+                    using (var db = new ECommerceDbContext())
+                    {
+                        db.UpdateModeLivraison(mode);
+                        return Json(new { success = true, message = "Mode de livraison mis à jour" });
+                    }
+                }
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = "Données invalides: " + errors });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpPost]
         public ActionResult DeleteModeLivraison(int id)
         {
             try
             {
-                if (id <= 0)
-                {
-                    return Json(new { success = false, message = "ID invalide" });
-                }
-
                 using (var db = new ECommerceDbContext())
                 {
-                    if (db.DeleteModeLivraison(id))
-                    {
-                        return Json(new { success = true, message = "Mode de livraison supprimé avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la suppression" });
+                    db.DeleteModeLivraison(id);
+                    return Json(new { success = true, message = "Mode de livraison supprimé" });
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+                return Json(new { success = false, message = ex.Message });
             }
         }
 
-        // GET: Admin/Livraison/GetMode
+        // --- Delivery Zones ---
+
         [HttpGet]
-        public ActionResult GetModeLivraison(int id)
-        {
-            using (var db = new ECommerceDbContext())
-            {
-                var mode = db.GetModeLivraison(id);
-                if (mode == null)
-                {
-                    return Json(new { success = false, message = "Mode de livraison introuvable" }, JsonRequestBehavior.AllowGet);
-                }
-                return Json(new { 
-                    success = true, 
-                    mode = new {
-                        ModeLivraisonId = mode.ModeLivraisonId,
-                        Nom = mode.Nom,
-                        Description = mode.Description,
-                        Tarif = mode.Tarif,
-                        DelaiEstime = mode.DelaiEstime,
-                        EstActif = mode.EstActif
-                    }
-                }, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-        // ============================================
-        // ZONES DE LIVRAISON
-        // ============================================
-
-        // POST: Admin/Livraison/CreateZone
-        [HttpPost]
-        public ActionResult CreateZoneLivraison(FormCollection form)
+        public ActionResult GetZoneLivraison(int id)
         {
             try
             {
-                var estActifValue = form["EstActif"];
-                bool estActif = !string.IsNullOrEmpty(estActifValue) && estActifValue.ToLower() == "true";
-                
-                var zone = new ZoneLivraison
-                {
-                    ZoneVille = form["ZoneVille"],
-                    Supplement = decimal.Parse(form["Supplement"] ?? "0"),
-                    DelaiEstime = form["DelaiEstime"],
-                    EstActif = estActif
-                };
-
-                if (string.IsNullOrWhiteSpace(zone.ZoneVille) || string.IsNullOrWhiteSpace(zone.DelaiEstime))
-                {
-                    return Json(new { success = false, message = "Données invalides. Veuillez remplir tous les champs obligatoires." });
-                }
-
                 using (var db = new ECommerceDbContext())
                 {
-                    if (db.CreateZoneLivraison(zone))
-                    {
-                        return Json(new { success = true, message = "Zone de livraison créée avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la création" });
+                    var zone = db.GetZoneLivraison(id);
+                    if (zone == null) return Json(new { success = false, message = "Zone introuvable" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = true, zone = zone }, JsonRequestBehavior.AllowGet);
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
-        // POST: Admin/Livraison/UpdateZone
         [HttpPost]
-        public ActionResult UpdateZoneLivraison(FormCollection form)
+        public ActionResult CreateZoneLivraison(ZoneLivraison zone)
         {
             try
             {
-                if (string.IsNullOrEmpty(form["ZoneLivraisonId"]) || !int.TryParse(form["ZoneLivraisonId"], out int zoneId))
-                {
-                    return Json(new { success = false, message = "ID invalide" });
-                }
+                ModelState.Remove("ZoneLivraisonId");
+                ModelState.Remove("DateCreation");
 
-                var estActifValue = form["EstActif"];
-                bool estActif = !string.IsNullOrEmpty(estActifValue) && estActifValue.ToLower() == "true";
-                
-                var zone = new ZoneLivraison
+                if (ModelState.IsValid)
                 {
-                    ZoneLivraisonId = zoneId,
-                    ZoneVille = form["ZoneVille"],
-                    Supplement = decimal.Parse(form["Supplement"] ?? "0"),
-                    DelaiEstime = form["DelaiEstime"],
-                    EstActif = estActif
-                };
-
-                if (string.IsNullOrWhiteSpace(zone.ZoneVille) || string.IsNullOrWhiteSpace(zone.DelaiEstime))
-                {
-                    return Json(new { success = false, message = "Données invalides. Veuillez remplir tous les champs obligatoires." });
-                }
-
-                using (var db = new ECommerceDbContext())
-                {
-                    if (db.UpdateZoneLivraison(zone))
+                    zone.DateCreation = DateTime.Now;
+                    using (var db = new ECommerceDbContext())
                     {
-                        return Json(new { success = true, message = "Zone de livraison mise à jour avec succès" });
+                        db.CreateZoneLivraison(zone);
+                        return Json(new { success = true, message = "Zone de livraison ajoutée" });
                     }
-                    return Json(new { success = false, message = "Erreur lors de la mise à jour" });
                 }
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = "Données invalides: " + errors });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+                return Json(new { success = false, message = ex.Message });
             }
         }
 
-        // POST: Admin/Livraison/DeleteZone
+        [HttpPost]
+        public ActionResult UpdateZoneLivraison(ZoneLivraison zone)
+        {
+            try
+            {
+                ModelState.Remove("DateCreation");
+
+                if (ModelState.IsValid)
+                {
+                    using (var db = new ECommerceDbContext())
+                    {
+                        db.UpdateZoneLivraison(zone);
+                        return Json(new { success = true, message = "Zone de livraison mise à jour" });
+                    }
+                }
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = "Données invalides: " + errors });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpPost]
         public ActionResult DeleteZoneLivraison(int id)
         {
             try
             {
-                if (id <= 0)
-                {
-                    return Json(new { success = false, message = "ID invalide" });
-                }
-
                 using (var db = new ECommerceDbContext())
                 {
-                    if (db.DeleteZoneLivraison(id))
-                    {
-                        return Json(new { success = true, message = "Zone de livraison supprimée avec succès" });
-                    }
-                    return Json(new { success = false, message = "Erreur lors de la suppression" });
+                    db.DeleteZoneLivraison(id);
+                    return Json(new { success = true, message = "Zone de livraison supprimée" });
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Erreur serveur : " + ex.Message });
+                return Json(new { success = false, message = ex.Message });
             }
         }
 
-        // GET: Admin/Livraison/GetZone
-        [HttpGet]
-        public ActionResult GetZoneLivraison(int id)
+        protected override void Dispose(bool disposing)
         {
-            using (var db = new ECommerceDbContext())
+            if (disposing)
             {
-                var zone = db.GetZoneLivraison(id);
-                if (zone == null)
+                db.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        // ============================================
+        // GESTION DES CATEGORIES
+        // ============================================
+
+        public ActionResult Categories(string searchTerm = "")
+        {
+            try
+            {
+                var categories = db.GetCategoriesWithStats()
+                    .OrderByDescending(c => c.DateCreation)
+                    .ToList();
+                
+                if (!string.IsNullOrEmpty(searchTerm))
                 {
-                    return Json(new { success = false, message = "Zone de livraison introuvable" }, JsonRequestBehavior.AllowGet);
+                    searchTerm = searchTerm.ToLower();
+                    categories = categories.Where(c => 
+                        c.Nom.ToLower().Contains(searchTerm) || 
+                        (!string.IsNullOrEmpty(c.Description) && c.Description.ToLower().Contains(searchTerm))
+                    ).ToList();
                 }
-                return Json(new { 
-                    success = true, 
-                    zone = new {
-                        ZoneLivraisonId = zone.ZoneLivraisonId,
-                        ZoneVille = zone.ZoneVille,
-                        Supplement = zone.Supplement,
-                        DelaiEstime = zone.DelaiEstime,
-                        EstActif = zone.EstActif
+
+                ViewBag.SearchTerm = searchTerm;
+                ViewBag.TotalCategories = categories.Count;
+                ViewBag.ActiveCategories = categories.Count(c => c.EstActive);
+                ViewBag.TotalProductsInCategory = categories.Sum(c => c.NombreProduits);
+
+                return View(categories);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans Categories: {ex.Message}");
+                TempData["ErrorMessage"] = "Erreur lors du chargement des catégories";
+                return RedirectToAction("Index");
+            }
+        }
+
+        /// <summary>
+        /// Récupère les données d'une catégorie pour le modal d'édition
+        /// </summary>
+        [HttpGet]
+        public JsonResult GetCategorie(int id)
+        {
+            try
+            {
+                var c = db.GetCategorie(id);
+                if (c == null) return Json(new { success = false, message = "Catégorie non trouvée" }, JsonRequestBehavior.AllowGet);
+
+                return Json(new
+                {
+                    success = true,
+                    categorie = new
+                    {
+                        c.CategorieId,
+                        c.Nom,
+                        c.Description,
+                        c.ImageUrl,
+                        c.EstActive
                     }
                 }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public ActionResult AjouterCategorie()
+        {
+            return View(new Categorie { EstActive = true }); // Active par défaut
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AjouterCategorie(Categorie categorie, System.Web.HttpPostedFileBase imageFile)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    if (imageFile != null && imageFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/categories/"), fileName);
+                        
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        categorie.ImageUrl = "~/Content/images/categories/" + fileName;
+                    }
+
+                    categorie.DateCreation = DateTime.Now;
+                    db.AddCategorie(categorie);
+
+                    if (Request.IsAjaxRequest())
+                    {
+                        return Json(new { success = true, message = "Catégorie ajoutée avec succès" });
+                    }
+
+                    TempData["SuccessMessage"] = "Catégorie ajoutée avec succès";
+                    return RedirectToAction("Categories");
+                }
+
+                if (Request.IsAjaxRequest())
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return Json(new { success = false, message = "Données invalides", errors = errors });
+                }
+                return View(categorie);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans AjouterCategorie: {ex.Message}");
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(new { success = false, message = "Erreur lors de l'ajout: " + ex.Message });
+                }
+                TempData["ErrorMessage"] = "Erreur lors de l'ajout";
+                return View(categorie);
+            }
+        }
+
+        public ActionResult ModifierCategorie(int id)
+        {
+            var categorie = db.GetCategorie(id);
+            if (categorie == null)
+            {
+                TempData["ErrorMessage"] = "Catégorie non trouvée";
+                return RedirectToAction("Categories");
+            }
+            return View(categorie);
+        }
+
+        [HttpPost]
+        public JsonResult SupprimerCategorie(int id)
+        {
+            try
+            {
+                var c = db.GetCategorie(id);
+                if (c == null) return Json(new { success = false, message = "Catégorie non trouvée" });
+
+                // Optionnel: vérifier s'il y a des produits
+                if (db.Produits.Any(p => p.CategorieId == id))
+                {
+                    return Json(new { success = false, message = "Impossible de supprimer une catégorie contenant des produits" });
+                }
+
+                db.DeleteCategorie(id);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ModifierCategorie(Categorie categorie, System.Web.HttpPostedFileBase imageFile)
+        {
+            try
+            {
+                // DateCreation n'est pas dans le formulaire, on l'ignore pour la validation
+                ModelState.Remove("DateCreation");
+
+                if (ModelState.IsValid)
+                {
+                    var existing = db.GetCategorie(categorie.CategorieId);
+                    if (existing == null)
+                    {
+                        if (Request.IsAjaxRequest())
+                            return Json(new { success = false, message = "Catégorie non trouvée" });
+
+                        TempData["ErrorMessage"] = "Catégorie non trouvée";
+                        return RedirectToAction("Categories");
+                    }
+
+                    if (imageFile != null && imageFile.ContentLength > 0)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(imageFile.FileName);
+                        string path = System.IO.Path.Combine(Server.MapPath("~/Content/images/categories/"), fileName);
+                        
+                        string directory = System.IO.Path.GetDirectoryName(path);
+                        if (!System.IO.Directory.Exists(directory))
+                            System.IO.Directory.CreateDirectory(directory);
+
+                        imageFile.SaveAs(path);
+                        categorie.ImageUrl = "~/Content/images/categories/" + fileName;
+                    }
+                    else
+                    {
+                        categorie.ImageUrl = existing.ImageUrl; // Garder l'ancienne image
+                    }
+
+                    // On s'assure de garder la date de création originale
+                    categorie.DateCreation = existing.DateCreation;
+
+                    db.UpdateCategorie(categorie);
+
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = true, message = "Catégorie mise à jour avec succès" });
+
+                    TempData["SuccessMessage"] = "Catégorie mise à jour avec succès";
+                    return RedirectToAction("Categories");
+                }
+
+                if (Request.IsAjaxRequest())
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return Json(new { success = false, message = "Validation échouée", errors = errors });
+                }
+
+                return View(categorie);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans ModifierCategorie: {ex.Message}");
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, message = "Erreur lors de la modification: " + ex.Message });
+
+                TempData["ErrorMessage"] = "Erreur lors de la modification";
+                return View(categorie);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ToggleCategorieStatus(int id)
+        {
+            try
+            {
+                db.ToggleCategorieStatus(id);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur dans ToggleCategorieStatus: {ex.Message}");
+                return Json(new { success = false, message = "Erreur serveur" });
             }
         }
 
@@ -983,23 +1540,120 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
             {
                 connection.Open();
 
-                // Statistiques générales
-                var stats = GetUserStatistics(connection);
+                var dashboard = new DashboardViewModel();
 
-                // Graphiques d'évolution
-                var evolutionData = GetUserEvolutionData(connection);
-                ViewBag.EvolutionData = evolutionData;
+                // Stats Cards
+                dashboard = GetDashboardStats(connection, dashboard);
+                
+                // Recent Orders
+                dashboard.RecentOrders = GetRecentOrders(connection, 4);
+                
+                // Low Stock Products
+                dashboard.LowStockProducts = GetLowStockProducts(connection);
+                
+                // Best Selling Products
+                dashboard.BestSellingProducts = GetBestSellingProducts(connection, 24);
+                
+                // Cooperatives
+                dashboard.Cooperatives = GetCooperatives(connection);
 
-                // Utilisateurs les plus actifs
-                var activeUsers = GetMostActiveUsers(connection);
-                ViewBag.ActiveUsers = activeUsers;
+                return View(dashboard);
+            }
+        }
 
-                return View(stats);
+        // POST: Admin/AddUser
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AddUser(string Prenom, string Nom, string Email, string Telephone, string MotDePasse)
+        {
+            // Handle anti-forgery token validation errors
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                if (errors.Any(e => e.Contains("token") || e.Contains("Token") || e.Contains("anti-forgery")))
+                {
+                    return Json(new { success = false, message = "Erreur de sécurité. Veuillez recharger la page et réessayer." }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return Json(new { success = false, message = "Non autorisé" }, JsonRequestBehavior.AllowGet);
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(Prenom) || string.IsNullOrEmpty(Nom) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(MotDePasse))
+                {
+                    return Json(new { success = false, message = "Tous les champs obligatoires doivent être remplis." }, JsonRequestBehavior.AllowGet);
+                }
+
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Check if email exists
+                    var checkEmailQuery = "SELECT COUNT(*) FROM Utilisateurs WHERE Email = @Email";
+                    using (var checkCommand = new SqlCommand(checkEmailQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@Email", Email);
+                        var emailExists = (int)checkCommand.ExecuteScalar() > 0;
+
+                        if (emailExists)
+                        {
+                            return Json(new { success = false, message = "Cet email est déjà utilisé." }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+
+                    // Hash password
+                    string hashedPassword = E_Commerce_Cooperatives.Models.PasswordHelper.HashPassword(MotDePasse);
+
+                    // Insert user
+                    var insertUserQuery = @"INSERT INTO Utilisateurs (Email, MotDePasse, TypeUtilisateur, DateCreation) 
+                                           VALUES (@Email, @MotDePasse, 'Client', GETDATE());
+                                           SELECT CAST(SCOPE_IDENTITY() as int);";
+                    
+                    int utilisateurId;
+                    using (var userCommand = new SqlCommand(insertUserQuery, connection))
+                    {
+                        userCommand.Parameters.AddWithValue("@Email", Email);
+                        userCommand.Parameters.AddWithValue("@MotDePasse", hashedPassword);
+                        utilisateurId = (int)userCommand.ExecuteScalar();
+                    }
+
+                    // Insert client
+                    var insertClientQuery = @"INSERT INTO Clients (UtilisateurId, Nom, Prenom, Telephone, EstActif, DateCreation) 
+                                             VALUES (@UtilisateurId, @Nom, @Prenom, @Telephone, 1, GETDATE());
+                                             SELECT CAST(SCOPE_IDENTITY() as int);";
+                    
+                    int clientId;
+                    using (var clientCommand = new SqlCommand(insertClientQuery, connection))
+                    {
+                        clientCommand.Parameters.AddWithValue("@UtilisateurId", utilisateurId);
+                        clientCommand.Parameters.AddWithValue("@Nom", Nom);
+                        clientCommand.Parameters.AddWithValue("@Prenom", Prenom);
+                        clientCommand.Parameters.AddWithValue("@Telephone", string.IsNullOrEmpty(Telephone) ? (object)DBNull.Value : Telephone);
+                        clientId = (int)clientCommand.ExecuteScalar();
+                    }
+
+                    return Json(new { success = true, message = "Client ajouté avec succès" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                System.Diagnostics.Debug.WriteLine("SQL Error in AddUser: " + sqlEx.Message);
+                return Json(new { success = false, message = "Erreur de base de données: " + sqlEx.Message }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error in AddUser: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack trace: " + ex.StackTrace);
+                return Json(new { success = false, message = "Erreur: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
         // GET: Admin/Utilisateurs
-        public ActionResult Utilisateurs(string searchTerm = "", string statusFilter = "all", int page = 1, int pageSize = 20)
+        public ActionResult Utilisateurs(string searchTerm = "", string statusFilter = "all", int page = 1, int pageSize = 6)
         {
             if (Session["TypeUtilisateur"]?.ToString() != "Admin")
             {
@@ -1083,23 +1737,208 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
                 {
                     connection.Open();
 
-                    var updateQuery = @"UPDATE Clients 
-                                       SET EstActif = @EstActif 
-                                       WHERE ClientId = @ClientId";
-                    
-                    using (var command = new SqlCommand(updateQuery, connection))
+                    using (var transaction = connection.BeginTransaction())
                     {
-                        command.Parameters.AddWithValue("@EstActif", isActive);
-                        command.Parameters.AddWithValue("@ClientId", userId);
-                        command.ExecuteNonQuery();
-                    }
+                        try
+                        {
+                            // 1. Mettre à jour le statut du client
+                            var updateQuery = @"UPDATE Clients 
+                                              SET EstActif = @EstActif 
+                                              WHERE ClientId = @ClientId";
+                            
+                            using (var command = new SqlCommand(updateQuery, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@EstActif", isActive);
+                                command.Parameters.AddWithValue("@ClientId", userId);
+                                command.ExecuteNonQuery();
+                            }
 
-                    return Json(new { success = true, message = isActive ? "Compte activé avec succès" : "Compte désactivé avec succès" });
+                            string message = isActive ? "Compte activé avec succès" : "Compte désactivé avec succès";
+
+                            // 2. Si on DÉSACTIVE, on annule TOUTES les commandes qui ne sont pas déjà annulées ou livrées
+                            // On exclut explicitement 'Livrée' pour ne pas fausser l'historique des ventes réussies
+                            if (!isActive)
+                            {
+                                var updateOrdersQuery = @"UPDATE Commandes 
+                                                        SET Statut = 'Annulée', 
+                                                            DateAnnulation = GETDATE(), 
+                                                            RaisonAnnulation = 'Compte client désactivé par l''administrateur' 
+                                                        WHERE ClientId = @ClientId 
+                                                        AND Statut NOT IN ('Annulée', 'Livrée')"; 
+
+                                int ordersAffected = 0;
+                                using (var cmdOrders = new SqlCommand(updateOrdersQuery, connection, transaction))
+                                {
+                                    cmdOrders.Parameters.AddWithValue("@ClientId", userId);
+                                    ordersAffected = cmdOrders.ExecuteNonQuery();
+                                }
+
+                                if (ordersAffected > 0)
+                                {
+                                    message += $" et {ordersAffected} commande(s) ont été annulée(s).";
+                                }
+                                else 
+                                {
+                                     // Pour le debug : si 0 commandes touchées, c'est peut-être qu'elles sont toutes déjà annulées ou livrées
+                                     message += " (Aucune commande en cours à annuler).";
+                                }
+                            }
+
+                            transaction.Commit();
+                            return Json(new { success = true, message = message });
+                        }
+                        catch (Exception)
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
                 return Json(new { success = false, message = "Erreur: " + ex.Message });
+            }
+        }
+
+        // GET: Admin/GetUserDetailsJson/5 (JSON)
+        [HttpGet]
+        public JsonResult GetUserDetailsJson(int id)
+        {
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return Json(new { success = false, message = "Non autorisé" }, JsonRequestBehavior.AllowGet);
+            }
+
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    var user = GetUserDetails(connection, id);
+                    if (user == null)
+                    {
+                        return Json(new { success = false, message = "Utilisateur introuvable" }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    // Create a serializable object with proper date formatting
+                    var userData = new
+                    {
+                        ClientId = user.ClientId,
+                        UtilisateurId = user.UtilisateurId,
+                        Prenom = user.Prenom ?? "",
+                        Nom = user.Nom ?? "",
+                        Email = user.Email ?? "",
+                        Telephone = user.Telephone ?? "",
+                        DateNaissance = user.DateNaissance.HasValue ? user.DateNaissance.Value.ToString("yyyy-MM-dd") : (string)null,
+                        EstActif = user.EstActif,
+                        DateCreation = user.DateCreation.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        DerniereConnexion = user.DerniereConnexion.HasValue ? user.DerniereConnexion.Value.ToString("yyyy-MM-ddTHH:mm:ss") : (string)null,
+                        OrderCount = user.OrderCount,
+                        TotalSpent = user.TotalSpent
+                    };
+
+                    return Json(new { success = true, user = userData }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error in GetUserDetailsJson: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Stack trace: " + ex.StackTrace);
+                return Json(new { success = false, message = "Erreur: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        // POST: Admin/UpdateUser
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult UpdateUser(int ClientId, string Prenom, string Nom, string Email, string Telephone)
+        {
+            if (Session["TypeUtilisateur"]?.ToString() != "Admin")
+            {
+                return Json(new { success = false, message = "Non autorisé" }, JsonRequestBehavior.AllowGet);
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(Prenom) || string.IsNullOrEmpty(Nom) || string.IsNullOrEmpty(Email))
+                {
+                    return Json(new { success = false, message = "Les champs Prénom, Nom et Email sont obligatoires." }, JsonRequestBehavior.AllowGet);
+                }
+
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Check if email exists for another user
+                    var checkEmailQuery = @"SELECT COUNT(*) FROM Utilisateurs u
+                                           INNER JOIN Clients c ON u.UtilisateurId = c.UtilisateurId
+                                           WHERE u.Email = @Email AND c.ClientId != @ClientId";
+                    using (var checkCommand = new SqlCommand(checkEmailQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@Email", Email);
+                        checkCommand.Parameters.AddWithValue("@ClientId", ClientId);
+                        var emailExists = (int)checkCommand.ExecuteScalar() > 0;
+
+                        if (emailExists)
+                        {
+                            return Json(new { success = false, message = "Cet email est déjà utilisé par un autre utilisateur." }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+
+                    // Get UtilisateurId for this ClientId
+                    var getUserIdQuery = "SELECT UtilisateurId FROM Clients WHERE ClientId = @ClientId";
+                    int utilisateurId;
+                    using (var getUserIdCmd = new SqlCommand(getUserIdQuery, connection))
+                    {
+                        getUserIdCmd.Parameters.AddWithValue("@ClientId", ClientId);
+                        var result = getUserIdCmd.ExecuteScalar();
+                        if (result == null)
+                        {
+                            return Json(new { success = false, message = "Client introuvable" }, JsonRequestBehavior.AllowGet);
+                        }
+                        utilisateurId = (int)result;
+                    }
+
+                    // Update Utilisateur
+                    var updateUserQuery = @"UPDATE Utilisateurs 
+                                           SET Email = @Email 
+                                           WHERE UtilisateurId = @UtilisateurId";
+                    using (var userCommand = new SqlCommand(updateUserQuery, connection))
+                    {
+                        userCommand.Parameters.AddWithValue("@Email", Email);
+                        userCommand.Parameters.AddWithValue("@UtilisateurId", utilisateurId);
+                        userCommand.ExecuteNonQuery();
+                    }
+
+                    // Update Client
+                    var updateClientQuery = @"UPDATE Clients 
+                                             SET Nom = @Nom, 
+                                                 Prenom = @Prenom, 
+                                                 Telephone = @Telephone
+                                             WHERE ClientId = @ClientId";
+                    using (var clientCommand = new SqlCommand(updateClientQuery, connection))
+                    {
+                        clientCommand.Parameters.AddWithValue("@Nom", Nom);
+                        clientCommand.Parameters.AddWithValue("@Prenom", Prenom);
+                        clientCommand.Parameters.AddWithValue("@Telephone", string.IsNullOrEmpty(Telephone) ? (object)DBNull.Value : Telephone);
+                        clientCommand.Parameters.AddWithValue("@ClientId", ClientId);
+                        clientCommand.ExecuteNonQuery();
+                    }
+
+                    return Json(new { success = true, message = "Client modifié avec succès" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                System.Diagnostics.Debug.WriteLine("SQL Error in UpdateUser: " + sqlEx.Message);
+                return Json(new { success = false, message = "Erreur de base de données: " + sqlEx.Message }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error in UpdateUser: " + ex.Message);
+                return Json(new { success = false, message = "Erreur: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -1304,9 +2143,10 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
 
             using (var countCommand = new SqlCommand(countQuery, connection))
             {
-                foreach (var param in parameters)
+                // Add parameters to count command (create new instances)
+                if (!string.IsNullOrEmpty(searchTerm))
                 {
-                    countCommand.Parameters.Add(param);
+                    countCommand.Parameters.AddWithValue("@SearchTerm", "%" + searchTerm + "%");
                 }
                 totalCount = (int)countCommand.ExecuteScalar();
             }
@@ -1334,12 +2174,13 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
 
             using (var command = new SqlCommand(query, connection))
             {
-                foreach (var param in parameters)
+                // Add parameters to main command (create new instances)
+                if (!string.IsNullOrEmpty(searchTerm))
                 {
-                    command.Parameters.Add(param);
+                    command.Parameters.AddWithValue("@SearchTerm", "%" + searchTerm + "%");
                 }
-                command.Parameters.Add(new SqlParameter("@Offset", offset));
-                command.Parameters.Add(new SqlParameter("@PageSize", pageSize));
+                command.Parameters.AddWithValue("@Offset", offset);
+                command.Parameters.AddWithValue("@PageSize", pageSize);
 
                 using (var reader = command.ExecuteReader())
                 {
@@ -1414,6 +2255,284 @@ namespace E_Commerce_Cooperatives.Controllers.Admin
             }
 
             return null;
+        }
+
+        private DashboardViewModel GetDashboardStats(SqlConnection connection, DashboardViewModel dashboard)
+        {
+            // Total Sales
+            var salesQuery = @"SELECT 
+                                ISNULL(SUM(TotalTTC), 0) as TotalSales,
+                                ISNULL(SUM(CASE WHEN DateCommande >= DATEADD(DAY, -30, GETDATE()) THEN TotalTTC ELSE 0 END), 0) as LastMonthSales
+                              FROM Commandes
+                              WHERE Statut != 'Annulée'";
+            
+            using (var command = new SqlCommand(salesQuery, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        dashboard.TotalSales = reader.IsDBNull(0) ? 0 : reader.GetDecimal(0);
+                        var lastMonthSales = reader.IsDBNull(1) ? 0 : reader.GetDecimal(1);
+                        var previousMonthSales = dashboard.TotalSales - lastMonthSales;
+                        dashboard.SalesChangePercent = previousMonthSales > 0 
+                            ? Math.Round(((lastMonthSales - previousMonthSales) / previousMonthSales) * 100, 1)
+                            : 0;
+                    }
+                }
+            }
+
+            // Orders Today
+            var ordersTodayQuery = @"SELECT 
+                                        COUNT(*) as OrdersToday,
+                                        (SELECT COUNT(*) FROM Commandes 
+                                         WHERE CAST(DateCommande AS DATE) = CAST(DATEADD(DAY, -1, GETDATE()) AS DATE)) as YesterdayOrders
+                                     FROM Commandes
+                                     WHERE CAST(DateCommande AS DATE) = CAST(GETDATE() AS DATE)";
+            
+            using (var command = new SqlCommand(ordersTodayQuery, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        dashboard.OrdersToday = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                        var yesterdayOrders = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                        dashboard.OrdersTodayChange = dashboard.OrdersToday - yesterdayOrders;
+                    }
+                }
+            }
+
+            // Active Products
+            var activeProductsQuery = "SELECT COUNT(*) FROM Produits WHERE EstDisponible = 1";
+            using (var command = new SqlCommand(activeProductsQuery, connection))
+            {
+                dashboard.ActiveProducts = (int)command.ExecuteScalar();
+            }
+
+            // Total Users
+            var usersQuery = @"SELECT 
+                                COUNT(*) as TotalUsers,
+                                (SELECT COUNT(*) FROM Utilisateurs 
+                                 WHERE TypeUtilisateur = 'Client' 
+                                 AND DateCreation >= DATEADD(DAY, -30, GETDATE())) as NewUsers
+                              FROM Utilisateurs
+                              WHERE TypeUtilisateur = 'Client'";
+            
+            using (var command = new SqlCommand(usersQuery, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        dashboard.TotalUsers = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                        dashboard.UsersChange = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                    }
+                }
+            }
+
+            // Total Orders
+            var totalOrdersQuery = "SELECT COUNT(*) FROM Commandes";
+            using (var command = new SqlCommand(totalOrdersQuery, connection))
+            {
+                dashboard.TotalOrders = (int)command.ExecuteScalar();
+            }
+
+            // Graphs Data - Sales last 7 days
+            dashboard.SaleDates = new List<string>();
+            dashboard.SaleValues = new List<decimal>();
+            dashboard.OrderStatusCounts = new Dictionary<string, int>();
+
+            var salesGraphQuery = @"SELECT 
+                                        CAST(DateCommande AS DATE) as SaleDate, 
+                                        SUM(TotalTTC) as DailyTotal
+                                    FROM Commandes
+                                    WHERE DateCommande >= DATEADD(DAY, -6, CAST(GETDATE() AS DATE))
+                                    AND Statut != 'Annulée'
+                                    GROUP BY CAST(DateCommande AS DATE)
+                                    ORDER BY SaleDate";
+
+            using (var command = new SqlCommand(salesGraphQuery, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    var salesDict = new Dictionary<DateTime, decimal>();
+                    while (reader.Read())
+                    {
+                        salesDict.Add(reader.GetDateTime(0), reader.GetDecimal(1));
+                    }
+
+                    // Fill last 7 days including empty ones
+                    for (int i = 6; i >= 0; i--)
+                    {
+                        var date = DateTime.Today.AddDays(-i);
+                        dashboard.SaleDates.Add(date.ToString("dd/MM"));
+                        dashboard.SaleValues.Add(salesDict.ContainsKey(date) ? salesDict[date] : 0);
+                    }
+                }
+            }
+
+            // Graphs Data - Order Status distribution
+            var statusQuery = @"SELECT Statut, COUNT(*) 
+                                FROM Commandes 
+                                GROUP BY Statut";
+            
+            using (var command = new SqlCommand(statusQuery, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string status = reader.GetString(0);
+                        dashboard.OrderStatusCounts[status] = reader.GetInt32(1);
+                    }
+                }
+            }
+
+            return dashboard;
+        }
+
+        private List<RecentOrderViewModel> GetRecentOrders(SqlConnection connection, int limit = 4)
+        {
+            var orders = new List<RecentOrderViewModel>();
+            
+            var query = @"SELECT TOP (@Limit)
+                            c.NumeroCommande,
+                            cl.Prenom + ' ' + LEFT(cl.Nom, 1) + '.' as CustomerName,
+                            c.TotalTTC,
+                            c.Statut,
+                            c.DateCommande
+                         FROM Commandes c
+                         INNER JOIN Clients cl ON c.ClientId = cl.ClientId
+                         ORDER BY c.DateCommande DESC";
+            
+            using (var command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@Limit", limit);
+                
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        orders.Add(new RecentOrderViewModel
+                        {
+                            OrderNumber = reader.GetString(0),
+                            CustomerName = reader.GetString(1),
+                            Amount = reader.GetDecimal(2),
+                            Status = reader.GetString(3),
+                            OrderDate = reader.GetDateTime(4)
+                        });
+                    }
+                }
+            }
+            
+            return orders;
+        }
+
+        private List<LowStockProductViewModel> GetLowStockProducts(SqlConnection connection)
+        {
+            var products = new List<LowStockProductViewModel>();
+            
+            var query = @"SELECT 
+                            ProduitId,
+                            Nom,
+                            StockTotal,
+                            SeuilAlerte
+                         FROM Produits
+                         WHERE StockTotal <= SeuilAlerte
+                         AND EstDisponible = 1
+                         ORDER BY StockTotal ASC";
+            
+            using (var command = new SqlCommand(query, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        products.Add(new LowStockProductViewModel
+                        {
+                            ProductId = reader.GetInt32(0),
+                            ProductName = reader.GetString(1),
+                            Stock = reader.GetInt32(2),
+                            AlertThreshold = reader.GetInt32(3)
+                        });
+                    }
+                }
+            }
+            
+            return products;
+        }
+
+        private List<BestSellingProductViewModel> GetBestSellingProducts(SqlConnection connection, int limit = 5)
+        {
+            var products = new List<BestSellingProductViewModel>();
+            
+            var query = @"SELECT TOP (@Limit)
+                            p.ProduitId,
+                            p.Nom,
+                            ISNULL(SUM(ci.Quantite), 0) as SalesCount,
+                            p.Prix
+                         FROM Produits p
+                         LEFT JOIN CommandeItems ci ON p.ProduitId = ci.ProduitId
+                         LEFT JOIN Commandes c ON ci.CommandeId = c.CommandeId
+                         WHERE (c.Statut != 'Annulée' OR c.Statut IS NULL)
+                         GROUP BY p.ProduitId, p.Nom, p.Prix
+                         HAVING ISNULL(SUM(ci.Quantite), 0) >= 3
+                         ORDER BY SalesCount DESC";
+            
+            using (var command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@Limit", limit);
+                
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        products.Add(new BestSellingProductViewModel
+                        {
+                            ProductId = reader.GetInt32(0),
+                            ProductName = reader.GetString(1),
+                            SalesCount = reader.GetInt32(2),
+                            Price = reader.GetDecimal(3)
+                        });
+                    }
+                }
+            }
+            
+            return products;
+        }
+
+        private List<CooperativeViewModel> GetCooperatives(SqlConnection connection)
+        {
+            var cooperatives = new List<CooperativeViewModel>();
+            
+            var query = @"SELECT 
+                            CooperativeId,
+                            Nom,
+                            Ville,
+                            EstActive
+                         FROM Cooperatives
+                         WHERE EstActive = 1
+                         ORDER BY Nom";
+            
+            using (var command = new SqlCommand(query, connection))
+            {
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        cooperatives.Add(new CooperativeViewModel
+                        {
+                            CooperativeId = reader.GetInt32(0),
+                            Name = reader.GetString(1),
+                            City = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                            IsActive = reader.IsDBNull(3) ? false : reader.GetBoolean(3)
+                        });
+                    }
+                }
+            }
+            
+            return cooperatives;
         }
     }
 }

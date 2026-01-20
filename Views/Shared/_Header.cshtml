@@ -2,7 +2,7 @@
     <div class="container">
         <!-- Logo -->
         <a class="navbar-brand fw-bold" href="@Url.Action("Index", "Home")">
-            
+
             <img src="~/Content/images/logo-coop.png" alt="Logo" style="width: 100px; height: 50px;">
         </a>
 
@@ -37,69 +37,136 @@
 
             <!-- Actions -->
             <div class="d-flex align-items-center gap-2">
-                <!-- Hidden element for JS auth check -->
-                <div id="user-authenticated" data-authenticated="@((Session["UserId"] != null).ToString().ToLower())" style="display:none;"></div>
 
-                <!-- Wishlist Icon -->
-                <a href="#wishlist" class="btn btn-link text-dark" style="text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
-                        <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
-                    </svg>
-                </a>
 
                 @if (Session["UserId"] != null)
                 {
-                    <!-- User Account Dropdown (Logged In) -->
-                    <div class="dropdown">
-                        <button class="btn btn-link text-dark dropdown-toggle" type="button" id="userDropdown" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-decoration: none; border: none; padding: 0.25rem 0.5rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
-                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                        <!-- Wishlist Icon -->
+                        <a href="@Url.Action("Index", "Favoris")" class="btn btn-link text-dark" style="text-decoration: none;" title="Mes Favoris">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
+                                <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
                             </svg>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); min-width: 200px; margin-top: 0.5rem; background-color: white;">
-                            <li><h6 class="dropdown-header">@(Session["Prenom"] + " " + Session["Nom"])</h6></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Home")#profil" style="color: #305C7D;">Mon profil</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Home")#commandes" style="color: #305C7D;">Mes commandes</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
+                        </a>
+
+                        <!-- User Account Dropdown (Logged In) -->
+                        <div class="dropdown">
+                            <button class="btn btn-link text-dark dropdown-toggle" type="button" id="userDropdown" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-decoration: none; border: none; padding: 0.25rem 0.5rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+                                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                                </svg>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); min-width: 200px; margin-top: 0.5rem; background-color: white;">
+                                <li><h6 class="dropdown-header">@(Session["Prenom"] + " " + Session["Nom"])</h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="@Url.Action("Profile", "UserSpace")" style="color: #305C7D;">Mon profil</a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("MesCommandes", "Checkout")" style="color: #305C7D;">Mes commandes</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
                                 @using (Html.BeginForm("LogoutPost", "Account", FormMethod.Post, new { @class = "d-inline", id = "logout-form" }))
                                 {
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="dropdown-item text-danger" style="border: none; background: none; width: 100%; text-align: left; padding: 0.5rem 1rem;">Déconnexion</button>
+                                            <button type="submit" class="dropdown-item text-danger" style="border: none; background: none; width: 100%; text-align: left; padding: 0.5rem 1rem;">Déconnexion</button>
                                 }
-                            </li>
-                        </ul>
-                    </div>
+                                </li>
+                            </ul>
+                        </div>
                 }
                 else
                 {
-                    <!-- User Account Dropdown (Not Logged In) -->
-                    <div class="dropdown">
-                        <button class="btn btn-link text-dark dropdown-toggle" type="button" id="userDropdownNotLogged" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-decoration: none; border: none; padding: 0.25rem 0.5rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
-                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-                            </svg>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdownNotLogged" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); min-width: 200px; margin-top: 0.5rem; background-color: white; z-index: 1050;">
-                            <li><a class="dropdown-item" href="/Account/Login" style="color: #305C7D; padding: 0.75rem 1rem; text-decoration: none; display: block; cursor: pointer;">Connexion</a></li>
-                            <li><a class="dropdown-item" href="/Account/Register" style="color: #305C7D; padding: 0.75rem 1rem; text-decoration: none; display: block; cursor: pointer;">Inscription</a></li>
-                        </ul>
-                    </div>
+                        <!-- User Account Dropdown (Not Logged In) -->
+                        <div class="dropdown">
+                            <button class="btn btn-link text-dark dropdown-toggle" type="button" id="userDropdownNotLogged" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-decoration: none; border: none; padding: 0.25rem 0.5rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+                                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                                </svg>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdownNotLogged" style="border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); min-width: 200px; margin-top: 0.5rem; background-color: white; z-index: 1050;">
+                                <li><a class="dropdown-item" href="/Account/Login" style="color: #305C7D; padding: 0.75rem 1rem; text-decoration: none; display: block; cursor: pointer;">Connexion</a></li>
+                                <li><a class="dropdown-item" href="/Account/Register" style="color: #305C7D; padding: 0.75rem 1rem; text-decoration: none; display: block; cursor: pointer;">Inscription</a></li>
+                            </ul>
+                        </div>
                 }
 
                 <!-- Cart -->
-                <a href="#panier" class="btn btn-link text-dark position-relative" style="text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart3" viewBox="0 0 16 16">
-                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l.84 4.479 9.194-.459L13.89 4H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-                    </svg>
-                    @if (Session["UserId"] != null)
-                    {
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" id="cart-badge" style="display: none;">0</span>
-                    }
-                </a>
+                @if (Session["UserId"] != null)
+                {
+                    <a href="@Url.Action("Index", "Panier")" class="btn btn-link text-dark position-relative" style="text-decoration: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart3" viewBox="0 0 16 16">
+                            <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l.84 4.479 9.194-.459L13.89 4H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                        </svg>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill" id="cart-badge" style="display: none; background-color: #C06C50;">0</span>
+                    </a>
+                }
             </div>
         </div>
     </div>
 </header>
+
+<style>
+    /* 1. Stabilize the User Button to prevent moving/shifting */
+    #userDropdown, #userDropdownNotLogged {
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+        position: relative !important;
+        text-decoration: none !important;
+    }
+
+    /* Target all states to prevent blue color appearing */
+    #userDropdown:focus, #userDropdown:active, #userDropdown.show, 
+    #userDropdownNotLogged:focus, #userDropdownNotLogged:active, #userDropdownNotLogged.show {
+        background-color: rgba(0,0,0,0.05) !important;
+        border-radius: 50% !important; /* Circular highlight looks better */
+        color: #305C7D !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
+    /* REMOVE the caret (arrow) to prevent content-based shifting */
+    #userDropdown::after, #userDropdownNotLogged::after {
+        display: none !important;
+    }
+
+    /* 2. Dropdown menu and items cleanup - Remove Blue States */
+    .dropdown-item:active, 
+    .dropdown-item:focus {
+        background-color: #F8F9FA !important; /* Neutral light grey, no blue */
+        color: #305C7D !important;
+        outline: none !important;
+    }
+
+    .dropdown-menu {
+        border: none !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        margin-top: 10px !important;
+        border-radius: 12px !important;
+        padding: 8px 0 !important;
+        /* Align to the right edge of the button */
+        left: auto !important;
+        right: 0 !important;
+        transform: none !important;
+    }
+
+    /* Ensure it doesn't go off-screen on the right for small screens */
+    @@media (max-width: 576px) {
+        .dropdown-menu {
+            left: auto !important;
+            right: 0 !important;
+            transform: none !important;
+        }
+    }
+
+    /* Global prevention for focus outline on buttons in header */
+    .navbar-expand-lg .btn:focus {
+        box-shadow: none !important;
+        outline: none !important;
+    }
+</style>
 

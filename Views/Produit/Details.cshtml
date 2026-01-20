@@ -1,27 +1,60 @@
 @using E_Commerce_Cooperatives.Models
 @{
-    ViewBag.Title = "Détails du produit - CoopShop";
+    ViewBag.Title = "Détails du produit - Cooporia";
     var produit = ViewBag.Produit as Produit;
     var produitsSimilaires = ViewBag.ProduitsSimilaires as List<Produit> ?? new List<Produit>();
-    
+
     if (produit == null)
     {
         Response.Redirect(Url.Action("Index", "Catalogue"));
         return;
     }
-    
-    var images = produit.Images?.ToList() ?? new List<ImageProduit>();
-    if (!images.Any() && !string.IsNullOrEmpty(produit.ImageUrl))
+
+    var images = new List<ImageProduit>();
+    // Image principale de la table Produits
+    if (!string.IsNullOrEmpty(produit.ImageUrl))
     {
         images.Add(new ImageProduit { UrlImage = produit.ImageUrl, EstPrincipale = true });
     }
+    
+    // Images secondaires de la table ImagesProduits
+    if (produit.Images != null)
+    {
+        foreach (var img in produit.Images)
+        {
+            if (!string.IsNullOrEmpty(img.UrlImage) && img.UrlImage != produit.ImageUrl)
+            {
+                images.Add(img);
+            }
+        }
+    }
+
+    // Par défaut si aucune image
     if (!images.Any())
     {
-        images.Add(new ImageProduit { UrlImage = "/Content/images/default-product.jpg", EstPrincipale = true });
+        images.Add(new ImageProduit { UrlImage = "~/Content/images/default-product.jpg", EstPrincipale = true });
     }
-    
-    var variantes = produit.Variantes?.ToList() ?? new List<Variante>();
+
+    // Normalisation des chemins
+    foreach (var img in images)
+    {
+        if (!string.IsNullOrEmpty(img.UrlImage) && !img.UrlImage.StartsWith("~") && !img.UrlImage.StartsWith("/"))
+        {
+            img.UrlImage = "~/Content/images/produits/" + img.UrlImage;
+        }
+    }
+
+    var variantes = produit.Variantes?.Where(v => v.EstDisponible).ToList() ?? new List<Variante>();
     var avis = produit.Avis?.ToList() ?? new List<AvisProduit>();
+    var baseVariant = variantes.FirstOrDefault(v => v.PrixSupplementaire == 0) ?? variantes.FirstOrDefault();
+
+    // Determiner le label des variantes
+    bool hasTaille = variantes.Any(v => !string.IsNullOrWhiteSpace(v.Taille));
+    bool hasCouleur = variantes.Any(v => !string.IsNullOrWhiteSpace(v.Couleur));
+    string variantLabel = "Variante";
+    if (hasTaille && hasCouleur) { variantLabel = "Taille & Couleur"; }
+    else if (hasTaille) { variantLabel = "Taille"; }
+    else if (hasCouleur) { variantLabel = "Couleur"; }
 }
 
 @Html.Partial("_Header")
@@ -31,11 +64,15 @@
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" style="color: #305C7D;">Accueil</a></li>
-                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Catalogue")" style="color: #305C7D;">Catalogue</a></li>
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")" style="color: #305C7D;">Accueil</a>
+                </li>
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Catalogue")"
+                        style="color: #305C7D;">Catalogue</a></li>
                 @if (produit.Categorie != null)
                 {
-                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Catalogue", new { categorie = produit.CategorieId })" style="color: #305C7D;">@produit.Categorie.Nom</a></li>
+                    <li class="breadcrumb-item"><a
+                            href="@Url.Action("Index", "Catalogue", new { categorie = produit.CategorieId })"
+                            style="color: #305C7D;">@produit.Categorie.Nom</a></li>
                 }
                 <li class="breadcrumb-item active" aria-current="page">@produit.Nom</li>
             </ol>
@@ -46,40 +83,42 @@
             <div class="col-lg-6">
                 <div class="product-gallery">
                     <!-- Main Image -->
-                    <div class="position-relative mb-3 rounded-3 overflow-hidden" style="aspect-ratio: 1/1; background-color: white;">
-                        <img id="main-product-image" 
-                             src="@images[0].UrlImage" 
-                             alt="@produit.Nom" 
-                             class="w-100 h-100 object-fit-cover cursor-pointer"
-                             style="cursor: zoom-in;"
-                             onclick="openImageModal(this.src)">
+                    <div class="position-relative mb-3 rounded-3 overflow-hidden"
+                        style="aspect-ratio: 1/1; background-color: white;">
+                        <img id="main-product-image" src="@Url.Content(images[0].UrlImage)" alt="@produit.Nom" 
+                            class="w-100 h-100 object-fit-contain transition-transform"
+                            style="cursor: zoom-in;"
+                            onerror="this.onerror=null;this.src='@Url.Content("~/Content/images/default-product.jpg")';"
+                            onclick="openImageModal(this.src)">
                         @if (produit.EstNouveau)
                         {
-                            <span class="badge position-absolute top-0 start-0 m-3" style="background-color: #7D8453; color: white; font-size: 0.875rem;">
+                            <span class="badge position-absolute top-0 start-0 m-3"
+                                style="background-color: #7D8453; color: white; font-size: 0.875rem;">
                                 Nouveau
                             </span>
                         }
                         @if (produit.EstEnVedette)
                         {
-                            <span class="badge position-absolute top-0 start-0 m-3" style="background-color: #305C7D; color: white; font-size: 0.875rem; @(produit.EstNouveau ? "margin-top: 3.5rem !important;" : "")">
+                            <span class="badge position-absolute top-0 start-0 m-3"
+                                style="background-color: #305C7D; color: white; font-size: 0.875rem; @(produit.EstNouveau ? "margin-top: 3.5rem !important;" : "")">
                                 Vedette
                             </span>
                         }
                     </div>
-                    
+
                     <!-- Thumbnail Images -->
                     @if (images.Count > 1)
                     {
                         <div class="d-flex gap-2 flex-wrap">
                             @foreach (var img in images)
                             {
-                                <div class="thumbnail-image position-relative rounded overflow-hidden" 
-                                     style="width: 80px; height: 80px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s;"
-                                     onclick="changeMainImage('@img.UrlImage', this)">
-                                    <img src="@img.UrlImage" 
-                                         alt="@produit.Nom" 
-                                         class="w-100 h-100 object-fit-cover"
-                                         onerror="this.src='/Content/images/default-product.jpg';">
+                                var resolvedUrl = Url.Content(img.UrlImage);
+                                <div class="thumbnail-item rounded overflow-hidden"
+                                    style="width: 80px; height: 80px; cursor: pointer; border: 2px solid @(img == images[0] ? "#C06C50" : "#e0e0e0"); transition: all 0.3s;"
+                                    onclick="changeMainImage('@resolvedUrl', this)">
+                                    <img src="@resolvedUrl" alt="@produit.Nom"
+                                        class="w-100 h-100 object-fit-cover"
+                                        onerror="this.onerror=null;this.src='@Url.Content("~/Content/images/default-product.jpg")';">
                                 </div>
                             }
                         </div>
@@ -111,14 +150,18 @@
                             {
                                 if (i < Math.Floor(produit.NoteMoyenne))
                                 {
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#ffc107" viewBox="0 0 16 16">
-                                        <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#ffc107"
+                                        viewBox="0 0 16 16">
+                                        <path
+                                            d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
                                     </svg>
                                 }
                                 else
                                 {
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#e0e0e0" viewBox="0 0 16 16">
-                                        <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#e0e0e0"
+                                        viewBox="0 0 16 16">
+                                        <path
+                                            d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z" />
                                     </svg>
                                 }
                             }
@@ -135,7 +178,9 @@
                 <!-- Price -->
                 <div class="mb-4">
                     <span class="display-6 fw-bold" style="color: #305C7D;">
-                        <span id="product-price">@produit.Prix.ToString("F2")</span> MAD
+                        <span id="product-price">@(baseVariant != null ? (produit.PrixTTC +
+                            baseVariant.PrixSupplementaireTTC).ToString("F2") : produit.PrixTTC.ToString("F2"))</span>
+                        MAD
                     </span>
                     @if (variantes.Any() && variantes.Any(v => v.PrixSupplementaire > 0))
                     {
@@ -172,14 +217,18 @@
                             @if (!string.IsNullOrEmpty(produit.Cooperative.Ville))
                             {
                                 <div class="d-flex align-items-start gap-2 mb-2 text-muted small">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#305C7D" class="bi bi-geo-alt-fill mt-1" viewBox="0 0 16 16" style="flex-shrink: 0;">
-                                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#305C7D"
+                                        class="bi bi-geo-alt-fill mt-1" viewBox="0 0 16 16" style="flex-shrink: 0;">
+                                        <path
+                                            d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6" />
                                     </svg>
                                     <div>
                                         <span class="fw-medium">@produit.Cooperative.Ville</span>
                                         @if (!string.IsNullOrEmpty(produit.Cooperative.Adresse))
                                         {
-                                            <br /><span class="opacity-75">@produit.Cooperative.Adresse</span>
+                                            <br />
+
+                                            <span class="opacity-75">@produit.Cooperative.Adresse</span>
                                         }
                                     </div>
                                 </div>
@@ -187,10 +236,13 @@
                             @if (!string.IsNullOrEmpty(produit.Cooperative.Telephone))
                             {
                                 <div class="d-flex align-items-center gap-2 text-muted small">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#305C7D" class="bi bi-telephone-fill" viewBox="0 0 16 16" style="flex-shrink: 0;">
-                                        <path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#305C7D"
+                                        class="bi bi-telephone-fill" viewBox="0 0 16 16" style="flex-shrink: 0;">
+                                        <path fill-rule="evenodd"
+                                            d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z" />
                                     </svg>
-                                    <a href="tel:@produit.Cooperative.Telephone.Replace(" ", "")" class="text-muted text-decoration-none">@produit.Cooperative.Telephone</a>
+                                    <a href="tel:@produit.Cooperative.Telephone.Replace(" ", "")"
+                                        class="text-muted text-decoration-none">@produit.Cooperative.Telephone</a>
                                 </div>
                             }
                         </div>
@@ -202,23 +254,23 @@
                 {
                     <div class="mb-4">
                         <h3 class="h6 fw-semibold mb-3" style="color: #2d3748;">
-                            @(variantes.First().Taille != null ? "Taille" : "Variante")
+                            @variantLabel
                         </h3>
                         <div class="d-flex flex-wrap gap-2" id="variants-container">
                             @foreach (var variant in variantes)
                             {
-                                var variantPrice = produit.Prix + variant.PrixSupplementaire;
-                                <button type="button" 
-                                        class="btn variant-btn @(variant == variantes.First() ? "active" : "")"
-                                        data-variant-id="@variant.VarianteId"
-                                        data-variant-price="@variantPrice"
-                                        data-variant-stock="@variant.Stock"
-                                        style="border: 2px solid #e0e0e0; background-color: white; color: #2d3748; transition: all 0.3s;"
-                                        onclick="selectVariant(this, @variant.VarianteId, '@variantPrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)', @variant.Stock)">
-                                    @(variant.Taille ?? variant.Couleur ?? "Standard")
+                                var variantPriceTTC = produit.PrixTTC + variant.PrixSupplementaireTTC;
+                                <button type="button" class="btn variant-btn @(variant == baseVariant ? "active" : "")"
+                                    data-variant-id="@variant.VarianteId" data-variant-price="@variantPriceTTC"
+                                    data-variant-stock="@variant.Stock"
+                                    style="border: 2px solid @(variant == baseVariant ? "#C06C50" : "#e0e0e0"); background-color: @(variant == baseVariant ? "#F5F3EF" : "white"); color: #2d3748; transition: all 0.3s;"
+                                    onclick="selectVariant(this, @variant.VarianteId, '@variantPriceTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)', @variant.Stock)">
+                                    @( (!string.IsNullOrWhiteSpace(variant.Taille) && !string.IsNullOrWhiteSpace(variant.Couleur)) 
+                                        ? variant.Taille + " - " + variant.Couleur 
+                                        : (!string.IsNullOrWhiteSpace(variant.Taille) ? variant.Taille : (!string.IsNullOrWhiteSpace(variant.Couleur) ? variant.Couleur : "Standard")) )
                                     @if (variant.PrixSupplementaire > 0)
                                     {
-                                        <span class="small ms-1">(+@variant.PrixSupplementaire.ToString("F2") MAD)</span>
+                                        <span class="small ms-1">(+@variant.PrixSupplementaireTTC.ToString("F2") MAD)</span>
                                     }
                                     @if (variant.Stock == 0)
                                     {
@@ -235,71 +287,127 @@
                     <h3 class="h6 fw-semibold mb-3" style="color: #2d3748;">Quantité</h3>
                     <div class="d-flex align-items-center gap-3">
                         <div class="d-flex align-items-center border rounded" style="border-color: #e0e0e0 !important;">
-                            <button type="button" 
-                                    class="btn border-0 bg-transparent px-3 py-2" 
-                                    onclick="decreaseQuantity()"
-                                    id="decrease-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
+                            <button type="button" class="btn border-0 bg-transparent px-3 py-2"
+                                onclick="decreaseQuantity()" id="decrease-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    viewBox="0 0 16 16">
+                                    <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8" />
                                 </svg>
                             </button>
-                            <span class="px-4 py-2 fw-semibold" id="quantity-display" style="min-width: 50px; text-align: center;">1</span>
-                            <button type="button" 
-                                    class="btn border-0 bg-transparent px-3 py-2" 
-                                    onclick="increaseQuantity()"
-                                    id="increase-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                            <span class="px-4 py-2 fw-semibold" id="quantity-display"
+                                style="min-width: 50px; text-align: center;">1</span>
+                            <button type="button" class="btn border-0 bg-transparent px-3 py-2"
+                                onclick="increaseQuantity()" id="increase-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    viewBox="0 0 16 16">
+                                    <path
+                                        d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
                                 </svg>
                             </button>
                         </div>
                         <span class="text-muted small" id="stock-info">
-                            @(variantes.Any() ? variantes.First().Stock : produit.StockTotal) en stock
+                            @(baseVariant != null ? baseVariant.Stock : (variantes.Any() ? variantes.First().Stock :
+                                produit.StockTotal)) en stock
                         </span>
                     </div>
                 </div>
 
                 <!-- Actions -->
                 <div class="d-flex gap-3 mb-4">
-                    <button type="button" 
-                            class="btn btn-lg flex-grow-1" 
-                            id="add-to-cart-btn"
-                            style="background-color: #C06C50; color: white; border: none;"
-                            onclick="addToCart()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-plus me-2" viewBox="0 0 16 16">
-                            <path d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9V5.5z"/>
-                            <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                    <button type="button" class="btn btn-lg flex-grow-1" id="add-to-cart-btn"
+                        style="background-color: #C06C50; color: white; border: none;" onclick="addToCart()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                            class="bi bi-cart-plus me-2" viewBox="0 0 16 16">
+                            <path
+                                d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9V5.5z" />
+                            <path
+                                d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zm3.915 10L3.102 4h10.796l-1.313 7h-8.17zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
                         </svg>
                         Ajouter au panier
                     </button>
-                    
+                    <button type="button"
+                        class="btn btn-lg btn-outline-light d-flex align-items-center justify-content-center favori-toggle-btn"
+                        data-produit-id="@produit.ProduitId" onclick="toggleFavori(event, @produit.ProduitId, this)"
+                        style="width: 56px; border: 1px solid #e0e0e0; color: #305C7D;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            class="bi bi-heart" viewBox="0 0 16 16">
+                            <path
+                                d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Reviews Section -->
-        @if (avis.Any())
-        {
-            <section class="mt-5 pt-5 border-top">
-                <h2 class="h3 fw-bold mb-4" style="color: #2d3748;">
+        <section class="mt-5 pt-5 border-top">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 fw-bold mb-0" style="color: #2d3748;">
                     Avis clients (@avis.Count)
                 </h2>
+                @if (ViewBag.CanReview == true)
+                {
+                    <button class="btn btn-lg" style="background-color: #305C7D; color: white; border: none;"
+                        onclick="openReviewModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-star me-2" viewBox="0 0 16 16">
+                            <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+                        </svg>
+                        Donner votre avis
+                    </button>
+                }
+                else if (ViewBag.IsLoggedIn == true)
+                {
+                    if (ViewBag.HasReviewed == true)
+                    {
+                        <span class="text-muted small">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle me-1" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 2.604 6.323a.75.75 0 0 0-1.208.765l3.5 2.25a.75.75 0 0 0 1.174-.096l4-5z"/>
+                            </svg>
+                            Vous avez déjà laissé un avis
+                        </span>
+                    }
+                    else if (ViewBag.HasDelivered == false)
+                    {
+                        <span class="text-muted small">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                            </svg>
+                            Vous devez recevoir ce produit pour laisser un avis
+                        </span>
+                    }
+                }
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["Error"]</div>
+            }
+
+            @if (avis.Any())
+            {
                 <div class="row g-4">
                     @foreach (var review in avis)
                     {
                         <div class="col-md-6">
-                            <div class="bg-white rounded-3 p-4 shadow-sm">
+                            <div class="bg-white rounded-3 p-4 shadow-sm h-100 position-relative">
                                 <div class="d-flex align-items-center gap-3 mb-3">
-                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-semibold" 
-                                         style="width: 40px; height: 40px; background-color: #305C7D; color: white; font-size: 1.1rem;">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-semibold"
+                                        style="width: 40px; height: 40px; background-color: #305C7D; color: white; font-size: 1.1rem;">
                                         @(review.ClientNom?.Substring(0, 1).ToUpper() ?? "A")
                                     </div>
-                                    <div>
+                                    <div class="flex-grow-1">
                                         <p class="fw-semibold mb-0" style="color: #2d3748;">
                                             @(review.ClientNom ?? "Client anonyme")
                                         </p>
                                         <p class="small text-muted mb-0">
-                                            @review.DateAvis.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"))
+                                            @review.DateAvis.ToString("dd MMMM yyyy", new
+                                    System.Globalization.CultureInfo("fr-FR"))
                                         </p>
                                     </div>
                                 </div>
@@ -308,14 +416,18 @@
                                     {
                                         if (i < review.Note)
                                         {
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#ffc107" viewBox="0 0 16 16">
-                                                <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#ffc107"
+                                                viewBox="0 0 16 16">
+                                                <path
+                                                    d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
                                             </svg>
                                         }
                                         else
                                         {
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#e0e0e0" viewBox="0 0 16 16">
-                                                <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#e0e0e0"
+                                                viewBox="0 0 16 16">
+                                                <path
+                                                    d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z" />
                                             </svg>
                                         }
                                     }
@@ -330,39 +442,191 @@
                         </div>
                     }
                 </div>
-            </section>
-        }
-        else
-        {
-            <section class="mt-5 pt-5 border-top">
-                <h2 class="h3 fw-bold mb-4" style="color: #2d3748;">Avis clients</h2>
-                <p class="text-muted">Aucun avis pour ce produit pour le moment.</p>
-            </section>
-        }
-
-        <!-- Related Products -->
-        @if (produitsSimilaires.Any())
-        {
-            <section class="mt-5 pt-5 border-top">
-                <h2 class="h3 fw-bold mb-4" style="color: #2d3748;">Produits similaires</h2>
-                <div class="row g-4">
-                    @foreach (var similarProduct in produitsSimilaires)
-                    {
-                        <div class="col-sm-6 col-lg-3">
-                            @Html.Partial("_ProductCard", similarProduct)
-                        </div>
-                    }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#e0e0e0"
+                        class="bi bi-chat-square-text mb-3" viewBox="0 0 16 16">
+                        <path
+                            d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2.5a2 2 0 0 0-1.6.8L8 14.333 6.1 11.8a2 2 0 0 0-1.6-.8H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5L8 15l3.5-3H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z" />
+                        <path
+                            d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6zm0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z" />
+                    </svg>
+                    <p class="text-muted">Aucun avis pour ce produit pour le moment.</p>
                 </div>
-            </section>
-        }
+            }
+
+            <!-- Related Products -->
+            @if (produitsSimilaires.Any())
+            {
+                <div class="mt-5 pt-5 border-top">
+                    <h2 class="h3 fw-bold mb-4" style="color: #2d3748;">Produits similaires</h2>
+                    <div class="row g-4">
+                        @foreach (var similarProduct in produitsSimilaires)
+                        {
+                            <div class="col-sm-6 col-lg-3">
+                                @Html.Partial("_ProductCard", similarProduct)
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </section>
     </div>
 </main>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="reviewModalTitle">Donner votre avis</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm" method="post" action="@Url.Action("AddAvis", "Produit")">
+                    <input type="hidden" name="produitId" value="@produit.ProduitId" />
+                    <input type="hidden" name="avisId" id="reviewId" value="" />
+
+                    <div class="mb-3 text-center">
+                        <label class="form-label d-block text-muted mb-2">Notez ce produit</label>
+                        <div class="rating-stars d-flex justify-content-center gap-2">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <div class="star-wrapper" style="position: relative; display: inline-block;">
+                                    <input type="radio" name="note" id="star@i" value="@i" class="star-radio"
+                                        style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2;"
+                                        required>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#e0e0e0"
+                                        class="bi bi-star-fill star-icon" data-value="@i" viewBox="0 0 16 16"
+                                        style="display: block; pointer-events: none;">
+                                        <path
+                                            d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
+                                    </svg>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="commentaire" class="form-label text-muted">Votre commentaire</label>
+                        <textarea class="form-control bg-light border-0" id="commentaire" name="commentaire" rows="4"
+                            placeholder="Partagez votre expérience..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn w-100 py-2 fw-semibold"
+                        style="background-color: #305C7D; color: white;">
+                        Publier l'avis
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Star Rating System - Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const ratingForm = document.getElementById('reviewForm');
+        if (!ratingForm) return;
+        
+        const starRadios = ratingForm.querySelectorAll('.star-radio');
+        const starIcons = ratingForm.querySelectorAll('.star-icon');
+        
+        // Update star visuals based on rating value
+        function updateStars(rating) {
+            starIcons.forEach(star => {
+                const starValue = parseInt(star.getAttribute('data-value'));
+                if (starValue <= rating) {
+                    star.setAttribute('fill', '#ffc107');
+                } else {
+                    star.setAttribute('fill', '#e0e0e0');
+                }
+            });
+        }
+        
+        // Listen for radio input changes (fired when clicked)
+        starRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    updateStars(parseInt(this.value));
+                }
+            });
+            
+            // Add hover effect on wrapper
+            const wrapper = radio.parentElement;
+            wrapper.addEventListener('mouseenter', function() {
+                const value = parseInt(radio.value);
+                updateStars(value);
+            });
+            
+            wrapper.addEventListener('mouseleave', function() {
+                const checkedRadio = ratingForm.querySelector('.star-radio:checked');
+                if (checkedRadio) {
+                    updateStars(parseInt(checkedRadio.value));
+                } else {
+                    updateStars(0);
+                }
+            });
+        });
+    });
+    
+    // Function to open modal for new review
+    function openReviewModal() {
+        const form = document.getElementById('reviewForm');
+        document.getElementById('reviewModalTitle').textContent = 'Donner votre avis';
+        form.action = '@Url.Action("AddAvis", "Produit")';
+        document.getElementById('reviewId').value = '';
+        document.getElementById('commentaire').value = '';
+        
+        // Clear star selection
+        const checkedRadio = form.querySelector('.star-radio:checked');
+        if (checkedRadio) checkedRadio.checked = false;
+        
+        // Reset star visuals
+        const starIcons = form.querySelectorAll('.star-icon');
+        starIcons.forEach(star => star.setAttribute('fill', '#e0e0e0'));
+        
+        new bootstrap.Modal(document.getElementById('reviewModal')).show();
+    }
+
+    // Function to open modal for editing existing review
+    function editReview(id, note, comment) {
+        const form = document.getElementById('reviewForm');
+        document.getElementById('reviewModalTitle').textContent = 'Modifier votre avis';
+        form.action = '@Url.Action("UpdateAvis", "Produit")';
+        document.getElementById('reviewId').value = id;
+        document.getElementById('commentaire').value = comment;
+        
+        // Set the rating after a small delay to ensure modal is ready
+        setTimeout(() => {
+            const radio = document.getElementById('star' + note);
+            if (radio) {
+                radio.checked = true;
+                // Update visuals
+                const starIcons = form.querySelectorAll('.star-icon');
+                starIcons.forEach(star => {
+                    const starValue = parseInt(star.getAttribute('data-value'));
+                    if (starValue <= note) {
+                        star.setAttribute('fill', '#ffc107');
+                    } else {
+                        star.setAttribute('fill', '#e0e0e0');
+                    }
+                });
+            }
+        }, 100);
+        
+        new bootstrap.Modal(document.getElementById('reviewModal')).show();
+    }
+</script>
 
 <!-- Image Modal -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content bg-transparent border-0">
-            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
+            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
             <img id="modal-image" src="" alt="" class="w-100 rounded">
         </div>
     </div>
@@ -373,20 +637,22 @@
 @section scripts {
     <script>
         let currentQuantity = 1;
-        let selectedVariantId = null;
-        let selectedVariantPrice = @produit.Prix.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-        let selectedVariantStock = @(variantes.Any() ? variantes.First().Stock : produit.StockTotal);
-        const basePrice = @produit.Prix.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+        let selectedVariantId = @(baseVariant != null ? baseVariant.VarianteId.ToString() : "null");
+        let selectedVariantPrice = @(baseVariant != null ? (produit.PrixTTC + baseVariant.PrixSupplementaireTTC).ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : produit.PrixTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+        let selectedVariantStock = @(baseVariant != null ? baseVariant.Stock : (variantes.Any() ? variantes.First().Stock : produit.StockTotal));
+        const basePrice = @produit.PrixTTC.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
         const productId = @produit.ProduitId;
 
         function changeMainImage(imageSrc, element) {
-            document.getElementById('main-product-image').src = imageSrc;
-            // Update active thumbnail
-            document.querySelectorAll('.thumbnail-image').forEach(thumb => {
-                thumb.style.borderColor = 'transparent';
+            const mainImg = document.getElementById('main-product-image');
+            mainImg.src = imageSrc;
+            
+            // Mise à jour des bordures des miniatures
+            document.querySelectorAll('.thumbnail-item').forEach(item => {
+                item.style.borderColor = '#e0e0e0';
             });
             if (element) {
-                element.style.borderColor = '#305C7D';
+                element.style.borderColor = '#C06C50';
             }
         }
 
@@ -401,7 +667,7 @@
             selectedVariantId = variantId;
             selectedVariantPrice = numericPrice;
             selectedVariantStock = stock;
-            
+
             // Update UI
             document.querySelectorAll('.variant-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -411,13 +677,13 @@
             button.classList.add('active');
             button.style.borderColor = '#C06C50';
             button.style.backgroundColor = '#F5F3EF';
-            
+
             // Update price
             document.getElementById('product-price').textContent = numericPrice.toFixed(2);
-            
+
             // Update stock
             document.getElementById('stock-info').textContent = stock + ' en stock';
-            
+
             // Update quantity max
             if (currentQuantity > stock) {
                 currentQuantity = stock;
@@ -449,27 +715,30 @@
         function updateQuantityButtons() {
             const decreaseBtn = document.getElementById('decrease-btn');
             const increaseBtn = document.getElementById('increase-btn');
-            
+
             decreaseBtn.disabled = currentQuantity <= 1;
             increaseBtn.disabled = currentQuantity >= selectedVariantStock;
         }
 
         function addToCart() {
-            const isAuthenticated = document.getElementById('user-authenticated')?.dataset.authenticated === 'true';
-            
-            if (!isAuthenticated) {
-                alert('Veuillez vous connecter pour ajouter au panier');
-                window.location.href = '@Url.Action("Login", "Account")?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+            if (!window.isUserAuthenticated()) {
+                const currentUrl = window.location.pathname + window.location.search;
+                const separator = currentUrl.includes('?') ? '&' : '?';
+                let returnUrl = currentUrl + separator + 'addItem=' + productId;
+                if (selectedVariantId) returnUrl += '&addVariant=' + selectedVariantId;
+                if (currentQuantity > 1) returnUrl += '&addQty=' + currentQuantity;
+
+                window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(returnUrl);
                 return;
             }
-            
-            // TODO: Implement add to cart functionality
-            // For now, just show a message
-            alert(currentQuantity + ' x @produit.Nom ajouté au panier');
+
+            window.addProductToCart(String(productId), currentQuantity, selectedVariantId);
+            window.showNotification(currentQuantity + ' x @produit.Nom ajouté au panier', 'success');
+            window.updateCartBadge();
         }
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             updateQuantityButtons();
             if (document.querySelectorAll('.thumbnail-image').length > 0) {
                 document.querySelectorAll('.thumbnail-image')[0].style.borderColor = '#305C7D';
@@ -482,16 +751,16 @@
     .thumbnail-image:hover {
         border-color: #305C7D !important;
     }
-    
+
     .variant-btn:hover:not(.active) {
         border-color: #C06C50 !important;
     }
-    
+
     .variant-btn.active {
         border-color: #C06C50 !important;
         background-color: #F5F3EF !important;
     }
-    
+
     #imageModal .modal-content {
         background: rgba(0, 0, 0, 0.9);
     }

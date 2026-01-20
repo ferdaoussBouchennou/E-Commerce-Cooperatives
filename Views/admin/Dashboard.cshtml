@@ -1,419 +1,752 @@
-@model E_Commerce_Cooperatives.Models.ViewModels.UserStatisticsViewModel
+@model E_Commerce_Cooperatives.Models.ViewModels.DashboardViewModel
 @using E_Commerce_Cooperatives.Models.ViewModels
 @{
-    ViewBag.Title = "Tableau de bord - Utilisateurs";
+    ViewBag.Title = "Tableau de bord";
     Layout = "~/Views/Admin/_AdminLayout.cshtml";
-    
-    var stats = Model ?? new UserStatisticsViewModel();
-    var evolutionData = ViewBag.EvolutionData as List<UserEvolutionViewModel> ?? new List<UserEvolutionViewModel>();
-    var activeUsers = ViewBag.ActiveUsers as List<ActiveUserViewModel> ?? new List<ActiveUserViewModel>();
 }
 
 <div class="admin-page">
     <div class="admin-page-header">
-        <h1 class="admin-page-title">Tableau de bord - Utilisateurs</h1>
-        <p class="admin-page-subtitle">Vue d'ensemble de la gestion des utilisateurs</p>
+        <h1 class="admin-page-title">Tableau de bord</h1>
+        <p class="admin-page-subtitle">Vue d'ensemble de votre boutique</p>
     </div>
 
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background-color: #305C7D;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16">
+            <div class="dashboard-stat-card">
+                <div class="stat-icon-wrapper" style="background-color: rgba(48, 92, 125, 0.1);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#305C7D" viewBox="0 0 16 16">
+                        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm15 2h-4v3h4V4zm0 4h-4v3h4V8zm0 4h-4v3h3a1 1 0 0 0 1-1v-2zm-5 3v-3H6v3h4zm-5 0v-3H1v2a1 1 0 0 0 1 1h3zm-4-4h4V8H1v3zm0-4h4V4H1v3zm5-3v3h4V4H6zm4 4H6v3h4V8z"/>
+                    </svg>
+                </div>
+                <div class="stat-content-wrapper">
+
+                    <h3 class="stat-value">@Model.TotalSales.ToString("N0") MAD</h3>
+                    <p class="stat-label">Ventes totales</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="dashboard-stat-card">
+                <div class="stat-icon-wrapper" style="background-color: rgba(192, 108, 80, 0.1);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#C06C50" viewBox="0 0 16 16">
+                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l.84 4.479 9.194-.459L13.89 4H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                </div>
+                <div class="stat-content-wrapper">
+
+                    <h3 class="stat-value">@Model.OrdersToday</h3>
+                    <p class="stat-label">Commandes aujourd'hui</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="dashboard-stat-card">
+                <div class="stat-icon-wrapper" style="background-color: rgba(125, 132, 83, 0.1);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#7D8453" viewBox="0 0 16 16">
+                        <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                    </svg>
+                </div>
+                <div class="stat-content-wrapper">
+                    <h3 class="stat-value">@Model.ActiveProducts</h3>
+                    <p class="stat-label">Produits actifs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="dashboard-stat-card">
+                <div class="stat-icon-wrapper" style="background-color: rgba(48, 92, 125, 0.1);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#305C7D" viewBox="0 0 16 16">
                         <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216Z"/>
                         <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
                     </svg>
                 </div>
-                <div class="stat-content">
-                    <h3 class="stat-value" id="totalUsers">@stats.TotalUsers</h3>
-                    <p class="stat-label">Total Utilisateurs</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background-color: #7D8453;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16">
-                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 2.384 4.323a.75.75 0 0 1 1.06-1.061l4.033 4.033L11.03 3.97a.75.75 0 0 1 1.08 1.04z"/>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <h3 class="stat-value" id="activeUsers">@stats.ActiveUsers</h3>
-                    <p class="stat-label">Utilisateurs Actifs</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background-color: #C06C50;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16">
-                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <h3 class="stat-value" id="newUsers">@stats.NewUsers</h3>
-                    <p class="stat-label">Nouveaux (30 jours)</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background-color: #E8DCC2;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16">
-                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                        <path d="M11.354 4.646a.5.5 0 0 0-.708 0l-6 6a.5.5 0 0 0 .708.708l6-6a.5.5 0 0 0 0-.708z"/>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <h3 class="stat-value" id="activityRate">@stats.ActivityRate%</h3>
-                    <p class="stat-label">Taux d'Activité</p>
+                <div class="stat-content-wrapper">
+
+                    <h3 class="stat-value">@Model.TotalUsers</h3>
+                    <p class="stat-label">Utilisateurs</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Period Filter -->
+    <!-- Alert Card -->
+    @if (Model.RecentOrders.Any(o => o.Status == "Validée" || o.Status == "Préparation"))
+    {
+        var pendingCount = Model.RecentOrders.Count(o => o.Status == "Validée" || o.Status == "Préparation");
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="dashboard-alert-card">
+                    <div class="alert-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l.84 4.479 9.194-.459L13.89 4H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                        </svg>
+                    </div>
+                    <div class="alert-content">
+                        <h4>@pendingCount commande(s) en attente</h4>
+                        <p>Nécessitent votre attention</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Graphs Row -->
     <div class="row mb-4">
-        <div class="col-12">
-            <div class="period-filter">
-                <label>Période :</label>
-                <button class="period-btn active" data-period="day">Aujourd'hui</button>
-                <button class="period-btn" data-period="week">7 derniers jours</button>
-                <button class="period-btn" data-period="month">30 derniers jours</button>
+        <!-- Sales Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="dashboard-content-card h-100">
+                <div class="card-header">
+                    <h3 class="card-title">Évolution des ventes (7 derniers jours)</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" style="display: block; width: 100%; height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Chart -->
+        <div class="col-lg-4 mb-4">
+            <div class="dashboard-content-card h-100">
+                <div class="card-header">
+                    <h3 class="card-title">État des commandes</h3>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div style="height: 250px; width: 100%; position: relative;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Charts Row -->
-    <div class="row mb-4">
-        <div class="col-md-8 mb-3">
-            <div class="chart-card">
-                <h3 class="chart-title">Évolution des Inscriptions</h3>
-                <canvas id="evolutionChart"></canvas>
-            </div>
-        </div>
-        <div class="col-md-4 mb-3">
-            <div class="chart-card">
-                <h3 class="chart-title">Répartition des Utilisateurs</h3>
-                <canvas id="distributionChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Most Active Users -->
+    <!-- Main Content Cards -->
     <div class="row">
-        <div class="col-12">
-            <div class="table-card">
-                <div class="table-header">
-                    <h3 class="table-title">Utilisateurs les plus actifs</h3>
-                    <a href="@Url.Action("Utilisateurs", "Admin")" class="btn-view-all">Voir tout</a>
+        <!-- Recent Orders Card -->
+        <div class="col-md-6 mb-4">
+            <div class="dashboard-content-card">
+                <div class="card-header">
+                    <h3 class="card-title">Commandes récentes</h3>
+                    <a href="@Url.Action("Commandes", "Admin")" class="card-link">Voir tout</a>
                 </div>
-                <div class="table-responsive">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Nom</th>
-                                <th>Email</th>
-                                <th>Dernière connexion</th>
-                                <th>Commandes</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (activeUsers.Any())
+                <div class="card-body">
+                    @if (Model.RecentOrders != null && Model.RecentOrders.Any())
+                    {
+                        foreach (var order in Model.RecentOrders)
+                        {
+                            <div class="order-item">
+                                <div class="order-info">
+                                    <div class="order-number">@order.OrderNumber</div>
+                                    <div class="order-customer">@order.CustomerName</div>
+                                </div>
+                                <div class="order-amount">@order.Amount.ToString("N0") MAD</div>
+                                <div class="order-status status-@order.Status.ToLower().Replace("é", "e").Replace("è", "e")">
+                                    @order.Status
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center py-3">Aucune commande récente</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Card -->
+        <div class="col-md-6 mb-4">
+            <div class="dashboard-content-card">
+                <div class="card-header">
+                    <h3 class="card-title">Stock faible</h3>
+                    <a href="@Url.Action("Produits", "Admin")" class="card-link">Gérer</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.LowStockProducts != null && Model.LowStockProducts.Any())
+                    {
+                        foreach (var product in Model.LowStockProducts)
+                        {
+                            <div class="stock-item">
+                                <div class="stock-info">
+                                    <div class="stock-name">@product.ProductName</div>
+                                    <div class="stock-level">Stock: @product.Stock / Seuil: @product.AlertThreshold</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center py-3">Tous les produits ont un stock suffisant</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Row Cards -->
+    <div class="row">
+        <!-- Best Selling Products -->
+        <div class="col-md-6 mb-4">
+            <div class="dashboard-content-card">
+                <div class="card-header">
+                    <h3 class="card-title">Produits les plus vendus</h3>
+                </div>
+                <div class="card-body">
+                    @if (Model.BestSellingProducts != null && Model.BestSellingProducts.Any())
+                    {
+                        <div id="best-selling-list">
+                            @{ int rank = 1; }
+                            @foreach (var product in Model.BestSellingProducts)
                             {
-                                foreach (var user in activeUsers)
-                                {
-                                    <tr>
-                                        <td>@user.Prenom @user.Nom</td>
-                                        <td>@user.Email</td>
-                                        <td>@(user.DerniereConnexion?.ToString("dd/MM/yyyy HH:mm") ?? "Jamais")</td>
-                                        <td>@user.OrderCount</td>
-                                        <td>
-                                            <a href="@Url.Action("UserDetails", "Admin", new { id = user.ClientId })" class="btn-action btn-view">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-                                                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
-                                                </svg>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                }
+                                <div class="product-item" style="@(rank > 6 ? "display:none;" : "display:flex;")">
+                                    <div class="product-rank">@rank</div>
+                                    <div class="product-info">
+                                        <div class="product-name">@product.ProductName</div>
+                                        <div class="product-sales">@product.SalesCount ventes</div>
+                                    </div>
+                                    <div class="product-price">@product.Price.ToString("N0") MAD</div>
+                                </div>
+                                rank++;
                             }
-                            else
-                            {
-                                <tr>
-                                    <td colspan="5" class="text-center">Aucun utilisateur actif</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                        </div>
+
+                        if (Model.BestSellingProducts.Count > 6)
+                        {
+                            <div class="pagination-controls mt-3 d-flex justify-content-between align-items-center">
+                                <button id="prev-prod" class="btn btn-sm btn-outline-secondary" disabled style="font-size: 12px; padding: 2px 8px;">&lt;</button>
+                                <span id="page-info" class="small text-muted">Page 1 / @Math.Ceiling((double)Model.BestSellingProducts.Count / 6)</span>
+                                <button id="next-prod" class="btn btn-sm btn-outline-secondary" style="font-size: 12px; padding: 2px 8px;">&gt;</button>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center py-3">Aucun produit vendu</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Cooperatives -->
+        <div class="col-md-6 mb-4">
+            <div class="dashboard-content-card">
+                <div class="card-header">
+                    <h3 class="card-title">Nos coopératives</h3>
+                    <a href="@Url.Action("Cooperatives", "Admin")" class="card-link">Voir tout</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.Cooperatives != null && Model.Cooperatives.Any())
+                    {
+                        foreach (var coop in Model.Cooperatives)
+                        {
+                            <div class="cooperative-item">
+                                <div class="cooperative-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bag" viewBox="0 0 16 16">
+                                        <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"/>
+                                    </svg>
+                                </div>
+                                <div class="cooperative-info">
+                                    <div class="cooperative-name">@coop.Name</div>
+                                    <div class="cooperative-location">@coop.City</div>
+                                </div>
+                                <div class="cooperative-status">
+                                    <span class="status-badge status-active">Active</span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center py-3">Aucune coopérative</p>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-@section scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <script>
-        // Evolution Chart Data
-        var evolutionData = @Html.Raw(Json.Encode(evolutionData));
-        var stats = @Html.Raw(Json.Encode(stats));
-
-        // Evolution Chart
-        var evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
-        var evolutionChart = new Chart(evolutionCtx, {
-            type: 'line',
-            data: {
-                labels: evolutionData.map(d => d.Date),
-                datasets: [{
-                    label: 'Nouveaux utilisateurs',
-                    data: evolutionData.map(d => d.Count),
-                    borderColor: '#305C7D',
-                    backgroundColor: 'rgba(48, 92, 125, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
-                }
-            }
-        });
-
-        // Distribution Chart
-        var distributionCtx = document.getElementById('distributionChart').getContext('2d');
-        var distributionChart = new Chart(distributionCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Actifs', 'Inactifs'],
-                datasets: [{
-                    data: [stats.ActiveUsers || 0, stats.InactiveUsers || 0],
-                    backgroundColor: ['#7D8453', '#C06C50']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-
-        // Period Filter
-        document.querySelectorAll('.period-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                
-                var period = this.getAttribute('data-period');
-                loadStats(period);
-            });
-        });
-
-        function loadStats(period) {
-            fetch('@Url.Action("GetUserStats", "Admin")?period=' + period)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('totalUsers').textContent = data.TotalUsers;
-                    document.getElementById('activeUsers').textContent = data.ActiveUsers;
-                    document.getElementById('newUsers').textContent = data.NewUsers;
-                    document.getElementById('activityRate').textContent = data.ActivityRate + '%';
-                    
-                    // Update distribution chart
-                    distributionChart.data.datasets[0].data = [data.ActiveUsers, data.InactiveUsers];
-                    distributionChart.update();
-                })
-                .catch(error => console.error('Error:', error));
-        }
-    </script>
-}
-
 <style>
-    .stat-card {
+    .dashboard-stat-card {
         background: white;
-        border-radius: 8px;
+        border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 16px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
     }
 
-    .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 8px;
+    .dashboard-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .stat-icon-wrapper svg {
+        width: 24px;
+        height: 24px;
     }
 
-    .stat-content {
+    .stat-content-wrapper {
         flex: 1;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .stat-trend {
+        position: absolute;
+        top: -4px;
+        right: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        background: rgba(0,0,0,0.03);
+        padding: 2px 6px;
+        border-radius: 10px;
+    }
+
+    .stat-trend.positive {
+        color: #28a745;
+        background: rgba(40, 167, 69, 0.1);
+    }
+
+    .stat-trend.negative {
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
     }
 
     .stat-value {
-        font-size: 32px;
-        font-weight: bold;
-        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
         color: #305C7D;
+        margin: 0;
+        line-height: 1.2;
     }
 
     .stat-label {
-        margin: 5px 0 0 0;
-        color: #666;
-        font-size: 14px;
+        font-size: 13px;
+        color: #6c757d;
+        margin: 4px 0 0 0;
+        font-weight: 500;
     }
 
-    .period-filter {
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    .dashboard-alert-card {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border-radius: 12px;
+        padding: 20px 24px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
-    .period-filter label {
-        margin: 0;
-        font-weight: 600;
-        color: #305C7D;
+    .alert-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(255,255,255,0.8);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #C06C50;
     }
 
-    .period-btn {
-        padding: 8px 16px;
-        border: 1px solid #ddd;
-        background: white;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .period-btn:hover {
-        background: #f5f5f5;
-    }
-
-    .period-btn.active {
-        background: #305C7D;
-        color: white;
-        border-color: #305C7D;
-    }
-
-    .chart-card {
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        height: 400px;
-    }
-
-    .chart-title {
+    .alert-content h4 {
+        margin: 0 0 4px 0;
         font-size: 18px;
         font-weight: 600;
-        margin-bottom: 20px;
-        color: #305C7D;
+        color: #856404;
     }
 
-    .table-card {
+    .alert-content p {
+        margin: 0;
+        font-size: 14px;
+        color: #856404;
+        opacity: 0.8;
+    }
+
+    .dashboard-content-card {
         background: white;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        height: 100%;
     }
 
-    .table-header {
+    .card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e9ecef;
     }
 
-    .table-title {
+    .card-title {
         font-size: 18px;
         font-weight: 600;
-        margin: 0;
         color: #305C7D;
+        margin: 0;
     }
 
-    .btn-view-all {
-        padding: 8px 16px;
-        background: #305C7D;
-        color: white;
+    .card-link {
+        color: #C06C50;
         text-decoration: none;
-        border-radius: 4px;
         font-size: 14px;
+        font-weight: 500;
+        transition: color 0.2s;
     }
 
-    .btn-view-all:hover {
-        background: #244a66;
-        color: white;
+    .card-link:hover {
+        color: #a85a42;
+        text-decoration: none;
     }
 
-    .admin-table {
-        width: 100%;
-        border-collapse: collapse;
+    .order-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
     }
 
-    .admin-table thead {
-        background: #f5f5f5;
+    .order-item:last-child {
+        border-bottom: none;
     }
 
-    .admin-table th {
-        padding: 12px;
-        text-align: left;
+    .order-info {
+        flex: 1;
+    }
+
+    .order-number {
         font-weight: 600;
         color: #305C7D;
-        border-bottom: 2px solid #ddd;
+        font-size: 14px;
+        margin-bottom: 4px;
     }
 
-    .admin-table td {
-        padding: 12px;
-        border-bottom: 1px solid #eee;
+    .order-customer {
+        font-size: 13px;
+        color: #6c757d;
     }
 
-    .admin-table tbody tr:hover {
-        background: #f9f9f9;
+    .order-amount {
+        font-weight: 600;
+        color: #305C7D;
+        font-size: 15px;
     }
 
-    .btn-action {
-        padding: 6px 12px;
-        border-radius: 4px;
-        text-decoration: none;
-        display: inline-flex;
+    .order-status {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-validee {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-preparation {
+        background: #ffeaa7;
+        color: #856404;
+    }
+
+    .status-expediee {
+        background: #ffd3a5;
+        color: #c2410c;
+    }
+
+    .status-livree {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .stock-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .stock-item:last-child {
+        border-bottom: none;
+    }
+
+    .stock-name {
+        font-weight: 600;
+        color: #305C7D;
+        margin-bottom: 4px;
+    }
+
+    .stock-level {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .product-item {
+        display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
     }
 
-    .btn-view {
+    .product-item:last-child {
+        border-bottom: none;
+    }
+
+    .product-rank {
+        width: 32px;
+        height: 32px;
         background: #305C7D;
         color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
     }
 
-    .btn-view:hover {
-        background: #244a66;
-        color: white;
+    .product-info {
+        flex: 1;
+    }
+
+    .product-name {
+        font-weight: 600;
+        color: #305C7D;
+        margin-bottom: 4px;
+    }
+
+    .product-sales {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .product-price {
+        font-weight: 600;
+        color: #305C7D;
+        font-size: 15px;
+    }
+
+    .cooperative-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .cooperative-item:last-child {
+        border-bottom: none;
+    }
+
+    .cooperative-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(48, 92, 125, 0.05);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #305C7D;
+        flex-shrink: 0;
+    }
+
+    .cooperative-info {
+        flex: 1;
+    }
+
+    .cooperative-name {
+        font-weight: 600;
+        color: #305C7D;
+        margin-bottom: 4px;
+    }
+
+    .cooperative-location {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: #d4edda;
+        color: #155724;
     }
 </style>
 
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sales Chart
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            const salesChart = new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(Json.Encode(Model.SaleDates)),
+                    datasets: [{
+                        label: 'Ventes (MAD)',
+                        data: @Html.Raw(Json.Encode(Model.SaleValues)),
+                        borderColor: '#305C7D',
+                        backgroundColor: 'rgba(48, 92, 125, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#305C7D',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#305C7D'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toLocaleString('fr-MA') + ' MAD';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { borderDash: [2, 4] },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' MAD';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+
+            // Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            const statusData = @Html.Raw(Json.Encode(Model.OrderStatusCounts));
+            
+            const statusColors = {
+                'En attente': '#ffc107',
+                'Validée': '#17a2b8',
+                'Confirmée': '#17a2b8',
+                'Préparation': '#6610f2',
+                'Expédiée': '#fd7e14',
+                'En livraison': '#20c997',
+                'En transit': '#20c997',
+                'Livrée': '#28a745',
+                'Annulée': '#dc3545'
+            };
+
+            const chartLabels = Object.keys(statusData);
+            const chartValues = Object.values(statusData);
+            const chartColors = chartLabels.map(label => statusColors[label] || '#6c757d');
+
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartValues,
+                        backgroundColor: chartColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { 
+                                boxWidth: 12, 
+                                usePointStyle: true,
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Pagination Best Selling JS
+            const listContainer = document.getElementById('best-selling-list');
+            if (listContainer) {
+                const items = listContainer.querySelectorAll('.product-item');
+                const pageSize = 6;
+                let currentPage = 1;
+                const totalPages = Math.ceil(items.length / pageSize);
+                const prevBtn = document.getElementById('prev-prod');
+                const nextBtn = document.getElementById('next-prod');
+                const pageInfo = document.getElementById('page-info');
+
+                if (prevBtn && nextBtn) {
+                    function showPage(page) {
+                        items.forEach((item, index) => {
+                            if (index >= (page - 1) * pageSize && index < page * pageSize) {
+                                item.style.display = 'flex';
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        });
+                        pageInfo.textContent = `Page ${page} / ${totalPages}`;
+                        prevBtn.disabled = page === 1;
+                        nextBtn.disabled = page === totalPages;
+                    }
+
+                    prevBtn.addEventListener('click', () => {
+                        if (currentPage > 1) {
+                            currentPage--;
+                            showPage(currentPage);
+                        }
+                    });
+
+                    nextBtn.addEventListener('click', () => {
+                        if (currentPage < totalPages) {
+                            currentPage++;
+                            showPage(currentPage);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+}

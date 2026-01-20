@@ -93,7 +93,7 @@
                 <div class="col-sm-6 col-lg-3 category-item" data-index="@i" data-name="@category.Nom.ToLower()">
                     <a href="@Url.Action("Index", "Catalogue", new { categorie = category.CategorieId })" class="text-decoration-none">
                         <div class="category-card-modern rounded-3 overflow-hidden position-relative" style="aspect-ratio: 4/3;">
-                            <img src="@(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
+                            <img src="@Url.Content(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
                                  alt="@category.Nom" 
                                  class="category-image w-100 h-100 object-fit-cover"
                                  onerror="this.src='/Content/images/default-category.jpg';">
@@ -125,7 +125,7 @@
                     <a href="@Url.Action("Index", "Catalogue", new { categorie = category.CategorieId })" class="text-decoration-none">
                         <div class="category-list-card bg-white rounded-3 p-4 shadow-sm d-flex align-items-center gap-4">
                             <div class="category-list-image-container" style="width: 100px; height: 100px; flex-shrink: 0;">
-                                <img src="@(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
+                                <img src="@Url.Content(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
                                      alt="@category.Nom" 
                                      class="rounded-3 w-100 h-100 object-fit-cover"
                                      onerror="this.src='/Content/images/default-category.jpg';">
@@ -164,7 +164,7 @@
                 <p class="text-muted">Découvrez les produits les plus appréciés dans chaque catégorie</p>
             </div>
 
-            <div class="row g-4">
+            <div class="row g-4" id="popularCategoriesRow">
                 @foreach (var category in categories.Where(c => popularProductsByCategory.ContainsKey(c.CategorieId) && popularProductsByCategory[c.CategorieId].Any()))
                 {
                     <div class="col-md-6">
@@ -184,7 +184,7 @@
                                 {
                                     <a href="@Url.Action("Details", "Produit", new { id = product.ProduitId })" class="popular-product-item d-flex align-items-center gap-3 p-3 rounded-2 text-decoration-none">
                                         <div class="popular-product-image-container" style="width: 60px; height: 60px; flex-shrink: 0; background-color: var(--arena-suave); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                            <img src="@(product.ImageUrl ?? "/Content/images/default-product.jpg")" 
+                                            <img src="@Url.Content(product.ImageUrl ?? "/Content/images/default-product.jpg")" 
                                                  alt="@product.Nom" 
                                                  class="rounded-2"
                                                  style="width: 100%; height: 100%; object-fit: cover;"
@@ -204,6 +204,47 @@
                     </div>
                 }
             </div>
+
+            <!-- Pagination Controls -->
+            <div id="popularPagination" class="d-flex justify-content-center align-items-center gap-4 mt-5 d-none">
+                <button class="btn popular-nav-btn rounded-pill px-4 py-2 d-flex align-items-center gap-2" id="prevPopular">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                    Précédent
+                </button>
+                <div class="fw-bold fs-5" style="color: #4A5568; font-family: serif;">
+                    <span id="currentPopularPage">1</span> <span class="mx-1 opacity-50">/</span> <span id="totalPopularPages">1</span>
+                </div>
+                <button class="btn popular-nav-btn rounded-pill px-4 py-2 d-flex align-items-center gap-2" id="nextPopular">
+                    Suivant
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                    </svg>
+                </button>
+            </div>
+
+            <style>
+                .popular-nav-btn {
+                    background-color: white;
+                    color: #C06C50;
+                    border: 1.5px solid #C06C50;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                }
+                .popular-nav-btn:hover:not(:disabled) {
+                    background-color: #C06C50;
+                    color: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(192, 108, 80, 0.2);
+                }
+                .popular-nav-btn:disabled {
+                    border-color: #e2e8f0;
+                    color: #cbd5e0;
+                    cursor: not-allowed;
+                }
+            </style>
         </div>
     </section>
 }
@@ -279,6 +320,39 @@
 
             document.querySelectorAll('.fade-in').forEach(function(element) {
                 observer.observe(element);
+            });
+
+            // Popular Categories Pagination
+            var popularItems = $("#popularCategoriesRow > div");
+            var itemsPerPage = 4;
+            var numPages = Math.ceil(popularItems.length / itemsPerPage);
+            var currentPage = 1;
+
+            if (numPages > 1) {
+                $("#popularPagination").removeClass("d-none");
+                $("#totalPopularPages").text(numPages);
+                showPopularPage(1);
+            }
+
+            function showPopularPage(page) {
+                currentPage = page;
+                var start = (page - 1) * itemsPerPage;
+                var end = start + itemsPerPage;
+
+                popularItems.addClass("d-none");
+                popularItems.slice(start, end).removeClass("d-none").hide().fadeIn(400);
+
+                $("#currentPopularPage").text(page);
+                $("#prevPopular").prop("disabled", page === 1).css("opacity", page === 1 ? "0.5" : "1");
+                $("#nextPopular").prop("disabled", page === numPages).css("opacity", page === numPages ? "0.5" : "1");
+            }
+
+            $("#prevPopular").on("click", function() {
+                if (currentPage > 1) showPopularPage(currentPage - 1);
+            });
+
+            $("#nextPopular").on("click", function() {
+                if (currentPage < numPages) showPopularPage(currentPage + 1);
             });
         });
     </script>
