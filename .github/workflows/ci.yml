@@ -1,0 +1,41 @@
+name: .NET Framework CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1
+      with:
+        nuget-version: 'latest'
+
+    - name: Restore NuGet Packages
+      run: nuget restore E-Commerce-Cooperatives.sln
+
+    - name: Build solution
+      run: msbuild E-Commerce-Cooperatives.sln /p:Configuration=Release /p:Platform="Any CPU"
+
+    - name: Run Tests
+      shell: pwsh
+      run: |
+        $vstest = Get-ChildItem -Path "C:\Program Files*" -Filter vstest.console.exe -Recurse | Select-Object -First 1
+        if ($null -eq $vstest) { throw "vstest.console.exe not found" }
+        Write-Host "Using test runner: $($vstest.FullName)"
+        
+        $testDll = Get-ChildItem -Path "Tests\bin" -Filter "E-Commerce-Cooperatives.Tests.dll" -Recurse | Select-Object -First 1
+        if ($null -eq $testDll) { throw "Test DLL not found in Tests/bin" }
+        Write-Host "Using test DLL: $($testDll.FullName)"
+        
+        & $vstest.FullName $testDll.FullName

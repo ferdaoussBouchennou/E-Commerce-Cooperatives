@@ -1,0 +1,109 @@
+@model E_Commerce_Cooperatives.Models.ViewModels.VerifyEmailViewModel
+
+@{
+    ViewBag.Title = "Vérification de l'email";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@Html.Partial("_Header")
+
+<main style="min-height: 70vh; background-color: #F5F3EF; padding: 60px 0;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4">
+                <!-- Logo and Title -->
+                <div class="text-center mb-4">
+                    <img src="@Url.Content("~/Content/images/logo-coop.png")" alt="Cooporia" style="width: 80px; height: 40px; margin-bottom: 1rem;">
+                    <h1 class="h2 fw-bold mb-2" style="color: #305C7D;">Vérification de l'email</h1>
+                    <p class="text-muted" style="color: #6c757d;">Entrez le code envoyé à votre adresse email</p>
+                </div>
+
+                <!-- Verification Card -->
+                <div class="card shadow-sm border-0" style="border-radius: 12px; background-color: white;">
+                    <div class="card-body p-4">
+                        @if (ViewBag.ErrorMessage != null)
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                @ViewBag.ErrorMessage
+                            </div>
+                        }
+
+                        @if (TempData["InfoMessage"] != null)
+                        {
+                            <div class="alert alert-info" role="alert">
+                                @TempData["InfoMessage"]
+                            </div>
+                        }
+
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger mb-0" })
+                            </div>
+                        }
+
+                        @using (Html.BeginForm("VerifyEmail", "Account", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+                        {
+                            @Html.AntiForgeryToken()
+
+                            <!-- Verification Code Field -->
+                            <div class="mb-4">
+                                @Html.LabelFor(m => m.VerificationCode, new { @class = "form-label fw-semibold", style = "color: #305C7D;" })
+                                <div class="input-group" style="border-radius: 8px; overflow: hidden;">
+                                    <span class="input-group-text bg-light border-0" style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#305C7D" class="bi bi-key" viewBox="0 0 16 16">
+                                            <path d="M0 8a4 4 0 0 1 7.465-2H13a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-5.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647a.5.5 0 0 1-.708.708l-.647-.646a.5.5 0 0 1 0-.707l.854-.853zm-1 1a2 2 0 1 1-.001 3.999A2 2 0 0 1 3 6z"/>
+                                        </svg>
+                                    </span>
+                                    @Html.TextBoxFor(m => m.VerificationCode, new { @class = "form-control border-0 bg-light", placeholder = "123456", maxlength = "6", required = "required", autocomplete = "off", style = "border-top-right-radius: 8px; border-bottom-right-radius: 8px; text-align: center; font-size: 24px; letter-spacing: 8px; font-weight: bold; font-family: 'Courier New', monospace;" })
+                                </div>
+                                @Html.ValidationMessageFor(m => m.VerificationCode, "", new { @class = "text-danger small" })
+                                <small class="form-text text-muted mt-2">
+                                    <i class="bi bi-info-circle"></i> Code envoyé à : <strong>@Model.Email</strong>
+                                </small>
+                            </div>
+
+                            @Html.HiddenFor(m => m.Email)
+
+                            <!-- Submit Button -->
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-lg fw-semibold" style="background-color: #305C7D; color: white; border-radius: 8px; padding: 12px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle me-2" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 2.384 4.323a.75.75 0 0 1 1.06-1.061l4.033 4.033L11.03 3.97a.75.75 0 0 1 1.08 1.04z"/>
+                                    </svg>
+                                    Vérifier mon email
+                                </button>
+                            </div>
+
+                            <!-- Resend Code Link -->
+                            <div class="text-center">
+                                <p class="text-muted small mb-0">
+                                    Vous n'avez pas reçu le code ? 
+                                    <a href="@Url.Action("ResendVerificationCode", "Account", new { email = Model.Email })" style="color: #C06C50; text-decoration: none; font-weight: 500;">
+                                        Renvoyer le code
+                                    </a>
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Auto-focus sur le champ de code
+    document.addEventListener('DOMContentLoaded', function () {
+        var codeInput = document.getElementById('VerificationCode');
+        if (codeInput) {
+            codeInput.focus();
+            // Permettre uniquement les chiffres
+            codeInput.addEventListener('input', function (e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
+    });
+</script>
+

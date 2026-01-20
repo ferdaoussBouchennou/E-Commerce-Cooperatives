@@ -1,0 +1,620 @@
+@model E_Commerce_Cooperatives.Models.ViewModels.MesCommandesViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Mes Commandes";
+    
+    // Fonction helper pour convertir "Validée" en "Confirmée" dans l'affichage client
+    Func<string, string> GetDisplayStatus = (status) => {
+        return status == "Validée" ? "Confirmée" : status;
+    };
+}
+
+<style>
+    .btn-details-custom:hover {
+        background-color: #305C7D !important;
+        color: white !important;
+    }
+</style>
+
+@Html.Partial("_Header")
+
+<main class="py-4" style="background-color: #F5F3EF; min-height: 80vh;">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <a href="@Url.Action("Index", "Home")" class="text-muted text-decoration-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                </a>
+                <h1 class="font-display mb-0" style="font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: #305C7D;">
+                    @(Model.IsHistory ? "Historique des Commandes" : "Mes Commandes en cours")
+                </h1>
+            </div>
+
+            @if (!Model.SelectedCommandeId.HasValue)
+            {
+                if (Model.IsHistory)
+                {
+                    <a href="@Url.Action("MesCommandes", "Checkout")" class="btn text-decoration-none d-inline-flex align-items-center gap-2" 
+                       style="color: #305C7D; border: 1px solid #305C7D; background-color: transparent; border-radius: 8px; padding: 0.5rem 1rem; transition: all 0.3s ease;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                        </svg>
+                        Retour aux commandes en cours
+                    </a>
+                }
+                else
+                {
+                    <a href="@Url.Action("HistoriqueCommandes", "Checkout")" class="btn text-decoration-none d-inline-flex align-items-center gap-2" 
+                       style="color: #fff; background-color: #305C7D; border-radius: 8px; padding: 0.5rem 1rem; transition: all 0.3s ease;">
+                        Historique des commandes
+                    </a>
+                }
+            }
+        </div>
+        
+        @if (Model.SelectedCommandeId.HasValue && Model.CommandeDetail != null)
+        {
+            <!-- Order Detail View -->
+            <div class="max-w-3xl mx-auto" style="max-width: 48rem;">
+                <a href="@(Model.IsHistory ? Url.Action("HistoriqueCommandes", "Checkout", new { page = Model.CurrentPage, id = (int?)null }) : Url.Action("MesCommandes", "Checkout", new { page = Model.CurrentPage, id = (int?)null }))" class="btn btn-link text-muted text-decoration-none mb-4 d-inline-flex align-items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                    @(Model.IsHistory ? "Retour à l'historique" : "Retour aux commandes")
+                </a>
+
+                <div class="bg-white rounded-4 p-4 shadow-soft" style="box-shadow: 0 4px 25px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-md-between gap-3 mb-4">
+                        <div>
+                            <h2 class="font-display mb-1" style="font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 700; color: #305C7D;">
+                                Commande @Model.CommandeDetail.NumeroCommande
+                            </h2>
+                            <p class="text-muted mb-0" style="font-size: 0.95rem;">
+                                Passée le @Model.CommandeDetail.DateCommande.ToString("dd/MM/yyyy")
+                            </p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="@Url.Action("DownloadInvoice", "Checkout", new { id = Model.CommandeDetail.CommandeId })" target="_blank" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" 
+                               style="border-radius: 8px; padding: 0.6rem 1.2rem; font-weight: 500;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-pdf" viewBox="0 0 16 16">
+                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                                    <path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029zm1.379-1.901c-.166.076-.32.156-.459.238-.328.194-.541.383-.647.545-.094.145-.096.25-.04.361.01.022.02.036.026.044a.266.266 0 0 0 .035-.012c.137-.056.355-.235.635-.572a8.18 8.18 0 0 0 .45-.606zm1.64-1.33a12.71 12.71 0 0 1 1.01-.193 11.744 11.744 0 0 1-.51-.858 20.801 20.801 0 0 1-.5 1.05zm2.446.45c.15.163.296.3.435.41.24.19.407.253.498.256a.107.107 0 0 0 .07-.015.307.307 0 0 0 .094-.125.436.436 0 0 0 .059-.2.095.095 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a3.876 3.876 0 0 0-.612-.053zM8.097 9.388c.063-.564.11-1.248.115-1.854.004-.619-.058-1.125-.275-1.485-.098-.163-.262-.29-.449-.317-.186-.027-.366.022-.51.127-.246.177-.333.565-.246 1.085.08.455.337.954.717 1.48.197.276.43.66.648.964z"/>
+                                </svg>
+                                Facture
+                            </a>
+                            <span class="badge d-flex align-items-center" style="font-size: 0.85rem; padding: 0.6rem 1.2rem; background-color: #305C7D; color: white; border-radius: 20px; font-weight: 500;">
+                                @GetDisplayStatus(Model.CommandeDetail.Statut)
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Tracking -->
+                    <div class="mb-4 p-4 rounded-4" style="background-color: #F8F6F2;">
+                        <h3 class="fw-bold mb-4" style="color: #305C7D; font-size: 1.1rem;">Suivi de livraison</h3>
+                        @{
+                            var statutDisplay = Model.CommandeDetail.Statut;
+                            var progressWidth = statutDisplay == "Livrée" ? "100%" :
+                                               statutDisplay == "Expédiée" || statutDisplay == "En cours de livraison" ? "66%" :
+                                               statutDisplay == "Préparation" ? "33%" : 
+                                               statutDisplay == "Validée" ? "0%" : "0%";
+                            
+                            var trackingSteps = new[]
+                            {
+                                new { Icon = "check-circle", Label = "Confirmée" },
+                                new { Icon = "box", Label = "Préparation" },
+                                new { Icon = "truck", Label = "Expédition" },
+                                new { Icon = "check-circle", Label = "Livrée" }
+                            };
+                            
+                            var currentStep = statutDisplay == "Livrée" ? 3 :
+                                             statutDisplay == "Expédiée" || statutDisplay == "En cours de livraison" ? 2 :
+                                             statutDisplay == "Préparation" ? 1 : 
+                                             statutDisplay == "Validée" ? 0 : 0;
+                        }
+                        <div class="d-flex justify-content-between align-items-center position-relative mb-2">
+                            <div class="position-absolute top-50 start-0 end-0" style="height: 3px; background-color: #e0e0e0; z-index: 0; margin: 0 40px; transform: translateY(-50%);">
+                                <div class="h-100 rounded" style="width: @progressWidth; background-color: #C06C50;"></div>
+                            </div>
+
+                            @for (int i = 0; i < trackingSteps.Length; i++)
+                            {
+                                var isActive = i <= currentStep;
+                                <div class="d-flex flex-column align-items-center position-relative" style="z-index: 10;">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                         style="width: 42px; height: 42px; background-color: @(isActive ? "#C06C50" : "#e0e0e0"); color: white; @(isActive ? "box-shadow: 0 0 0 4px rgba(192, 108, 80, 0.1);" : "")">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                            @if (trackingSteps[i].Icon == "check-circle")
+                                            {
+                                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z"/>
+                                            }
+                                            else if (trackingSteps[i].Icon == "box")
+                                            {
+                                                <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 .114 0l7.129 2.852A.5.5 0 0 1 15 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                                            }
+                                            else
+                                            {
+                                                <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-1h11V3.5zM3 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM2 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5V7H2V5.5z"/>
+                                            }
+                                        </svg>
+                                    </div>
+                                    <span class="small mt-2 text-center" style="color: @(isActive ? "#305C7D" : "#9e9e9e"); font-weight: @(isActive ? "600" : "400"); font-size: 0.75rem;">
+                                        @trackingSteps[i].Label
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                        <div class="text-center mt-4">
+                            <a href="/suivi-livraison?trackingNumber=@Model.CommandeDetail.NumeroCommande" class="small fw-semibold text-decoration-none px-3 py-2 rounded-pill" style="color: #C06C50; background-color: rgba(192, 108, 80, 0.05); border: 1px solid rgba(192, 108, 80, 0.1);">
+                                Voir l'historique détaillé de la livraison
+                                <svg xmlns="http://www.w3.org/2000/center" width="14" height="14" fill="currentColor" class="bi bi-arrow-right ms-1" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 1 0-.708-.708l4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="mb-4">
+                        <h3 class="fw-bold mb-3" style="color: #305C7D; font-size: 1.1rem;">Articles commandés</h3>
+                        <div class="space-y-3">
+                            @foreach (var item in Model.CommandeDetail.Items)
+                            {
+                                <div class="d-flex align-items-center gap-3 p-3 mb-3 rounded-4" style="background-color: #F8F9FA;">
+                                    <img src="@(item.Produit != null && !string.IsNullOrEmpty(item.Produit.ImageUrl) ? item.Produit.ImageUrl : "/Content/images/default-product.jpg")" 
+                                         alt="@(item.Produit != null ? item.Produit.Nom : "Produit")" 
+                                         class="rounded-3" 
+                                         style="width: 72px; height: 72px; object-fit: cover; background-color: white;">
+                                    <div class="flex-grow-1">
+                                        <p class="small text-muted mb-0">Quantité: @item.Quantite</p>
+                                    </div>
+                                    <p class="fw-bold mb-0 text-nowrap" style="color: #305C7D; font-size: 1.1rem;">@item.TotalLigneTTC.ToString("F2") MAD</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Delivery Address -->
+                    <div class="mb-4 p-4 rounded-4" style="background-color: #F8F6F2;">
+                        <h3 class="fw-bold mb-3" style="color: #305C7D; font-size: 1.1rem;">Adresse de livraison</h3>
+                        <p class="text-muted mb-2" style="font-size: 1rem; line-height: 1.6;">
+                            @(Model.CommandeDetail.Adresse != null ? Model.CommandeDetail.Adresse.AdresseComplete : "")<br>
+                            @(Model.CommandeDetail.Adresse != null ? Model.CommandeDetail.Adresse.CodePostal : "") @(Model.CommandeDetail.Adresse != null ? Model.CommandeDetail.Adresse.Ville : "")
+                        </p>
+                        @if (Model.CommandeDetail.Statut == "Livrée")
+                        {
+                            <p class="mb-0 fw-medium" style="color: #198754; font-size: 0.95rem;">
+                                Livrée le @Model.CommandeDetail.DateCommande.AddDays(2).ToString("dd/MM/yyyy")
+                            </p>
+                        }
+                    </div>
+
+                    <!-- Total -->
+                    <div class="pt-3 border-top mt-4">
+                        <div class="d-flex justify-content-between align-items-end">
+                            <span class="fw-bold" style="color: #305C7D; font-size: 1.25rem;">Total</span>
+                            <span class="fw-bold" style="color: #305C7D; font-size: 1.5rem;">@Model.CommandeDetail.TotalTTC.ToString("N2") MAD</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        }
+        else
+        {
+            @* Orders List *@
+            if (Model.Commandes == null || !Model.Commandes.Any())
+            {
+                <div class="text-center py-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" fill="#9e9e9e" class="opacity-25 mb-4" viewBox="0 0 16 16">
+                        <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 .114 0l7.129 2.852A.5.5 0 0 1 15 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                    </svg>
+                    <h2 class="font-display mb-3" style="font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: #305C7D;">
+                        Aucune commande
+                    </h2>
+                    <p class="text-muted mb-4">Vous n'avez pas encore passé de commande.</p>
+                    <a href="@Url.Action("Index", "Catalogue")" class="btn btn-lg" style="background-color: #C06C50; color: white; border: none;">
+                        Découvrir nos produits
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="space-y-4">
+                    @foreach (var commande in Model.Commandes)
+                    {
+                        var statusInfo = new
+                        {
+                            Label = GetDisplayStatus(commande.Statut),
+                            Color = commande.Statut == "Livrée" ? "text-success" :
+                                   commande.Statut == "Expédiée" || commande.Statut == "En cours de livraison" ? "text-primary" :
+                                   commande.Statut == "Préparation" ? "text-warning" : 
+                                   commande.Statut == "Validée" ? "text-info" : "text-muted",
+                            Icon = commande.Statut == "Livrée" ? "check-circle" :
+                                  commande.Statut == "Expédiée" || commande.Statut == "En cours de livraison" ? "truck" :
+                                  commande.Statut == "Préparation" ? "box" :
+                                  commande.Statut == "Validée" ? "check-circle" : "clock"
+                        };
+
+                        // Specific icons for status based on image
+                        string iconSvg = "";
+                        if (commande.Statut == "Livrée") {
+                            iconSvg = "<path d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z'/><path d='M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z'/>";
+                        } else if (commande.Statut == "Expédiée" || commande.Statut == "En cours de livraison") {
+                            iconSvg = "<path d='M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1v-1h11V3.5zM3 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM2 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5V7H2V5.5z'/>";
+                        } else if (commande.Statut == "Préparation") {
+                            iconSvg = "<path d='M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6z'/>";
+                        } else if (commande.Statut == "Validée") {
+                            iconSvg = "<path d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z'/>";
+                        } else {
+                            iconSvg = "<path d='M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z'/><path d='M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z'/>";
+                        }
+
+                        <div class="bg-white rounded-4 p-4 mb-4" style="box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05);">
+                            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-md-between gap-4">
+                                <div class="d-flex align-items-center gap-4">
+                                    <div class="d-flex align-items-center" style="padding-left: 10px;">
+                                        @{
+                                            var itemsToDisplay = commande.Items.Take(3).ToList();
+                                            for (int i = 0; i < itemsToDisplay.Count; i++)
+                                            {
+                                                var item = itemsToDisplay[i];
+                                                <div class="rounded-3 overflow-hidden border border-white" 
+                                                     style="width: 56px; height: 56px; margin-left: @(i == 0 ? "0" : "-20px"); z-index: @(10-i); box-shadow: -2px 0 5px rgba(0,0,0,0.1);">
+                                                    <img src="@(item.Produit != null && !string.IsNullOrEmpty(item.Produit.ImageUrl) ? item.Produit.ImageUrl : "/Content/images/default-product.jpg")" 
+                                                         alt="Produit" 
+                                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+
+                                    <div>
+                                        <h3 class="fw-bold mb-1" style="color: #305C7D; font-size: 1.15rem;">@commande.NumeroCommande</h3>
+                                        <p class="small text-muted mb-2">
+                                            @commande.DateCommande.ToString("dd/MM/yyyy") • @commande.Items.Count article(s)
+                                        </p>
+                                        @{
+                                            var unreviewedItems = commande.Items.Where(i => !i.HasBeenReviewed).ToList();
+                                            var productsJson = Newtonsoft.Json.JsonConvert.SerializeObject(unreviewedItems.Select(i => new { 
+                                                id = i.ProduitId, 
+                                                nom = i.Produit != null ? i.Produit.Nom : "Produit", 
+                                                image = i.Produit != null ? i.Produit.ImageUrl : "/Content/images/default-product.jpg" 
+                                            }));
+                                            var productsBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(productsJson));
+                                        }
+                                        @if (commande.Statut == "Livrée" && unreviewedItems.Any())
+                                        {
+                                            <div class="mt-2 review-button-container" data-order-items-count="@unreviewedItems.Count">
+                                                <button type="button" class="btn btn-link text-decoration-none d-inline-flex align-items-center gap-1 small p-0 open-review-modal" 
+                                                        style="color: #C06C50; font-weight: 500; border: none; background: none;"
+                                                        data-commande-id="@commande.CommandeId"
+                                                        data-products-base64="@productsBase64">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-star" viewBox="0 0 16 16">
+                                                        <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+                                                    </svg>
+                                                    Donner mon avis
+                                                </button>
+                                            </div>
+                                        }
+                                        <div class="d-flex align-items-center gap-2 @statusInfo.Color" style="font-weight: 500; font-size: 0.9rem;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                @Html.Raw(iconSvg)
+                                            </svg>
+                                            <span>@GetDisplayStatus(commande.Statut)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-4">
+                                    <span class="fw-bold" style="color: #305C7D; font-size: 1.25rem;">@commande.TotalTTC.ToString("N2") MAD</span>
+                                    
+                                    <a href="@(Model.IsHistory ? Url.Action("HistoriqueCommandes", "Checkout", new { id = commande.CommandeId, page = Model.CurrentPage }) : Url.Action("MesCommandes", "Checkout", new { id = commande.CommandeId, page = Model.CurrentPage }))" 
+                                       class="btn btn-sm px-4 py-2 d-inline-flex align-items-center gap-2 btn-details-custom" 
+                                       style="border: 1.5px solid #305C7D; color: #305C7D; background-color: transparent; border-radius: 8px; font-weight: 500; transition: all 0.3s ease;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                                            <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                                        </svg>
+                                        Détails
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.TotalPages > 1)
+                    {
+                        <div class="d-flex justify-content-center mt-5 mb-3">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination pagination-sm gap-2 border-0">
+                                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                        <a class="page-link rounded-3 border-0 px-3 py-2" 
+                                           href="@(Model.IsHistory ? Url.Action("HistoriqueCommandes", "Checkout", new { page = Model.CurrentPage - 1 }) : Url.Action("MesCommandes", "Checkout", new { page = Model.CurrentPage - 1 }))" 
+                                           style="background-color: @(Model.CurrentPage == 1 ? "#f8f9fa" : "#fff"); color: #305C7D; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                            Précédent
+                                        </a>
+                                    </li>
+
+                                    @for (int i = 1; i <= Model.TotalPages; i++)
+                                    {
+                                        <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                            <a class="page-link rounded-3 border-0 px-3 py-2" 
+                                               href="@(Model.IsHistory ? Url.Action("HistoriqueCommandes", "Checkout", new { page = i }) : Url.Action("MesCommandes", "Checkout", new { page = i }))"
+                                               style="background-color: @(Model.CurrentPage == i ? "#305C7D" : "#fff"); color: @(Model.CurrentPage == i ? "#fff" : "#305C7D"); box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                                @i
+                                            </a>
+                                        </li>
+                                    }
+
+                                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                        <a class="page-link rounded-3 border-0 px-3 py-2" 
+                                           href="@(Model.IsHistory ? Url.Action("HistoriqueCommandes", "Checkout", new { page = Model.CurrentPage + 1 }) : Url.Action("MesCommandes", "Checkout", new { page = Model.CurrentPage + 1 }))"
+                                           style="background-color: @(Model.CurrentPage == Model.TotalPages ? "#f8f9fa" : "#fff"); color: #305C7D; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                            Suivant
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</main>
+
+@Html.Partial("_Footer")
+
+<!-- Multi-Product Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <div class="d-flex flex-column">
+                    <h5 class="modal-title font-display fw-bold text-primary h4" id="reviewModalLabel">Donner votre avis</h5>
+                    <span id="review-progress" class="text-muted small fw-medium mt-1">Produit 0 sur 0</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="review-product-container">
+                    <!-- The current product will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 justify-content-between">
+                <button type="button" id="prev-product-btn" class="btn btn-outline-secondary rounded-pill px-4" style="display: none;">Précédent</button>
+                <div class="d-flex gap-2 ms-auto">
+                    <button type="button" id="next-product-btn" class="btn btn-outline-primary rounded-pill px-4" style="display: none;">Suivant</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal" style="background-color: #305C7D;">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 5px;
+    }
+    .star-rating input { display: none; }
+    .star-rating label {
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23ccc' class='bi bi-star-fill' viewBox='0 0 16 16'%3E%3Cpath d='M3.612 15.443c-.387.197-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        transition: all 0.2s ease;
+    }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23ffc107' class='bi bi-star-fill' viewBox='0 0 16 16'%3E%3Cpath d='M3.612 15.443c-.387.197-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z'/%3E%3C/svg%3E");
+    }
+    #review-product-container {
+        min-height: 250px;
+        transition: all 0.3s ease;
+    }
+</style>
+
+@section scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+            const productContainer = document.getElementById('review-product-container');
+            const progressText = document.getElementById('review-progress');
+            const nextBtn = document.getElementById('next-product-btn');
+            const prevBtn = document.getElementById('prev-product-btn');
+            
+            let currentProducts = [];
+            let currentIndex = 0;
+            let currentCommandeId = null;
+            let reviewsData = {}; 
+
+            function showProduct(index) {
+                const p = currentProducts[index];
+                if (!p) return;
+
+                currentIndex = index;
+                progressText.textContent = `Produit ${index + 1} sur ${currentProducts.length}`;
+                
+                prevBtn.style.display = index > 0 ? 'inline-block' : 'none';
+                nextBtn.style.display = index < currentProducts.length - 1 ? 'inline-block' : 'none';
+
+                const existingReview = reviewsData[p.id] || { rating: null, comment: '' };
+
+                productContainer.innerHTML = `
+                    <div class="review-step animate-fade-in" data-product-id="${p.id}">
+                        <div class="d-flex gap-4 align-items-center mb-4">
+                            <img src="${p.image}" class="rounded-4 shadow-sm" style="width: 80px; height: 80px; object-fit: cover; border: 2px solid white;">
+                            <h5 class="fw-bold text-dark mb-0">${p.nom}</h5>
+                        </div>
+                        
+                        <div class="review-form-body">
+                            <div class="mb-4">
+                                <label class="form-label small text-muted fw-bold mb-3 d-block">Votre évaluation</label>
+                                <div class="star-rating big-stars">
+                                    ${[5,4,3,2,1].map(num => `
+                                        <input type="radio" id="star${num}-${p.id}" name="rating-${p.id}" value="${num}" ${existingReview.rating == num ? 'checked' : ''}>
+                                        <label for="star${num}-${p.id}" style="width: 40px; height: 40px;"></label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label small text-muted fw-bold mb-2">Votre commentaire</label>
+                                <textarea class="form-control rounded-4 border-light p-3 bg-light shadow-none" 
+                                          placeholder="Ex: Excellent produit, je recommande !" 
+                                          rows="3" style="font-size: 0.95rem;">${existingReview.comment}</textarea>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-accent rounded-pill py-3 fw-bold submit-review-btn" 
+                                        style="background-color: #C06C50; color: white; border: none;">
+                                    Enregistrer l'avis
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="review-success-message d-none text-center py-4 text-success">
+                            <div class="mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 4.992 6.93a.75.75 0 0 0-1.08 1.04l2.75 2.75a.75.75 0 0 0 1.08-.022l4.75-5.5a.75.75 0 0 0-.022-1.08z"/>
+                                </svg>
+                            </div>
+                            <h5 class="fw-bold mb-1">Avis enregistré !</h5>
+                            <p class="text-muted small">Merci pour votre retour.</p>
+                            ${index < currentProducts.length - 1 ? `
+                                <button type="button" class="btn btn-primary rounded-pill mt-3 px-4 next-trigger" style="background-color: #305C7D;">Passer au suivant</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                if (reviewsData[p.id]?.submitted) {
+                    productContainer.querySelector('.review-form-body').classList.add('d-none');
+                    productContainer.querySelector('.review-success-message').classList.remove('d-none');
+                }
+            }
+
+
+            document.querySelectorAll('.open-review-modal').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    try {
+                        // Decode base64 with proper UTF-8 handling
+                        const base64Data = this.dataset.productsBase64;
+                        const jsonString = decodeURIComponent(Array.prototype.map.call(atob(base64Data), function(c) {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        }).join(''));
+                        currentProducts = JSON.parse(jsonString);
+                        currentCommandeId = this.dataset.commandeId;
+                        currentIndex = 0;
+                        reviewsData = {}; 
+                        showProduct(0);
+                        reviewModal.show();
+                    } catch (error) {
+                        console.error('Error parsing product data:', error);
+                        alert('Une erreur est survenue lors du chargement des produits. Veuillez rafraîchir la page.');
+                    }
+                });
+            });
+
+            nextBtn.addEventListener('click', () => showProduct(currentIndex + 1));
+            prevBtn.addEventListener('click', () => showProduct(currentIndex - 1));
+
+            productContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('next-trigger')) {
+                    showProduct(currentIndex + 1);
+                    return;
+                }
+
+                if (e.target.classList.contains('submit-review-btn')) {
+                    const btn = e.target;
+                    const card = btn.closest('.review-step');
+                    const productId = card.dataset.productId;
+                    const ratingInput = card.querySelector(`input[name="rating-${productId}"]:checked`);
+                    const comment = card.querySelector('textarea').value;
+
+                    if (!ratingInput) {
+                        alert('Veuillez sélectionner une note.');
+                        return;
+                    }
+
+                    const rating = ratingInput.value;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enregistrement...';
+
+                    const formData = new FormData();
+                    formData.append('produitId', productId);
+                    formData.append('note', rating);
+                    formData.append('commentaire', comment);
+
+                    fetch('@Url.Action("AddAvisJson", "Produit")', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            reviewsData[productId] = { rating, comment, submitted: true };
+                            card.querySelector('.review-form-body').classList.add('d-none');
+                            card.querySelector('.review-success-message').classList.remove('d-none');
+                            
+                            // Update the button's data-products-base64 for next time (in case modal is reopened without refresh)
+                            const orderBtn = document.querySelector(`.open-review-modal[data-commande-id="${currentCommandeId}"]`);
+                            if (orderBtn) {
+                                const remainingProducts = currentProducts.filter(p => !reviewsData[p.id]?.submitted);
+                                const remainingJson = JSON.stringify(remainingProducts);
+                                // Encode with proper UTF-8 handling
+                                const remainingBase64 = btoa(encodeURIComponent(remainingJson).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                                    return String.fromCharCode('0x' + p1);
+                                }));
+                                orderBtn.dataset.productsBase64 = remainingBase64;
+                                
+                                // Update count attribute if used for CSS or other logic
+                                const container = orderBtn.closest('.review-button-container');
+                                if (container) container.dataset.orderItemsCount = remainingProducts.length;
+
+                                if (remainingProducts.length === 0) {
+                                    container.style.display = 'none';
+                                }
+                            }
+
+                            if (currentIndex < currentProducts.length - 1) {
+                                setTimeout(() => {
+                                    if (currentIndex < currentProducts.length - 1) showProduct(currentIndex + 1);
+                                }, 1500);
+                            }
+                        } else {
+                            alert(data.message);
+                            btn.disabled = false;
+                            btn.textContent = 'Enregistrer l\'avis';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Une erreur est survenue.');
+                        btn.disabled = false;
+                        btn.textContent = 'Enregistrer l\'avis';
+                    });
+                }
+            });
+        });
+    </script>
+    <style>
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+    </style>
+}
+

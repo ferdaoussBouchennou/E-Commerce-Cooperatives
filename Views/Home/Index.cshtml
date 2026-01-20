@@ -3,7 +3,7 @@
     ViewBag.Title = "Accueil";
     var categories = ViewBag.Categories as List<Categorie>;
     var produitsVedettes = ViewBag.ProduitsVedettes as List<Produit>;
-    var nouveauxProduits = ViewBag.NouveauxProduits as List<Produit>;
+    var nouveauxProduits = ViewBag.NouveauxProduits as List<Produit>;   
 }
 
 @Html.Partial("_Header")
@@ -125,7 +125,7 @@
                         <div class="col-md-6 col-lg-3">
                             <a href="@Url.Action("Index", "Catalogue", new { categorie = category.CategorieId })" class="category-card text-decoration-none">
                                 <div class="position-relative overflow-hidden rounded-3" style="aspect-ratio: 3/2;">
-                                    <img src="@(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
+                                    <img src="@Url.Content(category.ImageUrl ?? "/Content/images/default-category.jpg")" 
                                          alt="@category.Nom" 
                                          class="w-100 h-100 object-fit-cover category-image"
                                          onerror="this.src='/Content/images/default-category.jpg';">
@@ -206,26 +206,26 @@
     }
 
     <!-- CTA Section -->
-    <section class="py-5 text-white" style="background-color: #305C7D;">
-        <div class="container text-center">
-            <h2 class="display-5 fw-bold mb-4">Rejoignez notre communauté</h2>
-            <p class="lead mb-4 opacity-90" style="max-width: 600px; margin: 0 auto;">
-                Inscrivez-vous pour recevoir nos offres exclusives et découvrir en avant-première 
-                les nouveaux produits de nos coopératives partenaires.
-            </p>
-            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
-                <a href="#inscription" class="btn btn-lg px-4" style="background-color: #C06C50; color: white; border: none;">
-                    Créer un compte
-                </a>
-                <a href="#connexion" class="btn btn-outline-light btn-lg px-4" style="border-color: rgba(255,255,255,0.5); color: white;">
-                    Se connecter
-                </a>
-                <a href="@Url.Action("Produits", "Admin")" class="btn btn-outline-light btn-lg px-4" style="border-color: rgba(255,255,255,0.5); color: red;">
-                    Administration
-                </a>
+    @if (Session["UserId"] == null)
+    {
+        <section class="py-5 text-white" style="background-color: #305C7D;">
+            <div class="container text-center">
+                <h2 class="display-5 fw-bold mb-4">Rejoignez notre communauté</h2>
+                <p class="lead mb-4 opacity-90" style="max-width: 600px; margin: 0 auto;">
+                    Inscrivez-vous pour recevoir nos offres exclusives et découvrir en avant-première 
+                    les nouveaux produits de nos coopératives partenaires.
+                </p>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                    <a href="@Url.Action("Register", "Account")" class="btn btn-lg px-4" style="background-color: #C06C50; color: white; border: none;">
+                        Créer un compte
+                    </a>
+                    <a href="@Url.Action("Login", "Account")" class="btn btn-outline-light btn-lg px-4" style="border-color: rgba(255,255,255,0.5); color: white;">
+                        Se connecter
+                    </a>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    }
 </main>
 
 @Html.Partial("_Footer")

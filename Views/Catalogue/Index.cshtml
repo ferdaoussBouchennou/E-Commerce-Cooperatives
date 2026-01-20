@@ -551,8 +551,7 @@
             var searchTerm = '@Html.Raw(HttpUtility.JavaScriptStringEncode(ViewBag.SearchTerm as string))';
             if (searchTerm && searchTerm.length > 0) {
                 try {
-                    var regex = new RegExp('(' + searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\                            <label for="price-range-max-mobile" class="form-label small mt-3">Maximum</label>
-                            <input type="range" class="form-range" id="price-range-max-mobile" min="@globalMin') + ')', 'gi');
+                    var regex = new RegExp('(' + searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
                     var titles = document.querySelectorAll('.product-title');
                     titles.forEach(function(title) {
                         var text = title.textContent;
@@ -567,6 +566,7 @@
         });
     </script>
 }
+
 
 
 

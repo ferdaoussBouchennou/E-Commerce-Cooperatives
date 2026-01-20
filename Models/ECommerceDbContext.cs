@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Configuration;
+using E_Commerce_Cooperatives.Helpers;
 
 namespace E_Commerce_Cooperatives.Models
 {
@@ -11,17 +12,29 @@ namespace E_Commerce_Cooperatives.Models
     {
         private string connectionString;
 
+        public string GetConnectionString()
+        {
+            return connectionString;
+        }
+
         public ECommerceDbContext()
         {
-            var connection = ConfigurationManager.ConnectionStrings["ECommerceConnection"];
-            if (connection != null)
+            // Use EnvironmentHelper to get connection string from .env file
+            connectionString = EnvironmentHelper.GetDatabaseConnectionString();
+            
+            // Fallback to Web.config if environment variables are not set
+            if (string.IsNullOrEmpty(connectionString))
             {
-                connectionString = connection.ConnectionString;
-            }
-            else
-            {
-                // Valeur par défaut si la chaîne de connexion n'est pas trouvée
-                connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=ecommerce;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+                var connection = ConfigurationManager.ConnectionStrings["ECommerceConnection"];
+                if (connection != null)
+                {
+                    connectionString = connection.ConnectionString;
+                }
+                else
+                {
+                    // Valeur par défaut si la chaîne de connexion n'est pas trouvée
+                    connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=ecommerce;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+                }
             }
         }
 
@@ -99,6 +112,80 @@ namespace E_Commerce_Cooperatives.Models
             }
         }
 
+        public IQueryable<Favori> Favoris
+        {
+            get
+            {
+                var result = new List<Favori>();
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    var query = "SELECT FavoriId, ClientId, ProduitId, DateAjout FROM Favoris";
+                    using (var command = new SqlCommand(query, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new Favori
+                            {
+                                FavoriId = reader.GetInt32(0),
+                                ClientId = reader.GetInt32(1),
+                                ProduitId = reader.GetInt32(2),
+                                DateAjout = reader.GetDateTime(3)
+                            });
+                        }
+                    }
+                }
+                return result.AsQueryable();
+            }
+        }
+
+        public void AddFavori(int clientId, int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "INSERT INTO Favoris (ClientId, ProduitId, DateAjout) VALUES (@ClientId, @ProduitId, @DateAjout)";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    command.Parameters.AddWithValue("@DateAjout", DateTime.Now);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void RemoveFavori(int clientId, int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Favoris WHERE ClientId = @ClientId AND ProduitId = @ProduitId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public bool IsFavori(int clientId, int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT COUNT(*) FROM Favoris WHERE ClientId = @ClientId AND ProduitId = @ProduitId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    return (int)command.ExecuteScalar() > 0;
+                }
+            }
+        }
+
         public IQueryable<CommandeItem> CommandeItems
         {
             get
@@ -138,7 +225,7 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT CategorieId, Nom, Description, ImageUrl, EstActive, DateCreation FROM Categories WHERE EstActive = 1";
+                var query = "SELECT CategorieId, Nom, Description, ImageUrl, EstActive, DateCreation FROM Categories WHERE EstActive = 1 ORDER BY DateCreation DESC";
                 using (var command = new SqlCommand(query, connection))
                 {
                     using (var reader = command.ExecuteReader())
@@ -236,8 +323,8 @@ namespace E_Commerce_Cooperatives.Models
                     }
                 }
             }
-            // Round up to nearest 100
-            return Math.Ceiling(maxPrice / 100) * 100;
+            // Round up to nearest 100 after applying 20% TVA
+            return Math.Ceiling((maxPrice * 1.20m) / 100) * 100;
         }
 
         public decimal GetMinPrice()
@@ -256,8 +343,8 @@ namespace E_Commerce_Cooperatives.Models
                     }
                 }
             }
-            // Round down to nearest 10 (or keep exact floor)
-            return Math.Floor(minPrice / 10) * 10;
+            // Round down to nearest 10 after applying 20% TVA
+            return Math.Floor((minPrice * 1.20m) / 10) * 10;
         }
 
         public List<Produit> GetProduits(bool? estEnVedette = null, bool? estNouveau = null, int? categorieId = null, int page = 1, int pageSize = 9, string search = null, string sortOrder = "popular", decimal? minPrice = null, decimal? maxPrice = null, List<int> cooperativeIds = null, bool inStockOnly = false, int? minRating = null)
@@ -276,7 +363,7 @@ namespace E_Commerce_Cooperatives.Models
                     LEFT JOIN Categories c ON p.CategorieId = c.CategorieId
                     LEFT JOIN Cooperatives coop ON p.CooperativeId = coop.CooperativeId
                     WHERE p.EstDisponible = 1";
-                
+
                 if (estEnVedette.HasValue)
                     query += " AND p.EstEnVedette = @EstEnVedette";
                 if (estNouveau.HasValue)
@@ -287,10 +374,10 @@ namespace E_Commerce_Cooperatives.Models
                     query += " AND (p.Nom LIKE @Search OR p.Description LIKE @Search)";
 
                 if (minPrice.HasValue)
-                    query += " AND p.Prix >= @MinPrice";
+                    query += " AND p.Prix * 1.20 >= @MinPrice";
                 if (maxPrice.HasValue)
-                    query += " AND p.Prix <= @MaxPrice";
-                
+                    query += " AND p.Prix * 1.20 <= @MaxPrice";
+
                 if (cooperativeIds != null && cooperativeIds.Any())
                 {
                     var coopIds = string.Join(",", cooperativeIds);
@@ -332,20 +419,20 @@ namespace E_Commerce_Cooperatives.Models
                     // OR JUST SORT BY ID/DATE IF COMPLEXITY IS TOO HIGH FOR NOW WITHOUT SCHEMA CHANGES.
                     // HOWEVER, user asked for "Popularity". Usually means "Most ordered" or "Most viewed" or "Most Reviews".
                     // Let's assume "Most Reviews" for Popularity based on current schema (AvisProduits).
-                    
+
                     case "rating":
                         // Complex sort: requires joining with avg rating. 
                         // Simplified: Do it in memory? No, pagination breaks.
                         // Correct way: Add subquery for sorting.
-                         query += " ORDER BY (SELECT AVG(CAST(Note AS FLOAT)) FROM AvisProduits WHERE ProduitId = p.ProduitId) DESC";
+                        query += " ORDER BY (SELECT AVG(CAST(Note AS FLOAT)) FROM AvisProduits WHERE ProduitId = p.ProduitId) DESC";
                         break;
                     case "popular":
                     default:
-                         // Popularity = Number of reviews?
-                         query += " ORDER BY (SELECT COUNT(*) FROM AvisProduits WHERE ProduitId = p.ProduitId) DESC";
+                        // Popularity = Number of reviews?
+                        query += " ORDER BY (SELECT COUNT(*) FROM AvisProduits WHERE ProduitId = p.ProduitId) DESC";
                         break;
                 }
-                
+
                 // Secondary sort for stable pagination
                 query += ", p.ProduitId DESC OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
 
@@ -359,7 +446,7 @@ namespace E_Commerce_Cooperatives.Models
                         command.Parameters.AddWithValue("@MinPrice", minPrice.Value);
                     if (maxPrice.HasValue)
                         command.Parameters.AddWithValue("@MaxPrice", maxPrice.Value);
-                    
+
                     if (minRating.HasValue)
                         command.Parameters.AddWithValue("@MinRating", minRating.Value);
 
@@ -415,10 +502,11 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
 
-            // Charger les images et avis pour chaque produit
+            // Charger les images, avis et variantes pour chaque produit
             foreach (var produit in produits)
             {
                 produit.Images = GetImagesProduit(produit.ProduitId);
+                produit.Variantes = GetVariantesProduit(produit.ProduitId);
                 var avis = GetAvisProduit(produit.ProduitId);
                 if (avis.Any())
                 {
@@ -448,10 +536,10 @@ namespace E_Commerce_Cooperatives.Models
                     query += " AND (p.Nom LIKE @Search OR p.Description LIKE @Search)";
 
                 if (minPrice.HasValue)
-                    query += " AND p.Prix >= @MinPrice";
+                    query += " AND p.Prix * 1.20 >= @MinPrice";
                 if (maxPrice.HasValue)
-                    query += " AND p.Prix <= @MaxPrice";
-                
+                    query += " AND p.Prix * 1.20 <= @MaxPrice";
+
                 if (cooperativeIds != null && cooperativeIds.Any())
                 {
                     var coopIds = string.Join(",", cooperativeIds);
@@ -460,7 +548,7 @@ namespace E_Commerce_Cooperatives.Models
 
                 if (inStockOnly)
                     query += " AND p.StockTotal > 0";
-                
+
                 if (minRating.HasValue)
                 {
                     query += @" AND (SELECT AVG(CAST(Note AS FLOAT)) 
@@ -482,7 +570,7 @@ namespace E_Commerce_Cooperatives.Models
                         command.Parameters.AddWithValue("@MinPrice", minPrice.Value);
                     if (maxPrice.HasValue)
                         command.Parameters.AddWithValue("@MaxPrice", maxPrice.Value);
-                    
+
                     if (minRating.HasValue)
                         command.Parameters.AddWithValue("@MinRating", minRating.Value);
 
@@ -516,12 +604,17 @@ namespace E_Commerce_Cooperatives.Models
                     {
                         while (reader.Read())
                         {
+                            decimal prixHT = reader.GetDecimal(2);
+                            decimal prixTTC = prixHT * 1.20m; // Ajouter 20% de TVA
+
+                            string imageUrl = NormalizeImagePath(reader.IsDBNull(3) ? null : reader.GetString(3));
+
                             suggestions.Add(new
                             {
                                 ProduitId = reader.GetInt32(0),
                                 Nom = reader.GetString(1),
-                                Prix = reader.GetDecimal(2),
-                                ImageUrl = reader.IsDBNull(3) ? null : reader.GetString(3)
+                                Prix = prixTTC, // Prix TTC au lieu de HT
+                                ImageUrl = imageUrl
                             });
                         }
                     }
@@ -530,7 +623,30 @@ namespace E_Commerce_Cooperatives.Models
             return suggestions;
         }
 
-        private List<ImageProduit> GetImagesProduit(int produitId)
+        private string NormalizeImagePath(string imageUrl)
+        {
+            if (string.IsNullOrEmpty(imageUrl))
+                return null;
+
+            // Normaliser les slashes (remplacer \ par /)
+            imageUrl = imageUrl.Replace("\\", "/");
+
+            // Enlever le ~ du début si présent
+            if (imageUrl.StartsWith("~"))
+            {
+                imageUrl = imageUrl.Substring(1);
+            }
+
+            // S'assurer que le chemin commence par / si ce n'est pas une URL externe
+            if (!imageUrl.StartsWith("/") && !imageUrl.StartsWith("http"))
+            {
+                imageUrl = "/" + imageUrl;
+            }
+
+            return imageUrl;
+        }
+
+        public List<ImageProduit> GetImagesProduit(int produitId)
         {
             var images = new List<ImageProduit>();
             using (var connection = new SqlConnection(connectionString))
@@ -555,6 +671,51 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
             return images;
+        }
+
+        public void AddImageProduit(ImageProduit image)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "INSERT INTO ImagesProduits (ProduitId, UrlImage, EstPrincipale, DateAjout) VALUES (@ProduitId, @UrlImage, @EstPrincipale, @DateAjout)";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProduitId", image.ProduitId);
+                    command.Parameters.AddWithValue("@UrlImage", image.UrlImage);
+                    command.Parameters.AddWithValue("@EstPrincipale", image.EstPrincipale);
+                    command.Parameters.AddWithValue("@DateAjout", DateTime.Now);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteImageProduit(int imageId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM ImagesProduits WHERE ImageId = @ImageId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ImageId", imageId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteImagesByProduit(int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM ImagesProduits WHERE ProduitId = @ProduitId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    command.ExecuteNonQuery();
+                }
+            }
         }
 
         private List<AvisProduit> GetAvisProduit(int produitId)
@@ -592,7 +753,7 @@ namespace E_Commerce_Cooperatives.Models
             return avis;
         }
 
-        private List<Variante> GetVariantesProduit(int produitId)
+        public List<Variante> GetVariantesProduit(int produitId)
         {
             var variantes = new List<Variante>();
             using (var connection = new SqlConnection(connectionString))
@@ -660,7 +821,7 @@ namespace E_Commerce_Cooperatives.Models
                     LEFT JOIN Categories c ON p.CategorieId = c.CategorieId
                     LEFT JOIN Cooperatives coop ON p.CooperativeId = coop.CooperativeId
                     WHERE p.ProduitId = @ProduitId AND p.EstDisponible = 1";
-                
+
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@ProduitId", produitId);
@@ -755,19 +916,19 @@ namespace E_Commerce_Cooperatives.Models
 
                 if (!string.IsNullOrEmpty(searchTerm))
                     query += " AND (c.NumeroCommande LIKE @SearchTerm OR cl.Nom LIKE @SearchTerm OR cl.Prenom LIKE @SearchTerm OR u.Email LIKE @SearchTerm)";
-                
+
                 if (!string.IsNullOrEmpty(statutFilter) && statutFilter != "all")
                     query += " AND c.Statut = @StatutFilter";
-                
+
                 if (dateFrom.HasValue)
                     query += " AND c.DateCommande >= @DateFrom";
-                
+
                 if (dateTo.HasValue)
                     query += " AND c.DateCommande <= @DateTo";
-                
+
                 if (montantMin.HasValue)
                     query += " AND c.TotalTTC >= @MontantMin";
-                
+
                 if (montantMax.HasValue)
                     query += " AND c.TotalTTC <= @MontantMax";
 
@@ -910,6 +1071,79 @@ namespace E_Commerce_Cooperatives.Models
             return commande;
         }
 
+        public Commande GetCommandeByNumber(string numeroCommande)
+        {
+            Commande commande = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT c.CommandeId, c.NumeroCommande, c.ClientId, c.AdresseId, c.ModeLivraisonId, 
+                           c.DateCommande, c.FraisLivraison, c.TotalHT, c.MontantTVA, c.TotalTTC, 
+                           c.Statut, c.Commentaire, c.DateAnnulation, c.RaisonAnnulation,
+                           cl.Nom, cl.Prenom, cl.Telephone, 
+                           u.Email,
+                           ml.ModeLivraisonId, ml.Nom as ModeLivraisonNom, ml.Description as ModeLivraisonDesc, ml.Tarif
+                    FROM Commandes c
+                    INNER JOIN Clients cl ON c.ClientId = cl.ClientId
+                    INNER JOIN Utilisateurs u ON cl.UtilisateurId = u.UtilisateurId
+                    LEFT JOIN ModesLivraison ml ON c.ModeLivraisonId = ml.ModeLivraisonId
+                    WHERE c.NumeroCommande = @NumeroCommande";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@NumeroCommande", numeroCommande);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            commande = new Commande
+                            {
+                                CommandeId = reader.GetInt32(0),
+                                NumeroCommande = reader.GetString(1),
+                                ClientId = reader.GetInt32(2),
+                                AdresseId = reader.GetInt32(3),
+                                ModeLivraisonId = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
+                                DateCommande = reader.GetDateTime(5),
+                                FraisLivraison = reader.GetDecimal(6),
+                                TotalHT = reader.GetDecimal(7),
+                                MontantTVA = reader.GetDecimal(8),
+                                TotalTTC = reader.GetDecimal(9),
+                                Statut = reader.IsDBNull(10) ? null : reader.GetString(10),
+                                Commentaire = reader.IsDBNull(11) ? null : reader.GetString(11),
+                                DateAnnulation = reader.IsDBNull(12) ? (DateTime?)null : reader.GetDateTime(12),
+                                RaisonAnnulation = reader.IsDBNull(13) ? null : reader.GetString(13),
+                                Client = new Client
+                                {
+                                    ClientId = reader.GetInt32(2),
+                                    Nom = reader.GetString(14),
+                                    Prenom = reader.GetString(15),
+                                    Telephone = reader.IsDBNull(16) ? null : reader.GetString(16),
+                                    Email = reader.GetString(17)
+                                },
+                                ModeLivraison = reader.IsDBNull(18) ? null : new ModeLivraison
+                                {
+                                    ModeLivraisonId = reader.GetInt32(18),
+                                    Nom = reader.GetString(19),
+                                    Description = reader.IsDBNull(20) ? null : reader.GetString(20),
+                                    Tarif = reader.IsDBNull(21) ? 0 : reader.GetDecimal(21)
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+
+            if (commande != null)
+            {
+                commande.Adresse = GetAdresse(commande.AdresseId);
+                commande.Items = GetCommandeItems(commande.CommandeId);
+                commande.SuiviLivraison = GetLivraisonSuivi(commande.CommandeId);
+            }
+
+            return commande;
+        }
+
         private Adresse GetAdresse(int adresseId)
         {
             Adresse adresse = null;
@@ -950,7 +1184,7 @@ namespace E_Commerce_Cooperatives.Models
                 connection.Open();
                 var query = @"
                     SELECT ci.CommandeItemId, ci.CommandeId, ci.ProduitId, ci.VarianteId, ci.Quantite, ci.PrixUnitaire, ci.TotalLigne,
-                           p.Nom as ProduitNom, p.ImageUrl as ProduitImage
+                           p.Nom as ProduitNom, p.ImageUrl as ProduitImage, p.Prix as ProduitPrix
                     FROM CommandeItems ci
                     INNER JOIN Produits p ON ci.ProduitId = p.ProduitId
                     WHERE ci.CommandeId = @CommandeId";
@@ -974,7 +1208,8 @@ namespace E_Commerce_Cooperatives.Models
                                 {
                                     ProduitId = reader.GetInt32(2),
                                     Nom = reader.GetString(7),
-                                    ImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8)
+                                    ImageUrl = NormalizeImagePath(reader.IsDBNull(8) ? null : reader.GetString(8)),
+                                    Prix = reader.GetDecimal(9) // Charger le prix HT du produit pour la détection
                                 }
                             });
                         }
@@ -1070,7 +1305,7 @@ namespace E_Commerce_Cooperatives.Models
                 using (var connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    
+
                     // Vérifier d'abord si la commande existe
                     var checkQuery = "SELECT COUNT(*) FROM Commandes WHERE CommandeId = @CommandeId";
                     using (var checkCommand = new SqlCommand(checkQuery, connection))
@@ -1082,7 +1317,7 @@ namespace E_Commerce_Cooperatives.Models
                             return false;
                         }
                     }
-                    
+
                     // Mettre à jour la commande
                     var query = "UPDATE Commandes SET Statut = 'Annulée', DateAnnulation = GETDATE(), RaisonAnnulation = @Raison WHERE CommandeId = @CommandeId";
                     using (var command = new SqlCommand(query, connection))
@@ -1093,7 +1328,7 @@ namespace E_Commerce_Cooperatives.Models
                         {
                             raison = raison.Substring(0, 500);
                         }
-                        
+
                         command.Parameters.AddWithValue("@Raison", raison);
                         command.Parameters.AddWithValue("@CommandeId", commandeId);
                         var rowsAffected = command.ExecuteNonQuery();
@@ -1122,7 +1357,7 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT ModeLivraisonId, Nom, Description, Tarif, DelaiEstime, EstActif, DateCreation FROM ModesLivraison ORDER BY DateCreation DESC";
+                var query = "SELECT ModeLivraisonId, Nom, Description, Tarif, EstActif, DateCreation FROM ModesLivraison ORDER BY DateCreation DESC";
                 using (var command = new SqlCommand(query, connection))
                 {
                     using (var reader = command.ExecuteReader())
@@ -1135,9 +1370,8 @@ namespace E_Commerce_Cooperatives.Models
                                 Nom = reader.GetString(1),
                                 Description = reader.IsDBNull(2) ? null : reader.GetString(2),
                                 Tarif = reader.GetDecimal(3),
-                                DelaiEstime = reader.IsDBNull(4) ? null : reader.GetString(4),
-                                EstActif = reader.GetBoolean(5),
-                                DateCreation = reader.GetDateTime(6)
+                                EstActif = reader.GetBoolean(4),
+                                DateCreation = reader.GetDateTime(5)
                             });
                         }
                     }
@@ -1152,7 +1386,7 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT ModeLivraisonId, Nom, Description, Tarif, DelaiEstime, EstActif, DateCreation FROM ModesLivraison WHERE ModeLivraisonId = @Id";
+                var query = "SELECT ModeLivraisonId, Nom, Description, Tarif, EstActif, DateCreation FROM ModesLivraison WHERE ModeLivraisonId = @Id";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Id", id);
@@ -1166,9 +1400,8 @@ namespace E_Commerce_Cooperatives.Models
                                 Nom = reader.GetString(1),
                                 Description = reader.IsDBNull(2) ? null : reader.GetString(2),
                                 Tarif = reader.GetDecimal(3),
-                                DelaiEstime = reader.IsDBNull(4) ? null : reader.GetString(4),
-                                EstActif = reader.GetBoolean(5),
-                                DateCreation = reader.GetDateTime(6)
+                                EstActif = reader.GetBoolean(4),
+                                DateCreation = reader.GetDateTime(5)
                             };
                         }
                     }
@@ -1182,14 +1415,13 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = @"INSERT INTO ModesLivraison (Nom, Description, Tarif, DelaiEstime, EstActif, DateCreation) 
-                             VALUES (@Nom, @Description, @Tarif, @DelaiEstime, @EstActif, GETDATE())";
+                var query = @"INSERT INTO ModesLivraison (Nom, Description, Tarif, EstActif, DateCreation) 
+                             VALUES (@Nom, @Description, @Tarif, @EstActif, GETDATE())";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Nom", mode.Nom);
                     command.Parameters.AddWithValue("@Description", (object)mode.Description ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Tarif", mode.Tarif);
-                    command.Parameters.AddWithValue("@DelaiEstime", (object)mode.DelaiEstime ?? DBNull.Value);
                     command.Parameters.AddWithValue("@EstActif", mode.EstActif);
                     return command.ExecuteNonQuery() > 0;
                 }
@@ -1202,8 +1434,7 @@ namespace E_Commerce_Cooperatives.Models
             {
                 connection.Open();
                 var query = @"UPDATE ModesLivraison 
-                             SET Nom = @Nom, Description = @Description, Tarif = @Tarif, 
-                                 DelaiEstime = @DelaiEstime, EstActif = @EstActif 
+                             SET Nom = @Nom, Description = @Description, Tarif = @Tarif, EstActif = @EstActif 
                              WHERE ModeLivraisonId = @Id";
                 using (var command = new SqlCommand(query, connection))
                 {
@@ -1211,7 +1442,6 @@ namespace E_Commerce_Cooperatives.Models
                     command.Parameters.AddWithValue("@Nom", mode.Nom);
                     command.Parameters.AddWithValue("@Description", (object)mode.Description ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Tarif", mode.Tarif);
-                    command.Parameters.AddWithValue("@DelaiEstime", (object)mode.DelaiEstime ?? DBNull.Value);
                     command.Parameters.AddWithValue("@EstActif", mode.EstActif);
                     return command.ExecuteNonQuery() > 0;
                 }
@@ -1311,7 +1541,7 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation FROM ZonesLivraison ORDER BY ZoneVille ASC";
+                var query = "SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation FROM ZonesLivraison ORDER BY ZoneVille ASC";
                 using (var command = new SqlCommand(query, connection))
                 using (var reader = command.ExecuteReader())
                 {
@@ -1322,9 +1552,12 @@ namespace E_Commerce_Cooperatives.Models
                             ZoneLivraisonId = reader.GetInt32(0),
                             ZoneVille = reader.GetString(1),
                             Supplement = reader.GetDecimal(2),
-                            DelaiEstime = reader.GetString(3),
-                            EstActif = reader.GetBoolean(4),
-                            DateCreation = reader.GetDateTime(5)
+                            DelaiMinStandard = reader.GetInt32(3),
+                            DelaiMaxStandard = reader.GetInt32(4),
+                            DelaiMinExpress = reader.GetInt32(5),
+                            DelaiMaxExpress = reader.GetInt32(6),
+                            EstActif = reader.GetBoolean(7),
+                            DateCreation = reader.GetDateTime(8)
                         });
                     }
                 }
@@ -1353,16 +1586,16 @@ namespace E_Commerce_Cooperatives.Models
                 }
 
                 // Récupérer les données paginées
-                var query = @"SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation 
+                var query = @"SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation 
                              FROM ZonesLivraison 
                              ORDER BY ZoneVille ASC
                              OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
-                
+
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
                     command.Parameters.AddWithValue("@PageSize", pageSize);
-                    
+
                     using (var reader = command.ExecuteReader())
                     {
                         while (reader.Read())
@@ -1372,9 +1605,12 @@ namespace E_Commerce_Cooperatives.Models
                                 ZoneLivraisonId = reader.GetInt32(0),
                                 ZoneVille = reader.GetString(1),
                                 Supplement = reader.GetDecimal(2),
-                                DelaiEstime = reader.GetString(3),
-                                EstActif = reader.GetBoolean(4),
-                                DateCreation = reader.GetDateTime(5)
+                                DelaiMinStandard = reader.GetInt32(3),
+                                DelaiMaxStandard = reader.GetInt32(4),
+                                DelaiMinExpress = reader.GetInt32(5),
+                                DelaiMaxExpress = reader.GetInt32(6),
+                                EstActif = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
                             });
                         }
                     }
@@ -1389,7 +1625,7 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation FROM ZonesLivraison WHERE ZoneLivraisonId = @Id";
+                var query = "SELECT ZoneLivraisonId, ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation FROM ZonesLivraison WHERE ZoneLivraisonId = @Id";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Id", id);
@@ -1402,9 +1638,12 @@ namespace E_Commerce_Cooperatives.Models
                                 ZoneLivraisonId = reader.GetInt32(0),
                                 ZoneVille = reader.GetString(1),
                                 Supplement = reader.GetDecimal(2),
-                                DelaiEstime = reader.GetString(3),
-                                EstActif = reader.GetBoolean(4),
-                                DateCreation = reader.GetDateTime(5)
+                                DelaiMinStandard = reader.GetInt32(3),
+                                DelaiMaxStandard = reader.GetInt32(4),
+                                DelaiMinExpress = reader.GetInt32(5),
+                                DelaiMaxExpress = reader.GetInt32(6),
+                                EstActif = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
                             };
                         }
                     }
@@ -1418,13 +1657,16 @@ namespace E_Commerce_Cooperatives.Models
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                var query = @"INSERT INTO ZonesLivraison (ZoneVille, Supplement, DelaiEstime, EstActif, DateCreation)
-                             VALUES (@ZoneVille, @Supplement, @DelaiEstime, @EstActif, GETDATE())";
+                var query = @"INSERT INTO ZonesLivraison (ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation)
+                             VALUES (@ZoneVille, @Supplement, @DelaiMinStandard, @DelaiMaxStandard, @DelaiMinExpress, @DelaiMaxExpress, @EstActif, GETDATE())";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@ZoneVille", zone.ZoneVille);
                     command.Parameters.AddWithValue("@Supplement", zone.Supplement);
-                    command.Parameters.AddWithValue("@DelaiEstime", zone.DelaiEstime);
+                    command.Parameters.AddWithValue("@DelaiMinStandard", zone.DelaiMinStandard);
+                    command.Parameters.AddWithValue("@DelaiMaxStandard", zone.DelaiMaxStandard);
+                    command.Parameters.AddWithValue("@DelaiMinExpress", zone.DelaiMinExpress);
+                    command.Parameters.AddWithValue("@DelaiMaxExpress", zone.DelaiMaxExpress);
                     command.Parameters.AddWithValue("@EstActif", zone.EstActif);
                     return command.ExecuteNonQuery() > 0;
                 }
@@ -1437,14 +1679,19 @@ namespace E_Commerce_Cooperatives.Models
             {
                 connection.Open();
                 var query = @"UPDATE ZonesLivraison
-                             SET ZoneVille = @ZoneVille, Supplement = @Supplement, DelaiEstime = @DelaiEstime, EstActif = @EstActif
+                             SET ZoneVille = @ZoneVille, Supplement = @Supplement, 
+                                 DelaiMinStandard = @DelaiMinStandard, DelaiMaxStandard = @DelaiMaxStandard,
+                                 DelaiMinExpress = @DelaiMinExpress, DelaiMaxExpress = @DelaiMaxExpress, EstActif = @EstActif
                              WHERE ZoneLivraisonId = @Id";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Id", zone.ZoneLivraisonId);
                     command.Parameters.AddWithValue("@ZoneVille", zone.ZoneVille);
                     command.Parameters.AddWithValue("@Supplement", zone.Supplement);
-                    command.Parameters.AddWithValue("@DelaiEstime", zone.DelaiEstime);
+                    command.Parameters.AddWithValue("@DelaiMinStandard", zone.DelaiMinStandard);
+                    command.Parameters.AddWithValue("@DelaiMaxStandard", zone.DelaiMaxStandard);
+                    command.Parameters.AddWithValue("@DelaiMinExpress", zone.DelaiMinExpress);
+                    command.Parameters.AddWithValue("@DelaiMaxExpress", zone.DelaiMaxExpress);
                     command.Parameters.AddWithValue("@EstActif", zone.EstActif);
                     return command.ExecuteNonQuery() > 0;
                 }
@@ -1465,6 +1712,140 @@ namespace E_Commerce_Cooperatives.Models
                     return command.ExecuteNonQuery() > 0;
                 }
             }
+        }
+
+        // ============================================
+        // CALCUL DU PRIX DE LIVRAISON DYNAMIQUE
+        // ============================================
+
+        /// <summary>
+        /// Récupère une zone de livraison par nom de ville
+        /// </summary>
+        public ZoneLivraison GetZoneLivraisonByVille(string ville)
+        {
+            if (string.IsNullOrWhiteSpace(ville))
+                return null;
+
+            ZoneLivraison zone = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                // Recherche exacte d'abord, puis recherche partielle, puis "Autres villes"
+                var query = @"SELECT TOP 1 ZoneLivraisonId, ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation 
+                             FROM ZonesLivraison 
+                             WHERE EstActif = 1 
+                             AND (
+                                 ZoneVille = @Ville 
+                                 OR ZoneVille LIKE @Ville + '%'
+                                 OR @Ville LIKE ZoneVille + '%'
+                             )
+                             ORDER BY 
+                                 CASE WHEN ZoneVille = @Ville THEN 1 ELSE 2 END,
+                                 ZoneVille ASC";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Ville", ville.Trim());
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            zone = new ZoneLivraison
+                            {
+                                ZoneLivraisonId = reader.GetInt32(0),
+                                ZoneVille = reader.GetString(1),
+                                Supplement = reader.GetDecimal(2),
+                                DelaiMinStandard = reader.GetInt32(3),
+                                DelaiMaxStandard = reader.GetInt32(4),
+                                DelaiMinExpress = reader.GetInt32(5),
+                                DelaiMaxExpress = reader.GetInt32(6),
+                                EstActif = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
+                            };
+                        }
+                    }
+                }
+
+                // Si aucune zone trouvée, utiliser "Autres villes" comme fallback
+                if (zone == null)
+                {
+                    query = "SELECT TOP 1 ZoneLivraisonId, ZoneVille, Supplement, DelaiMinStandard, DelaiMaxStandard, DelaiMinExpress, DelaiMaxExpress, EstActif, DateCreation FROM ZonesLivraison WHERE ZoneVille = 'Autres villes' AND EstActif = 1";
+                    using (var command = new SqlCommand(query, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            zone = new ZoneLivraison
+                            {
+                                ZoneLivraisonId = reader.GetInt32(0),
+                                ZoneVille = reader.GetString(1),
+                                Supplement = reader.GetDecimal(2),
+                                DelaiMinStandard = reader.GetInt32(3),
+                                DelaiMaxStandard = reader.GetInt32(4),
+                                DelaiMinExpress = reader.GetInt32(5),
+                                DelaiMaxExpress = reader.GetInt32(6),
+                                EstActif = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
+                            };
+                        }
+                    }
+                }
+            }
+            return zone;
+        }
+
+        /// <summary>
+        /// Calcule le prix de livraison total basé sur le mode et la ville
+        /// Formule: Prix total = Tarif du mode + Supplément ville
+        /// Cas spécial Casablanca: Supplément = 0
+        /// </summary>
+        public decimal CalculateDeliveryPrice(int modeLivraisonId, string ville)
+        {
+            // Récupérer le mode de livraison
+            var mode = GetModeLivraison(modeLivraisonId);
+            if (mode == null || !mode.EstActif)
+                return 0;
+
+            // Récupérer la zone de livraison pour la ville
+            var zone = GetZoneLivraisonByVille(ville);
+            decimal supplement = zone?.Supplement ?? 0;
+
+            // Le tarif du mode contient déjà le prix de base (33 MAD pour Standard, 60 MAD pour Express)
+            decimal prixBase = mode.Tarif;
+
+            // Calcul: Prix total = Prix base + Supplément ville
+            decimal prixTotal = prixBase + supplement;
+
+            return Math.Round(prixTotal, 2);
+        }
+
+        /// <summary>
+        /// Récupère les délais de livraison (min et max) pour un mode et une ville donnés
+        /// Retourne un objet avec DelaiMin et DelaiMax
+        /// </summary>
+        public object GetDeliveryDelay(int modeLivraisonId, string ville)
+        {
+            // Récupérer le mode de livraison
+            var mode = GetModeLivraison(modeLivraisonId);
+            if (mode == null || !mode.EstActif)
+                return new { DelaiMin = 0, DelaiMax = 0, DelaiText = "Non disponible" };
+
+            // Récupérer la zone de livraison pour la ville
+            var zone = GetZoneLivraisonByVille(ville);
+            if (zone == null)
+                return new { DelaiMin = 0, DelaiMax = 0, DelaiText = "Non disponible" };
+
+            // Déterminer si c'est Express ou Standard
+            bool isExpress = mode.Nom != null && (mode.Nom.Contains("Express") || mode.Nom.Contains("express"));
+
+            int delaiMin = isExpress ? zone.DelaiMinExpress : zone.DelaiMinStandard;
+            int delaiMax = isExpress ? zone.DelaiMaxExpress : zone.DelaiMaxStandard;
+
+            string delaiText = delaiMin == delaiMax
+                ? $"{delaiMin} jour{(delaiMin > 1 ? "s" : "")}"
+                : $"{delaiMin} à {delaiMax} jours";
+
+            return new { DelaiMin = delaiMin, DelaiMax = delaiMax, DelaiText = delaiText };
         }
 
         // ============================================
@@ -1588,7 +1969,8 @@ namespace E_Commerce_Cooperatives.Models
                     var query = @"INSERT INTO Produits (Nom, Description, Prix, ImageUrl, CategorieId, CooperativeId, 
                                                         StockTotal, SeuilAlerte, EstDisponible, EstEnVedette, EstNouveau, DateCreation)
                                   VALUES (@Nom, @Description, @Prix, @ImageUrl, @CategorieId, @CooperativeId, 
-                                          @StockTotal, @SeuilAlerte, @EstDisponible, @EstEnVedette, @EstNouveau, @DateCreation)";
+                                          @StockTotal, @SeuilAlerte, @EstDisponible, @EstEnVedette, @EstNouveau, @DateCreation);
+                                  SELECT CAST(SCOPE_IDENTITY() as int);";
                     using (var command = new SqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Nom", produit.Nom);
@@ -1603,7 +1985,12 @@ namespace E_Commerce_Cooperatives.Models
                         command.Parameters.AddWithValue("@EstEnVedette", produit.EstEnVedette);
                         command.Parameters.AddWithValue("@EstNouveau", produit.EstNouveau);
                         command.Parameters.AddWithValue("@DateCreation", produit.DateCreation);
-                        command.ExecuteNonQuery();
+
+                        var result = command.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            produit.ProduitId = (int)result;
+                        }
                     }
                 }
 
@@ -1662,6 +2049,83 @@ namespace E_Commerce_Cooperatives.Models
         public void Dispose()
         {
             // Nothing to dispose in this implementation
+        }
+
+        // ============================================
+        // GESTION DES VARIANTES
+        // ============================================
+
+        public void AddVariante(Variante v)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"INSERT INTO Variantes (ProduitId, Taille, Couleur, Stock, PrixSupplementaire, SKU, EstDisponible, DateCreation)
+                              VALUES (@ProduitId, @Taille, @Couleur, @Stock, @PrixSupplementaire, @SKU, @EstDisponible, GETDATE())";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProduitId", v.ProduitId);
+                    command.Parameters.AddWithValue("@Taille", (object)v.Taille ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Couleur", (object)v.Couleur ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Stock", v.Stock);
+                    command.Parameters.AddWithValue("@PrixSupplementaire", v.PrixSupplementaire);
+                    command.Parameters.AddWithValue("@SKU", (object)v.SKU ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstDisponible", v.EstDisponible);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateVariante(Variante v)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"UPDATE Variantes 
+                              SET Taille = @Taille, Couleur = @Couleur, Stock = @Stock, 
+                                  PrixSupplementaire = @PrixSupplementaire, SKU = @SKU, 
+                                  EstDisponible = @EstDisponible
+                              WHERE VarianteId = @VarianteId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@VarianteId", v.VarianteId);
+                    command.Parameters.AddWithValue("@Taille", (object)v.Taille ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Couleur", (object)v.Couleur ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Stock", v.Stock);
+                    command.Parameters.AddWithValue("@PrixSupplementaire", v.PrixSupplementaire);
+                    command.Parameters.AddWithValue("@SKU", (object)v.SKU ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstDisponible", v.EstDisponible);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteVariante(int id)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Variantes WHERE VarianteId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteVariantesByProduit(int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Variantes WHERE ProduitId = @ProduitId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    command.ExecuteNonQuery();
+                }
+            }
         }
 
         // ============================================
@@ -1788,5 +2252,506 @@ namespace E_Commerce_Cooperatives.Models
                 }
             }
         }
+
+        public void DeleteCategorie(int id)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Categories WHERE CategorieId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        // ============================================
+        // GESTION DES COMMANDES - CRÉATION
+        // ============================================
+
+        public string CreateCommande(int clientId, int adresseId, int modeLivraisonId, List<CartItemForOrder> items, string commentaire = null)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // Générer le numéro de commande
+                        string numeroCommande = "CMD-" + DateTime.Now.ToString("yyyyMMdd") + "-" + new Random().Next(10000, 99999).ToString();
+
+                        // Calculer les totaux
+                        // IMPORTANT: Les prix reçus (PrixUnitaire) sont TTC car ils viennent du frontend
+                        // Il faut les convertir en HT avant de calculer la TVA
+                        decimal totalHT = 0;
+                        foreach (var item in items)
+                        {
+                            // Convertir le prix TTC en HT: PrixHT = PrixTTC / 1.20
+                            decimal prixHT = Math.Round(item.PrixUnitaire / 1.20m, 2);
+                            totalHT += prixHT * item.Quantite;
+                        }
+                        decimal montantTVA = Math.Round(totalHT * 0.20m, 2); // TVA 20% sur le HT
+
+                        // Récupérer la ville depuis l'adresse pour calculer le prix de livraison dynamique
+                        var adresse = GetAdresse(adresseId);
+                        string ville = adresse?.Ville ?? "";
+                        decimal fraisLivraison = CalculateDeliveryPrice(modeLivraisonId, ville);
+
+                        decimal totalTTC = Math.Round(totalHT + montantTVA + fraisLivraison, 2);
+
+                        // Insérer la commande
+                        var insertCommandeQuery = @"INSERT INTO Commandes (NumeroCommande, ClientId, AdresseId, ModeLivraisonId, DateCommande, 
+                                                      FraisLivraison, TotalHT, MontantTVA, TotalTTC, Statut, Commentaire)
+                                                  VALUES (@NumeroCommande, @ClientId, @AdresseId, @ModeLivraisonId, GETDATE(), 
+                                                      @FraisLivraison, @TotalHT, @MontantTVA, @TotalTTC, 'Validée', @Commentaire);
+                                                  SELECT CAST(SCOPE_IDENTITY() as int);";
+
+                        int commandeId;
+                        using (var command = new SqlCommand(insertCommandeQuery, connection, transaction))
+                        {
+                            command.Parameters.AddWithValue("@NumeroCommande", numeroCommande);
+                            command.Parameters.AddWithValue("@ClientId", clientId);
+                            command.Parameters.AddWithValue("@AdresseId", adresseId);
+                            command.Parameters.AddWithValue("@ModeLivraisonId", modeLivraisonId);
+                            command.Parameters.AddWithValue("@FraisLivraison", fraisLivraison);
+                            command.Parameters.AddWithValue("@TotalHT", totalHT);
+                            command.Parameters.AddWithValue("@MontantTVA", montantTVA);
+                            command.Parameters.AddWithValue("@TotalTTC", totalTTC);
+                            command.Parameters.AddWithValue("@Commentaire", (object)commentaire ?? DBNull.Value);
+                            commandeId = (int)command.ExecuteScalar();
+                        }
+
+                        // Insérer les items de la commande
+                        // IMPORTANT: Stocker les prix HT dans la base de données
+                        foreach (var item in items)
+                        {
+                            // Convertir le prix TTC en HT pour le stockage
+                            decimal prixHT = Math.Round(item.PrixUnitaire / 1.20m, 2);
+                            decimal totalLigneHT = Math.Round(prixHT * item.Quantite, 2);
+
+                            var insertItemQuery = @"INSERT INTO CommandeItems (CommandeId, ProduitId, VarianteId, Quantite, PrixUnitaire, TotalLigne)
+                                                  VALUES (@CommandeId, @ProduitId, @VarianteId, @Quantite, @PrixUnitaire, @TotalLigne)";
+                            using (var itemCommand = new SqlCommand(insertItemQuery, connection, transaction))
+                            {
+                                itemCommand.Parameters.AddWithValue("@CommandeId", commandeId);
+                                itemCommand.Parameters.AddWithValue("@ProduitId", item.ProduitId);
+                                itemCommand.Parameters.AddWithValue("@VarianteId", (object)item.VarianteId ?? DBNull.Value);
+                                itemCommand.Parameters.AddWithValue("@Quantite", item.Quantite);
+                                itemCommand.Parameters.AddWithValue("@PrixUnitaire", prixHT); // Stocker le prix HT
+                                itemCommand.Parameters.AddWithValue("@TotalLigne", totalLigneHT); // Stocker le total HT
+                                itemCommand.ExecuteNonQuery();
+                            }
+                        }
+
+                        // Créer le suivi de livraison initial
+                        var insertSuiviQuery = @"INSERT INTO LivraisonSuivi (CommandeId, Statut, Description, DateStatut)
+                                               VALUES (@CommandeId, 'Confirmée', 'Votre commande a été confirmée', GETDATE())";
+                        using (var suiviCommand = new SqlCommand(insertSuiviQuery, connection, transaction))
+                        {
+                            suiviCommand.Parameters.AddWithValue("@CommandeId", commandeId);
+                            suiviCommand.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                        return numeroCommande;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public int CreateOrUpdateAdresse(int clientId, string adresseComplete, string ville, string codePostal, string pays = "Maroc")
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                // Vérifier si une adresse existe déjà pour ce client
+                var checkQuery = "SELECT TOP 1 AdresseId FROM Adresses WHERE ClientId = @ClientId ORDER BY EstParDefaut DESC, DateCreation DESC";
+                int? existingAdresseId = null;
+                using (var checkCommand = new SqlCommand(checkQuery, connection))
+                {
+                    checkCommand.Parameters.AddWithValue("@ClientId", clientId);
+                    var result = checkCommand.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        existingAdresseId = (int)result;
+                    }
+                }
+
+                if (existingAdresseId.HasValue)
+                {
+                    // Mettre à jour l'adresse existante
+                    var updateQuery = @"UPDATE Adresses SET AdresseComplete = @AdresseComplete, Ville = @Ville, 
+                                      CodePostal = @CodePostal, Pays = @Pays, EstParDefaut = 1
+                                      WHERE AdresseId = @AdresseId";
+                    using (var updateCommand = new SqlCommand(updateQuery, connection))
+                    {
+                        updateCommand.Parameters.AddWithValue("@AdresseId", existingAdresseId.Value);
+                        updateCommand.Parameters.AddWithValue("@AdresseComplete", adresseComplete);
+                        updateCommand.Parameters.AddWithValue("@Ville", ville);
+                        updateCommand.Parameters.AddWithValue("@CodePostal", codePostal);
+                        updateCommand.Parameters.AddWithValue("@Pays", pays);
+                        updateCommand.ExecuteNonQuery();
+                    }
+                    return existingAdresseId.Value;
+                }
+                else
+                {
+                    // Créer une nouvelle adresse
+                    var insertQuery = @"INSERT INTO Adresses (ClientId, AdresseComplete, Ville, CodePostal, Pays, EstParDefaut, DateCreation)
+                                      VALUES (@ClientId, @AdresseComplete, @Ville, @CodePostal, @Pays, 1, GETDATE());
+                                      SELECT CAST(SCOPE_IDENTITY() as int)";
+                    using (var insertCommand = new SqlCommand(insertQuery, connection))
+                    {
+                        insertCommand.Parameters.AddWithValue("@ClientId", clientId);
+                        insertCommand.Parameters.AddWithValue("@AdresseComplete", adresseComplete);
+                        insertCommand.Parameters.AddWithValue("@Ville", ville);
+                        insertCommand.Parameters.AddWithValue("@CodePostal", codePostal);
+                        insertCommand.Parameters.AddWithValue("@Pays", pays);
+                        return (int)insertCommand.ExecuteScalar();
+                    }
+                }
+            }
+        }
+
+        public List<Commande> GetCommandesByClient(int clientId)
+        {
+            var commandes = new List<Commande>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"SELECT c.CommandeId, c.NumeroCommande, c.ClientId, c.AdresseId, c.ModeLivraisonId, 
+                           c.DateCommande, c.FraisLivraison, c.TotalHT, c.MontantTVA, c.TotalTTC, 
+                           c.Statut, c.Commentaire, c.DateAnnulation, c.RaisonAnnulation,
+                           ml.Nom as ModeLivraisonNom
+                    FROM Commandes c
+                    LEFT JOIN ModesLivraison ml ON c.ModeLivraisonId = ml.ModeLivraisonId
+                    WHERE c.ClientId = @ClientId
+                    ORDER BY c.DateCommande DESC";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            commandes.Add(new Commande
+                            {
+                                CommandeId = reader.GetInt32(0),
+                                NumeroCommande = reader.GetString(1),
+                                ClientId = reader.GetInt32(2),
+                                AdresseId = reader.GetInt32(3),
+                                ModeLivraisonId = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
+                                DateCommande = reader.GetDateTime(5),
+                                FraisLivraison = reader.GetDecimal(6),
+                                TotalHT = reader.GetDecimal(7),
+                                MontantTVA = reader.GetDecimal(8),
+                                TotalTTC = reader.GetDecimal(9),
+                                Statut = reader.IsDBNull(10) ? null : reader.GetString(10),
+                                Commentaire = reader.IsDBNull(11) ? null : reader.GetString(11),
+                                DateAnnulation = reader.IsDBNull(12) ? (DateTime?)null : reader.GetDateTime(12),
+                                RaisonAnnulation = reader.IsDBNull(13) ? null : reader.GetString(13),
+                                ModeLivraison = reader.IsDBNull(14) ? null : new ModeLivraison
+                                {
+                                    Nom = reader.GetString(14)
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Charger les adresses et items pour chaque commande
+            foreach (var commande in commandes)
+            {
+                commande.Adresse = GetAdresse(commande.AdresseId);
+                commande.Items = GetCommandeItems(commande.CommandeId);
+                commande.SuiviLivraison = GetLivraisonSuivi(commande.CommandeId);
+            }
+
+            return commandes;
+        }
+
+        // ============================================
+        // GESTION DES COOPERATIVES
+        // ============================================
+
+        public List<Cooperative> GetCooperativesWithStats()
+        {
+            var cooperatives = new List<Cooperative>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT c.CooperativeId, c.Nom, c.Description, c.Adresse, c.Ville, c.Telephone, c.Logo, c.EstActive, c.DateCreation,
+                           (SELECT COUNT(*) FROM Produits p WHERE p.CooperativeId = c.CooperativeId) as ProductCount
+                    FROM Cooperatives c
+                    ORDER BY c.Nom";
+
+                using (var command = new SqlCommand(query, connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        cooperatives.Add(new Cooperative
+                        {
+                            CooperativeId = reader.GetInt32(0),
+                            Nom = reader.GetString(1),
+                            Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                            Adresse = reader.IsDBNull(3) ? null : reader.GetString(3),
+                            Ville = reader.IsDBNull(4) ? null : reader.GetString(4),
+                            Telephone = reader.IsDBNull(5) ? null : reader.GetString(5),
+                            Logo = reader.IsDBNull(6) ? null : reader.GetString(6),
+                            EstActive = reader.GetBoolean(7),
+                            DateCreation = reader.GetDateTime(8),
+                            ProductCount = reader.GetInt32(9)
+                        });
+                    }
+                }
+            }
+            return cooperatives;
+        }
+
+        public Cooperative GetCooperative(int id)
+        {
+            Cooperative coop = null;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT CooperativeId, Nom, Description, Adresse, Ville, Telephone, Logo, EstActive, DateCreation FROM Cooperatives WHERE CooperativeId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            coop = new Cooperative
+                            {
+                                CooperativeId = reader.GetInt32(0),
+                                Nom = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                Adresse = reader.IsDBNull(3) ? null : reader.GetString(3),
+                                Ville = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                Telephone = reader.IsDBNull(5) ? null : reader.GetString(5),
+                                Logo = reader.IsDBNull(6) ? null : reader.GetString(6),
+                                EstActive = reader.GetBoolean(7),
+                                DateCreation = reader.GetDateTime(8)
+                            };
+                        }
+                    }
+                }
+            }
+            return coop;
+        }
+
+        public void AddCooperative(Cooperative coop)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"INSERT INTO Cooperatives (Nom, Description, Adresse, Ville, Telephone, Logo, EstActive, DateCreation) 
+                              VALUES (@Nom, @Description, @Adresse, @Ville, @Telephone, @Logo, @EstActive, @DateCreation)";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Nom", coop.Nom);
+                    command.Parameters.AddWithValue("@Description", (object)coop.Description ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Adresse", (object)coop.Adresse ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Ville", (object)coop.Ville ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Telephone", (object)coop.Telephone ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Logo", (object)coop.Logo ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstActive", coop.EstActive);
+                    command.Parameters.AddWithValue("@DateCreation", coop.DateCreation);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateCooperative(Cooperative coop)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"UPDATE Cooperatives 
+                              SET Nom = @Nom, Description = @Description, Adresse = @Adresse, 
+                                  Ville = @Ville, Telephone = @Telephone, Logo = @Logo, EstActive = @EstActive 
+                              WHERE CooperativeId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", coop.CooperativeId);
+                    command.Parameters.AddWithValue("@Nom", coop.Nom);
+                    command.Parameters.AddWithValue("@Description", (object)coop.Description ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Adresse", (object)coop.Adresse ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Ville", (object)coop.Ville ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Telephone", (object)coop.Telephone ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Logo", (object)coop.Logo ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EstActive", coop.EstActive);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteCooperative(int id)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Cooperatives WHERE CooperativeId = @Id";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        // ============================================
+        // GESTION DES AVIS
+        // ============================================
+
+        public void AddAvis(AvisProduit avis)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "INSERT INTO AvisProduits (ClientId, ProduitId, Note, Commentaire, DateAvis) VALUES (@ClientId, @ProduitId, @Note, @Commentaire, @DateAvis)";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", avis.ClientId);
+                    command.Parameters.AddWithValue("@ProduitId", avis.ProduitId);
+                    command.Parameters.AddWithValue("@Note", avis.Note);
+                    command.Parameters.AddWithValue("@Commentaire", (object)avis.Commentaire ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@DateAvis", DateTime.Now);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateAvis(AvisProduit avis)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "UPDATE AvisProduits SET Note = @Note, Commentaire = @Commentaire WHERE AvisId = @AvisId AND ClientId = @ClientId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@AvisId", avis.AvisId);
+                    command.Parameters.AddWithValue("@ClientId", avis.ClientId);
+                    command.Parameters.AddWithValue("@Note", avis.Note);
+                    command.Parameters.AddWithValue("@Commentaire", (object)avis.Commentaire ?? DBNull.Value);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteAvis(int avisId, int clientId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM AvisProduits WHERE AvisId = @AvisId AND ClientId = @ClientId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@AvisId", avisId);
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public bool HasDeliveredProduct(int clientId, int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                // Vérifier que le produit a été livré (statut 'Livrée' dans Commandes)
+                var query = @"
+                    SELECT COUNT(*) 
+                    FROM CommandeItems ci
+                    INNER JOIN Commandes c ON ci.CommandeId = c.CommandeId
+                    WHERE c.ClientId = @ClientId 
+                    AND ci.ProduitId = @ProduitId
+                    AND c.Statut = 'Livrée'";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    return (int)command.ExecuteScalar() > 0;
+                }
+            }
+        }
+
+        // Méthode obsolète - conservée pour compatibilité, utilise HasDeliveredProduct
+        [Obsolete("Utilisez HasDeliveredProduct à la place. Cette méthode sera supprimée dans une future version.")]
+        public bool HasOrderedProduct(int clientId, int produitId)
+        {
+            return HasDeliveredProduct(clientId, produitId);
+        }
+
+        public bool HasReviewedProduct(int clientId, int produitId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = "SELECT COUNT(*) FROM AvisProduits WHERE ClientId = @ClientId AND ProduitId = @ProduitId";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    command.Parameters.AddWithValue("@ProduitId", produitId);
+                    return (int)command.ExecuteScalar() > 0;
+                }
+            }
+        }
+
+        public List<AvisProduit> GetClientAvis(int clientId)
+        {
+            var avis = new List<AvisProduit>();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var query = @"
+                    SELECT a.AvisId, a.ClientId, a.ProduitId, a.Note, a.Commentaire, a.DateAvis,
+                           p.Nom as ProduitNom, p.ImageUrl as ProduitImage
+                    FROM AvisProduits a
+                    INNER JOIN Produits p ON a.ProduitId = p.ProduitId
+                    WHERE a.ClientId = @ClientId
+                    ORDER BY a.DateAvis DESC";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ClientId", clientId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            avis.Add(new AvisProduit
+                            {
+                                AvisId = reader.GetInt32(0),
+                                ClientId = reader.GetInt32(1),
+                                ProduitId = reader.GetInt32(2),
+                                Note = reader.GetInt32(3),
+                                Commentaire = reader.IsDBNull(4) ? null : reader.GetString(4),
+                                DateAvis = reader.GetDateTime(5),
+                                ProduitNom = reader.IsDBNull(6) ? "Produit" : reader.GetString(6),
+                                ProduitImage = NormalizeImagePath(reader.IsDBNull(7) ? null : reader.GetString(7))
+                            });
+                        }
+                    }
+                }
+            }
+            return avis;
+        }
+
     }
 }
+

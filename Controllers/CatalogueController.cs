@@ -11,7 +11,7 @@ namespace E_Commerce_Cooperatives.Controllers
     {
         public ActionResult Index(int? categorie, string search = null, string sort = "popular", int page = 1, decimal? minPrice = null, decimal? maxPrice = null, string coops = null, bool onlyAvailable = false, int? minRating = null)
         {
-            int pageSize = 9;
+            int pageSize = 6;
 
             using (var db = new ECommerceDbContext())
             {

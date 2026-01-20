@@ -24,6 +24,7 @@ namespace E_Commerce_Cooperatives.Models
         public string SKU { get; set; }
         
         public bool EstDisponible { get; set; }
+        public decimal PrixSupplementaireTTC { get { return Math.Round(PrixSupplementaire * 1.20m, 2); } }
         
         public DateTime DateCreation { get; set; }
     }

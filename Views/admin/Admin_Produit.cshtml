@@ -3,217 +3,788 @@
     ViewBag.Title = "Gestion des Produits";
     Layout = "~/Views/Admin/_AdminLayout.cshtml";
 
-    var stats = ViewBag.Stats as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var categories = ViewBag.Categories as List<E_Commerce_Cooperatives.Models.Categorie> ?? new List<E_Commerce_Cooperatives.Models.Categorie>();
+    var cooperatives = ViewBag.Cooperatives as List<E_Commerce_Cooperatives.Models.Cooperative> ?? new List<E_Commerce_Cooperatives.Models.Cooperative>();
 }
 
+<style>
+    /* === STYLES GÉNÉRAUX === */
+    /* === STYLES GÉNÉRAUX === */
+    /* .admin-page styles removed to match Cooperatives (standard layout padding) */
+
+    /* === BARRE DE RECHERCHE ET FILTRES === */
+
+    .search-input-wrapper {
+        position: relative;
+        flex: 1;
+        max-width: 400px;
+    }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #D09E86; /* Couleur assortie au border */
+        }
+
+    .search-input {
+        width: 100%;
+        height: 48px; /* Hauteur fixe pour alignement parfait */
+        padding: 12px 15px 12px 40px; /* Aligné avec Catégories */
+        border: 1px solid #D09E86;
+        border-radius: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4A90A4;
+        }
+
+    .filter-dropdown {
+        height: 48px; /* Hauteur fixe pour alignement parfait avec le search */
+        padding: 0 15px;
+        border: 1px solid #D09E86;
+        border-radius: 8px;
+        background: white;
+        box-sizing: border-box;
+        color: #2C5F7D;
+        cursor: pointer;
+        min-width: 180px;
+        font-size: 14px;
+    }
+
+    .btn-add-product {
+        padding: 12px 25px;
+        margin-left: auto;
+        background: linear-gradient(135deg, #305C7D 0%, #3D7BA8 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-add-product:hover {
+            background: linear-gradient(135deg, #244A63 0%, #2F6289 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 164, 0.3);
+        }
+
+    /* === STATS CARDS === */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #4A90A4;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: #7A8B99;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .stat-card.danger .stat-value {
+        color: #E74C3C;
+    }
+
+    /* === TABLE MODERNE === */
+    .products-table-container {
+        background: white;
+        border-radius: 12px;
+        padding: 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        overflow: hidden;
+    }
+
+    .products-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .products-table thead {
+            background: #F8F9FA;
+        }
+
+            .products-table thead th {
+                padding: 18px 20px;
+                text-align: left;
+                font-weight: 600;
+                color: #5A6C7D;
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border-bottom: 2px solid #E1E8ED;
+            }
+
+        .products-table tbody tr {
+            border-bottom: 1px solid #F1F3F5;
+            transition: all 0.2s;
+        }
+
+            .products-table tbody tr:hover {
+                background: #F8F9FA;
+            }
+
+        .products-table tbody td {
+            padding: 20px;
+            vertical-align: middle;
+        }
+
+    .product-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .product-thumb {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        background: #F1F3F5;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+        .product-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .product-details .name {
+        font-weight: 600;
+        color: #2C3E50;
+        font-size: 15px;
+        margin-bottom: 4px;
+    }
+
+    .product-details .coop {
+        font-size: 13px;
+        color: #95A5A6;
+    }
+
+    /* === BADGES === */
+    .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .badge-category {
+        background: #D4C5B0;
+        color: #5D4E37;
+    }
+
+    .badge-stock {
+        background: #7D8453;
+        color: white;
+    }
+
+    .badge-dispo {
+        background: #7D8453;
+        color: white;
+    }
+
+    .badge-indispo {
+        background: #95A5A6;
+        color: white;
+    }
+
+    .badge-vedette {
+        background: #C06C50;
+        color: white;
+    }
+
+    .status-badges {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .price {
+        font-weight: 700;
+        color: #4A90A4;
+        font-size: 16px;
+    }
+
+    /* === ACTION BUTTONS === */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+    .btn-action {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 8px;
+        transition: all 0.2s;
+        color: #4A90A4;
+        font-size: 18px;
+    }
+
+        .btn-action:hover {
+            transform: scale(1.2);
+        }
+
+        .btn-action.edit {
+            color: #4A90A4;
+        }
+
+        .btn-action.delete {
+            color: #E74C3C;
+        }
+
+    /* === PAGINATION === */
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        background: white;
+        border-top: 1px solid #F1F3F5;
+    }
+
+    .pagination-info {
+        color: #7A8B99;
+        font-size: 14px;
+    }
+
+    .pagination {
+        display: flex;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #E1E8ED;
+            background: white;
+            color: #4A90A4;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+            .pagination button:hover:not(:disabled) {
+                background: #4A90A4;
+                color: white;
+                border-color: #4A90A4;
+            }
+
+            .pagination button.active {
+                background: #4A90A4;
+                color: white;
+                border-color: #4A90A4;
+            }
+
+            .pagination button:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+    /* Modal Styling */
+    #produitModal .modal-content {
+        background-color: #F5F3EF;
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+    }
+
+    #produitModal {
+        z-index: 9999 !important;
+    }
+
+        #produitModal .modal-dialog {
+    max-width: 1100px !important;
+    width: 95% !important;
+}
+        #produitModal .modal-content {
+            background-color: #F5F3EF;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+        }
+
+        #produitModal .modal-header {
+            background: transparent;
+            padding: 25px 35px 10px 35px;
+            border: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #produitModal .modal-title {
+            font-family: 'Georgia', serif;
+            color: #2C5F7D;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        #produitModal .close {
+            background: none !important;
+            border: none !important;
+            font-size: 32px;
+            color: #305C7D !important;
+            opacity: 0.6;
+            cursor: pointer;
+            padding: 0 !important;
+            margin: 0 !important;
+            line-height: 1;
+            font-weight: 300;
+        }
+
+            #produitModal .close:hover {
+                opacity: 1;
+            }
+
+        #produitModal .modal-body {
+            padding: 10px 35px 25px 35px;
+        }
+
+        #produitModal .form-label {
+            color: #2C5F7D;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        #produitModal .form-input,
+        #produitModal .form-select {
+            background-color: white !important;
+            border: 2px solid #D09E86 !important;
+            border-radius: 12px !important;
+            padding: 12px 16px !important;
+            font-size: 16px !important;
+            color: #2C5F7D !important;
+            width: 100% !important;
+            transition: all 0.3s;
+        }
+
+            #produitModal .form-input::placeholder {
+                color: #AAB7C4;
+            }
+
+            #produitModal .form-input:focus,
+            #produitModal .form-select:focus {
+                outline: none;
+                border-color: #305C7D;
+                box-shadow: 0 0 0 4px rgba(48, 92, 125, 0.05);
+            }
+
+        #produitModal .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+
+        #produitModal .form-group {
+            margin-bottom: 20px;
+        }
+
+        #produitModal textarea.form-input {
+            resize: none;
+            min-height: 100px;
+        }
+
+    /* === TOGGLE SWITCHES === */
+    .switch-row {
+        display: flex;
+        gap: 30px;
+        margin-top: 5px;
+        align-items: center;
+    }
+
+    .custom-switch {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .switch-track {
+        position: relative;
+        width: 48px;
+        height: 24px;
+        background-color: #D1D9E0;
+        border-radius: 12px;
+        transition: all 0.3s;
+    }
+
+    .switch-thumb {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background-color: white;
+        border-radius: 50%;
+        transition: all 0.3s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    input[type="checkbox"]:checked + .switch-track {
+        background-color: #305C7D;
+    }
+
+        input[type="checkbox"]:checked + .switch-track .switch-thumb {
+            left: 26px;
+        }
+
+    .switch-label {
+        font-size: 15px;
+        font-weight: 600;
+        color: #2C5F7D;
+    }
+
+    /* === MODAL FOOTER === */
+    #produitModal .modal-footer {
+        padding: 15px 35px 35px 35px;
+        border: none;
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        background: transparent;
+    }
+
+    .btn-modal-cancel {
+        padding: 12px 30px;
+        background: white;
+        border: 2px solid #305C7D;
+        color: #305C7D;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-modal-cancel:hover {
+            background: #F0F4F7;
+        }
+
+    .btn-modal-save {
+        padding: 12px 35px;
+        background: #305C7D;
+        border: none;
+        color: white;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-modal-save:hover {
+            background: #244660;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(48, 92, 125, 0.2);
+        }
+
+    /* === ASSURER QUE TOUS LES ÉLÉMENTS DU MODAL SONT CLIQUABLES === */
+    #produitModal input,
+    #produitModal select,
+    #produitModal textarea,
+    #produitModal button,
+    #produitModal label {
+        pointer-events: auto !important;
+    }
+    /* === VARIANTES SECTION === */
+    .variants-section {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #E1E8ED;
+    }
+
+    .variants-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .variants-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2C5F7D;
+    }
+
+    .btn-add-variant {
+        padding: 6px 12px;
+        background: #F0F4F7;
+        color: #305C7D;
+        border: 1px solid #305C7D;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-add-variant:hover {
+            background: #305C7D;
+            color: white;
+        }
+
+    .variants-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+
+        .variants-table th {
+                text-align: left;
+                font-size: 14px;
+                font-weight: 600;
+                color: #5A6C7D;
+                padding: 12px;
+                border-bottom: 1px solid #E1E8ED;
+            }
+
+        .variants-table td {
+            padding: 12px;
+            vertical-align: middle;
+        }
+    .variant-input::placeholder {
+        color: #AAB7C4;
+        font-weight: 400;
+    }
+
+    .variant-input {
+        width: 100% !important;
+        padding: 10px 8px !important;
+        border: 2px solid #D09E86 !important;
+        border-radius: 10px !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        color: #2C5F7D !important;
+        background-color: white !important;
+        transition: border-color 0.2s;
+        text-align: center !important;
+        min-height: 45px !important;
+        min-width: 90px !important;
+    }
+
+        .variant-input:focus {
+            border-color: #305C7D;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(48, 92, 125, 0.1);
+            background-color: #FAFBFC;
+        }
+
+    .btn-remove-variant {
+        color: #E74C3C;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 5px;
+    }
+
+        .btn-remove-variant:hover {
+            transform: scale(1.2);
+        }
+    /* === GALLERY MANAGEMENT === */
+    .gallery-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 15px;
+    }
+
+    .preview-item {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid #D09E86;
+        background: white;
+    }
+
+    .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .preview-item.to-delete {
+        opacity: 0.4;
+        border-color: #E74C3C;
+    }
+
+    .btn-delete-img {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 20px;
+        height: 20px;
+        background: rgba(231, 76, 60, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        z-index: 5;
+    }
+
+    .btn-delete-img:hover {
+        background: #E74C3C;
+        transform: scale(1.1);
+    }
+</style>
+
 <div class="admin-page">
-    <!-- En-tête de page - SANS le bouton Ajouter -->
-    <div class="admin-page-header">
-        <div>
-            <h1 class="admin-page-title">Gestion des Produits</h1>
-            <p class="admin-page-subtitle">Gérez votre catalogue de produits</p>
+    <div class="admin-header-row" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 30px;">
+        <div class="admin-page-header" style="margin-bottom: 0;">
+            <h1 class="admin-page-title" style="margin-bottom: 0;">Gestion des Produits</h1>
+            <p class="admin-page-subtitle" style="margin-bottom: 0;">Gérez votre catalogue de produits</p>
+        </div>
+
+        <div style="flex: 1; max-width: 500px; display: flex; gap: 10px;">
+            <div class="search-input-wrapper" style="flex: 1;">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Rechercher un produit..." style="width: 100%;">
+            </div>
+
+            <select id="categoryFilter" class="filter-dropdown" style="width: auto; min-width: 180px;">
+                <option value="all">Toutes les catégories</option>
+                @foreach (var cat in categories)
+                {
+                    <option value="@cat.CategorieId">@cat.Nom</option>
+                }
+            </select>
+        </div>
+
+        <div class="admin-actions">
+            <button class="btn-add-product" onclick="openAddModal()" style="white-space: nowrap;">
+                <i class="fas fa-plus"></i> Ajouter un produit
+            </button>
         </div>
     </div>
 
-    <!-- Filtres avec le bouton Ajouter À GAUCHE sur la même ligne -->
-    <div class="admin-filters">
-        <div class="filters-row">
-            <!-- Barre de recherche -->
-            <div class="search-box">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="search-icon">
-                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-                </svg>
-                <input type="text" id="searchInput" class="form-control search-input"
-                       placeholder="Rechercher un produit..." />
-            </div>
-
-            <!-- Filtre par catégorie - AUTOMATIQUE -->
-            <div class="status-filter-wrapper">
-                <select id="categorieFilter" class="status-filter">
-                    <option value="all">Toutes les catégories</option>
-                    <option value="1">Cosmétiques</option>
-                    <option value="2">Alimentaire</option>
-                    <option value="3">Poterie & Céramique</option>
-                    <option value="4">Textiles & Vannerie</option>
-                </select>
-            </div>
-
-            <!-- Filtre par statut - AUTOMATIQUE -->
-            <div class="status-filter-wrapper">
-                <select id="statutFilter" class="status-filter">
-                    <option value="all">Tous les statuts</option>
-                    <option value="disponible">Disponible</option>
-                    <option value="vedette">En vedette</option>
-                    <option value="stock-faible">Stock faible</option>
-                </select>
-            </div>
-            <!-- Bouton Ajouter à GAUCHE -->
-            <a href="@Url.Action("AjouterProduit", "Admin")" class="btn-primary-action">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
-                </svg>
-                Ajouter un produit
-            </a>
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">@(ViewBag.Stats != null ? ViewBag.Stats["Total"] : Model.Count)</div>
+            <div class="stat-label">Total produits</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@(ViewBag.Stats != null ? ViewBag.Stats["Disponibles"] : Model.Count(p => p.EstDisponible))</div>
+            <div class="stat-label">Disponibles</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@(ViewBag.Stats != null ? ViewBag.Stats["EnVedette"] : Model.Count(p => p.EstEnVedette))</div>
+            <div class="stat-label">En vedette</div>
+        </div>
+        <div class="stat-card danger">
+            <div class="stat-value">@(ViewBag.Stats != null ? ViewBag.Stats["StockFaible"] : 0)</div>
+            <div class="stat-label">Stock faible</div>
         </div>
     </div>
 
-    <!-- Reste du code identique... cartes stats et tableau -->
-    <div class="stats-cards">
-        <div class="stat-card stat-total">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6z" />
-                </svg>
-            </div>
-            <div>
-                <div class="stat-value">@(stats.ContainsKey("Total") ? stats["Total"] : 0)</div>
-                <div class="stat-label">Total produits</div>
-            </div>
-        </div>
-
-        <div class="stat-card stat-disponible">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
-                </svg>
-            </div>
-            <div>
-                <div class="stat-value">@(stats.ContainsKey("Disponibles") ? stats["Disponibles"] : 0)</div>
-                <div class="stat-label">Disponibles</div>
-            </div>
-        </div>
-
-        <div class="stat-card stat-vedette">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
-                </svg>
-            </div>
-            <div>
-                <div class="stat-value">@(stats.ContainsKey("EnVedette") ? stats["EnVedette"] : 0)</div>
-                <div class="stat-label">En vedette</div>
-            </div>
-        </div>
-
-        <div class="stat-card stat-stock-faible">
-            <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057z" />
-                </svg>
-            </div>
-            <div>
-                <div class="stat-value">@(stats.ContainsKey("StockFaible") ? stats["StockFaible"] : 0)</div>
-                <div class="stat-label">Stock faible</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tableau des produits -->
-    <div class="admin-table-container">
-        <table class="table admin-table products-table">
+    <!-- Products Table -->
+    <div class="products-table-container">
+        <table class="products-table">
             <thead>
                 <tr>
-                    <th style="width: 50px;"></th>
-                    <th>Produit</th>
-                    <th>Catégorie</th>
-                    <th>Prix</th>
-                    <th>Stock</th>
-                    <th>Statut</th>
-                    <th class="text-end">Actions</th>
+                    <th style="width: 30%;">Produit</th>
+                    <th style="width: 15%;">Catégorie</th>
+                    <th style="width: 15%;">Prix</th>
+                    <th style="width: 10%;">Stock</th>
+                    <th style="width: 15%;">Statut</th>
+                    <th style="width: 15%;">Actions</th>
                 </tr>
             </thead>
             <tbody id="productsTableBody">
-                @foreach (var produit in Model)
+                @foreach (var p in Model)
                 {
-                    var stockClass = produit.StockTotal <= produit.SeuilAlerte ? "stock-faible" : "stock-ok";
-                    var disponibleClass = produit.EstDisponible ? "dispo" : "indisponible";
-
-                    <tr class="product-row"
-                        data-categorie="@(produit.CategorieId.HasValue ? produit.CategorieId.Value.ToString() : "")"
-                        data-statut="@(produit.EstDisponible ? "disponible" : "indisponible")"
-                        data-vedette="@(produit.EstEnVedette ? "true" : "false")"
-                        data-stock-faible="@(produit.StockTotal <= produit.SeuilAlerte ? "true" : "false")"
-                        data-nom="@produit.Nom.ToLower()"
-                        data-cooperative="@(produit.Cooperative != null ? produit.Cooperative.Nom.ToLower() : "")">
-                        <td>
-                            <div class="product-image-thumb">
-                                @if (!string.IsNullOrEmpty(produit.ImageUrl))
-                                {
-                                    <img src="@Url.Content(produit.ImageUrl)" alt="@produit.Nom" />
-                                }
-                                else
-                                {
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
-                                        <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z" />
-                                    </svg>
-                                }
-                            </div>
-                        </td>
+                    <tr class="product-row" data-name="@p.Nom.ToLower()" data-cat="@(p.CategorieId.HasValue ? p.CategorieId.Value.ToString() : "0")">
                         <td>
                             <div class="product-info">
-                                <div class="product-name">@produit.Nom</div>
-                                @if (produit.Cooperative != null)
-                                {
-                                    <div class="product-cooperative">@produit.Cooperative.Nom</div>
-                                }
-                                <div class="product-badges">
-                                    @if (produit.EstEnVedette)
+                                <div class="product-thumb">
+                                    @if (!string.IsNullOrEmpty(p.ImageUrl))
                                     {
-                                        <span class="badge badge-vedette">Vedette</span>
+                                        <img src="@Url.Content(p.ImageUrl)" alt="@p.Nom" />
                                     }
-                                    @if (produit.EstNouveau)
-                                    {
-                                        <span class="badge badge-nouveau">Nouveau</span>
-                                    }
+                                </div>
+                                <div class="product-details">
+                                    <div class="name">@p.Nom</div>
+                                    <div class="coop">@(p.Cooperative != null ? p.Cooperative.Nom : "Coopérative Arganière Taroudant")</div>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            @if (produit.Categorie != null)
-                            {
-                                <span class="badge badge-categorie badge-cat-@produit.CategorieId">
-                                    @produit.Categorie.Nom
-                                </span>
-                            }
-                        </td>
-                        <td class="product-price">@produit.Prix.ToString("0.00") MAD</td>
-                        <td>
-                            <span class="badge badge-stock badge-@stockClass">
-                                @produit.StockTotal
-                            </span>
+                            <span class="badge badge-category">@(p.Categorie != null ? p.Categorie.Nom : "Cosmétiques")</span>
                         </td>
                         <td>
-                            <span class="badge badge-status badge-@disponibleClass">
-                                @if (produit.EstDisponible)
+                            <span class="price">@p.Prix.ToString("0") MAD</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-stock">@p.StockTotal</span>
+                        </td>
+                        <td>
+                            <div class="status-badges">
+                                @if (p.EstDisponible)
                                 {
-                                    <text>Dispo</text>
+                                    <span class="badge badge-dispo">Dispo</span>
                                 }
                                 else
                                 {
-                                    <text>Indisponible</text>
+                                    <span class="badge badge-indispo">Indispo</span>
                                 }
-                            </span>
+                                @if (p.EstEnVedette)
+                                {
+                                    <span class="badge badge-vedette">Vedette</span>
+                                }
+                            </div>
                         </td>
-                        <td class="text-end">
+                        <td>
                             <div class="action-buttons">
-                                <button class="btn-action btn-view" onclick="viewProduct(@produit.ProduitId)" title="Voir">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
-                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
-                                    </svg>
+                                <button class="btn-action edit" onclick="openEditModal(@p.ProduitId)" title="Modifier">
+                                    <i class="far fa-edit"></i>
                                 </button>
-                                <a href="@Url.Action("ModifierProduit", "Admin", new { id = produit.ProduitId })" class="btn-action btn-edit" title="Modifier">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
-                                    </svg>
-                                </a>
-                                <button class="btn-action btn-delete" onclick="deleteProduct(@produit.ProduitId, '@produit.Nom')" title="Supprimer">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
-                                    </svg>
-                                </button>
+                                <!-- <button class="btn-action delete" onclick="deleteProduct(@p.ProduitId, '@p.Nom')" title="Supprimer">
+                                    <i class="far fa-trash-alt"></i>
+                                </button> -->
                             </div>
                         </td>
                     </tr>
@@ -221,184 +792,485 @@
             </tbody>
         </table>
 
-        <div id="productsPagination" class="products-pagination" style="display: none;">
+        <!-- Pagination -->
+        <div class="pagination-container">
+            <div class="pagination-info">
+                Affichage de <strong id="pageStart">1</strong> à <strong id="pageEnd">6</strong> sur <strong id="totalProducts">@Model.Count</strong> produits
+            </div>
+            <div class="pagination" id="paginationControls"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Produit Compact -->
+<div id="produitModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Ajouter un nouveau produit</h5>
+                <button type="button" class="close" onclick="closeModal()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="produitForm" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="ProduitId" name="ProduitId" value="0" />
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Nom du produit</label>
+                            <input type="text" id="Nom" name="Nom" class="form-input" placeholder="Ex: Huile d'Argan Pure" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Prix (MAD)</label>
+                            <input type="number" id="Prix" name="Prix" class="form-input" placeholder="0.00" required step="0.01" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea id="Description" name="Description" class="form-input" placeholder="Description du produit..." rows="2"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Catégorie</label>
+                            <select id="CategorieId" name="CategorieId" class="form-select" required>
+                                <option value="" disabled selected>Sélectionner</option>
+                                @foreach (var cat in categories)
+                                {
+                                    <option value="@cat.CategorieId">@cat.Nom</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Coopérative</label>
+                            <select id="CooperativeId" name="CooperativeId" class="form-select">
+                                <option value="" selected>Sélectionner</option>
+                                @foreach (var coop in cooperatives)
+                                {
+                                    <option value="@coop.CooperativeId">@coop.Nom</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Stock initial</label>
+                            <input type="number" id="StockTotal" name="StockTotal" class="form-input" placeholder="0" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Seuil d'alerte</label>
+                            <input type="number" id="SeuilAlerte" name="SeuilAlerte" class="form-input" placeholder="10" value="5" />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Photo principale</label>
+                            <input type="file" id="imageFile" name="imageFile" class="form-input" accept="image/*" onchange="previewMainImage(this)" />
+                            <input type="hidden" id="ImageUrl" name="ImageUrl" />
+                            <div id="mainImagePreview" style="margin-top: 10px; display: none;">
+                                <img src="" style="height: 80px; border-radius: 8px; border: 1px solid #D09E86;" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Photos secondaires</label>
+                            <input type="file" id="secondaryImages" name="secondaryImages" class="form-input" accept="image/*" multiple onchange="previewSecondaryImages(this)" />
+                            <div id="secondaryImagesPreview" class="gallery-preview">
+                                <!-- Prévisualisations dynamiques -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Variantes Section -->
+                    <div class="variants-section">
+                        <div class="variants-header">
+                            <h6 class="variants-title"><i class="fas fa-tags"></i> Variantes du produit</h6>
+                            <button type="button" class="btn-add-variant" onclick="addVariantRow()">
+                                <i class="fas fa-plus"></i> Ajouter une variante
+                            </button>
+                        </div>
+                        <div style="overflow-x: auto; width: 100%; padding-bottom: 10px;">
+                            <table class="variants-table" style="min-width: 900px;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 20%; min-width: 150px;">Taille</th>
+                                        <th style="width: 20%; min-width: 150px;">Couleur</th>
+                                        <th style="width: 15%; min-width: 120px;">Stock</th>
+                                        <th style="width: 20%; min-width: 120px;">Prix Sup.</th>
+                                        <th style="width: 20%; min-width: 150px;">SKU</th>
+                                        <th style="width: 5%;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="variantsTableBody">
+                                    <!-- Les lignes de variantes seront ajoutées ici -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="switch-row">
+                        <label class="custom-switch">
+                            <input type="checkbox" id="EstDisponible" name="EstDisponible" value="true" checked hidden />
+                            <div class="switch-track">
+                                <span class="switch-thumb"></span>
+                            </div>
+                            <span class="switch-label">Disponible</span>
+                        </label>
+
+                        <label class="custom-switch">
+                            <input type="checkbox" id="EstEnVedette" name="EstEnVedette" value="true" hidden />
+                            <div class="switch-track">
+                                <span class="switch-thumb"></span>
+                            </div>
+                            <span class="switch-label">En vedette</span>
+                        </label>
+
+                        <label class="custom-switch">
+                            <input type="checkbox" id="EstNouveau" name="EstNouveau" value="true" checked hidden />
+                            <div class="switch-track">
+                                <span class="switch-thumb"></span>
+                            </div>
+                            <span class="switch-label">Nouveau</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-cancel" onclick="closeModal()">Annuler</button>
+                <button type="button" class="btn-modal-save" onclick="submitForm()">Enregistrer</button>
+            </div>
         </div>
     </div>
 </div>
 
 @section scripts {
     <script>
-        var productsPerPage = 6;
-        var currentPage = 1;
-        var totalPages = 1;
-        var allRows = [];
-
         $(document).ready(function() {
-            allRows = $('.product-row').toArray();
+            const itemsPerPage = 6;
+            let currentPage = 1;
+            let filteredRows = [];
 
-            // Filtrage AUTOMATIQUE sur recherche
-            $('#searchInput').on('keyup', function() {
-                applyFilters();
+            function updatePagination() {
+                // Get all rows that match the filters
+                filteredRows = $('.product-row.matched-filter').toArray();
+                const totalPages = Math.ceil(filteredRows.length / itemsPerPage) || 1;
+
+                // Ensure currentPage is within bounds
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                // Update info
+                const start = filteredRows.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+                const end = Math.min(currentPage * itemsPerPage, filteredRows.length);
+                $('#pageStart').text(start);
+                $('#pageEnd').text(end);
+                $('#totalProducts').text(filteredRows.length);
+
+                // Show/hide rows for current page
+                $('.product-row').hide();
+                $(filteredRows).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).show();
+
+                // Build pagination controls
+                let html = '';
+                html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">‹</button>`;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                        html += `<button class="${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                    } else if (i === currentPage - 2 || i === currentPage + 2) {
+                        html += '<button disabled>...</button>';
+                    }
+                }
+
+                html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">›</button>`;
+                $('#paginationControls').html(html);
+            }
+
+            window.changePage = function(page) {
+                currentPage = page;
+                updatePagination();
+            };
+
+            // Search & Filter
+            function applyFilters() {
+                const searchTerm = $('#searchInput').val().toLowerCase();
+                const category = $('#categoryFilter').val();
+
+                $('.product-row').each(function() {
+                    const name = $(this).data('name');
+                    const cat = $(this).data('cat').toString();
+
+                    const matchesSearch = name.indexOf(searchTerm) > -1;
+                    const matchesCat = category === 'all' || cat === category;
+
+                    if (matchesSearch && matchesCat) {
+                        $(this).addClass('matched-filter');
+                    } else {
+                        $(this).removeClass('matched-filter');
+                    }
+                });
+
+                currentPage = 1;
+                updatePagination();
+            }
+
+            $('#searchInput').on('keyup', applyFilters);
+            $('#categoryFilter').on('change', applyFilters);
+
+            // Form submit
+            $('#produitForm').on('submit', function(e) {
+                e.preventDefault();
+                submitForm();
             });
 
-            // Filtrage AUTOMATIQUE sur changement de catégorie
-            $('#categorieFilter').on('change', function() {
-                applyFilters();
-            });
+            // Initial initialization of filter class
+            $('.product-row').addClass('matched-filter');
 
-            // Filtrage AUTOMATIQUE sur changement de statut
-            $('#statutFilter').on('change', function() {
-                applyFilters();
-            });
-
-            initializePagination();
+            // Initial pagination
+            updatePagination();
         });
 
-        function applyFilters() {
-            var searchTerm = $('#searchInput').val().toLowerCase();
-            var categorieFilter = $('#categorieFilter').val();
-            var statutFilter = $('#statutFilter').val();
+        let idsToDelete = [];
+        let selectedFiles = []; // For cumulative uploads
 
-            var filteredRows = allRows.filter(function(row) {
-                var $row = $(row);
-                var nom = $row.data('nom') || '';
-                var cooperative = $row.data('cooperative') || '';
-                var categorie = $row.data('categorie') ? $row.data('categorie').toString() : '';
-                var statut = $row.data('statut') || '';
-                var isVedette = $row.data('vedette');
-                var isStockFaible = $row.data('stock-faible');
+        function openAddModal() {
+            $('#produitForm')[0].reset();
+            $('#ProduitId').val(0);
+            $('#modalTitle').text('Ajouter un nouveau produit');
+            $('#ImageUrl').val('');
+            $('#mainImagePreview').hide().find('img').attr('src', '');
+            $('#secondaryImagesPreview').empty();
+            $('#variantsTableBody').empty();
+            idsToDelete = [];
+            selectedFiles = [];
+            $('#secondaryImages').val(''); // Reset input
+            $('#produitModal').modal('show');
+        }
 
-                // Filtre recherche
-                if (searchTerm && !nom.includes(searchTerm) && !cooperative.includes(searchTerm)) {
-                    return false;
+        function openEditModal(id) {
+            idsToDelete = [];
+            selectedFiles = [];
+            $('#secondaryImages').val(''); // Reset input
+            $.get('@Url.Action("GetProduit", "Admin")', { id: id }, function(response) {
+                if (response.success) {
+                    const p = response.produit;
+                    $('#ProduitId').val(p.ProduitId);
+                    $('#Nom').val(p.Nom);
+                    $('#Prix').val(p.Prix);
+                    $('#Description').val(p.Description);
+                    $('#CategorieId').val(p.CategorieId);
+                    $('#CooperativeId').val(p.CooperativeId);
+                    $('#StockTotal').val(p.StockTotal);
+                    $('#SeuilAlerte').val(p.SeuilAlerte);
+                    $('#ImageUrl').val(p.ImageUrl);
+
+                    // Image principale preview
+                    if (p.ImageUrl) {
+                        const url = p.ImageUrl.startsWith('~') ? '@Url.Content("~")'.replace(/\/$/, '') + p.ImageUrl.substring(1) : p.ImageUrl;
+                        $('#mainImagePreview').show().find('img').attr('src', url);
+                    } else {
+                        $('#mainImagePreview').hide();
+                    }
+
+                    // Images secondaires preview
+                    $('#secondaryImagesPreview').empty();
+                    if (response.images && response.images.length > 0) {
+                        response.images.forEach(img => {
+                            const url = img.UrlImage.startsWith('~') ? '@Url.Content("~")'.replace(/\/$/, '') + img.UrlImage.substring(1) : img.UrlImage;
+                            const html = `
+                                <div class="preview-item" data-id="${img.ImageId}">
+                                    <img src="${url}" />
+                                    <button type="button" class="btn-delete-img" onclick="markImageForDeletion(${img.ImageId}, this)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `;
+                            $('#secondaryImagesPreview').append(html);
+                        });
+                    }
+
+                    $('#EstDisponible').prop('checked', p.EstDisponible);
+                    $('#EstEnVedette').prop('checked', p.EstEnVedette);
+                    $('#EstNouveau').prop('checked', p.EstNouveau);
+
+                    $('#modalTitle').text('Modifier le produit');
+
+                    $('#variantsTableBody').empty();
+                    if (response.variantes && response.variantes.length > 0) {
+                        response.variantes.forEach(function(v) {
+                            addVariantRow(v);
+                        });
+                    }
+
+                    $('#produitModal').modal('show');
+                } else {
+                    alert(response.message);
                 }
+            });
+        }
 
-                // Filtre catégorie
-                if (categorieFilter !== 'all' && categorie !== categorieFilter) {
-                    return false;
+        function markImageForDeletion(id, btn) {
+            const container = $(btn).closest('.preview-item');
+            if (idsToDelete.includes(id)) {
+                idsToDelete = idsToDelete.filter(i => i !== id);
+                container.removeClass('to-delete');
+                $(btn).find('i').removeClass('fa-undo').addClass('fa-times');
+            } else {
+                idsToDelete.push(id);
+                container.addClass('to-delete');
+                $(btn).find('i').removeClass('fa-times').addClass('fa-undo');
+            }
+        }
+
+        function addVariantRow(data = null) {
+            const id = data ? data.VarianteId : 0;
+            const taille = data ? (data.Taille || '') : '';
+            const couleur = data ? (data.Couleur || '') : '';
+            const stock = data ? data.Stock : 0;
+            const prixSup = data ? data.PrixSupplementaire : 0;
+            const sku = data ? (data.SKU || '') : '';
+
+            const row = `
+                <tr class="variant-row" data-id="${id}">
+                    <td><input type="text" class="variant-input var-taille" value="${taille}" placeholder="Ex: XL" style="min-width: 90px !important; width: 100% !important;" /></td>
+                    <td><input type="text" class="variant-input var-couleur" value="${couleur}" placeholder="Ex: Rouge" style="min-width: 90px !important; width: 100% !important;" /></td>
+                    <td><input type="number" class="variant-input var-stock" value="${stock}" style="min-width: 70px !important; width: 100% !important;" /></td>
+                    <td><input type="number" class="variant-input var-prix" value="${prixSup}" step="0.01" style="min-width: 70px !important; width: 100% !important;" /></td>
+                    <td><input type="text" class="variant-input var-sku" value="${sku}" placeholder="Ex: SKU-001" style="min-width: 90px !important; width: 100% !important;" /></td>
+                    <td>
+                        <button type="button" class="btn-remove-variant" onclick="removeVariantRow(this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            $('#variantsTableBody').append(row);
+        }
+
+        function removeVariantRow(btn) {
+            $(btn).closest('tr').remove();
+        }
+
+        function previewMainImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#mainImagePreview').show().find('img').attr('src', e.target.result);
                 }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
 
-                // Filtre statut
-                if (statutFilter !== 'all') {
-                    if (statutFilter === 'disponible' && statut !== 'disponible') return false;
-                    if (statutFilter === 'vedette' && !isVedette) return false;
-                    if (statutFilter === 'stock-faible' && !isStockFaible) return false;
-                }
+        function previewSecondaryImages(input) {
+            if (input.files) {
+                const filesArray = Array.from(input.files);
+                
+                filesArray.forEach(file => {
+                    // Generate a unique ID for each new file to handle removal
+                    const tempId = Date.now() + Math.random();
+                    file.tempId = tempId;
+                    selectedFiles.push(file);
 
-                return true;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                         const html = `
+                            <div class="preview-item temp-preview" id="temp-file-${tempId.toString().replace('.', '')}">
+                                <img src="${e.target.result}" />
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(48, 92, 125, 0.2); display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: bold; pointer-events: none;">NEW</div>
+                                <button type="button" class="btn-delete-img" onclick="removeSelectedFile(${tempId}, this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        `;
+                        $('#secondaryImagesPreview').append(html);
+                    }
+                    reader.readAsDataURL(file);
+                });
+                
+                // Important: clear the input so the same files can be selected again if needed
+                // (though our cumulative logic handles it, browser needs reset to trigger change again)
+                $(input).val('');
+            }
+        }
+
+        function removeSelectedFile(tempId, btn) {
+            selectedFiles = selectedFiles.filter(f => f.tempId !== tempId);
+            $(btn).closest('.preview-item').remove();
+        }
+
+        function submitForm() {
+            const formData = new FormData($('#produitForm')[0]);
+            
+            // Re-append main image if selected (standard behavior)
+            
+            // Append the accumulated secondary files
+            selectedFiles.forEach(file => {
+                formData.append('secondaryImages', file);
             });
 
-            // Cacher toutes les lignes
-            $(allRows).hide();
+            formData.append('deletedImageIds', idsToDelete.join(','));
 
-            // Afficher les lignes filtrées
-            $(filteredRows).show();
+            // Collecter les variantes
+            const variantes = [];
+            $('.variant-row').each(function() {
+                const row = $(this);
+                variantes.push({
+                    VarianteId: row.data('id'),
+                    Taille: row.find('.var-taille').val(),
+                    Couleur: row.find('.var-couleur').val(),
+                    Stock: parseInt(row.find('.var-stock').val()) || 0,
+                    PrixSupplementaire: parseFloat(row.find('.var-prix').val()) || 0,
+                    SKU: row.find('.var-sku').val(),
+                    EstDisponible: true
+                });
+            });
+            formData.append('variantesJson', JSON.stringify(variantes));
 
-            // Réinitialiser la pagination avec les résultats filtrés
-            totalPages = Math.ceil(filteredRows.length / productsPerPage);
+            const id = $('#ProduitId').val();
+            const url = id == 0 ? '@Url.Action("AjouterProduit", "Admin")' : '@Url.Action("ModifierProduit", "Admin")';
 
-            if (totalPages > 1) {
-                $('#productsPagination').show();
-                createPagination(filteredRows);
-                renderFilteredPage(1, filteredRows);
-            } else {
-                $('#productsPagination').hide();
-                $(filteredRows).show();
-            }
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response && response.success) {
+                        $('#produitModal').modal('hide');
+                        location.reload();
+                    } else {
+                        let errorMsg = 'Une erreur est survenue lors de l\'enregistrement.';
+                        if (response) {
+                            if (response.errors && response.errors.length > 0) {
+                                errorMsg = response.errors.join("\n");
+                            } else if (response.message) {
+                                errorMsg = response.message;
+                            }
+                        }
+                        alert('Erreur: ' + errorMsg);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", status, error, xhr.responseText);
+                    alert('Une erreur serveur est survenue. Veuillez consulter la console pour plus de détails.');
+                }
+            });
         }
 
-        function initializePagination() {
-            var totalProducts = allRows.length;
-            totalPages = Math.ceil(totalProducts / productsPerPage);
-
-            if (totalPages > 1) {
-                $('#productsPagination').show();
-                createPagination(allRows);
-            }
-
-            renderPage(1);
-        }
-
-        function renderPage(page) {
-            var start = (page - 1) * productsPerPage;
-            var end = start + productsPerPage;
-
-            $(allRows).hide();
-            $(allRows).slice(start, end).show();
-
-            currentPage = page;
-            updatePaginationControls();
-        }
-
-        function renderFilteredPage(page, filteredRows) {
-            var start = (page - 1) * productsPerPage;
-            var end = start + productsPerPage;
-
-            $(filteredRows).hide();
-            $(filteredRows).slice(start, end).show();
-
-            currentPage = page;
-            updatePaginationControls();
-        }
-
-        function createPagination(rows) {
-            var pages = Math.ceil(rows.length / productsPerPage);
-            var html = '<div class="pagination-controls">' +
-                '<button class="btn-pagination btn-prev" onclick="changePage(-1)" disabled>' +
-                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">' +
-                '<path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>' +
-                '</svg></button>' +
-                '<div class="pagination-pages">';
-
-            for (var i = 1; i <= pages; i++) {
-                html += '<button class="btn-page' + (i === 1 ? ' active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
-            }
-
-            html += '</div>' +
-                '<button class="btn-pagination btn-next" onclick="changePage(1)">' +
-                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">' +
-                '<path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>' +
-                '</svg></button>' +
-                '</div>';
-
-            $('#productsPagination').html(html);
-        }
-
-        function changePage(direction) {
-            var newPage = currentPage + direction;
-            if (newPage >= 1 && newPage <= totalPages) {
-                renderPage(newPage);
-            }
-        }
-
-        function goToPage(page) {
-            if (page >= 1 && page <= totalPages) {
-                renderPage(page);
-            }
-        }
-
-        function updatePaginationControls() {
-            $('.btn-prev').prop('disabled', currentPage === 1);
-            $('.btn-next').prop('disabled', currentPage === totalPages);
-            $('.btn-page').removeClass('active');
-            $('.btn-page').eq(currentPage - 1).addClass('active');
-        }
-
-        function viewProduct(id) {
-            window.location.href = '@Url.Action("DetailsProduit", "Admin")?id=' + id;
+        function closeModal() {
+            $('#produitModal').modal('hide');
         }
 
         function deleteProduct(id, nom) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer le produit "' + nom + '" ?')) {
-                $.post('@Url.Action("SupprimerProduit", "Admin")', { id: id }, function(result) {
-                    if (result.success) {
-                        alert('Produit supprimé avec succès');
-                        location.reload();
-                    } else {
-                        alert('Erreur: ' + result.message);
-                    }
-                }).fail(function() {
-                    alert('Erreur lors de la suppression');
+            if (confirm('Supprimer "' + nom + '" ?')) {
+                $.post('@Url.Action("SupprimerProduit", "Admin")', { id: id }, function(response) {
+                    if (response.success) location.reload();
+                    else alert('Erreur: ' + response.message);
                 });
             }
         }
